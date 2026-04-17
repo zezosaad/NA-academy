@@ -1,0 +1,207 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Exam, ExamDocument, Question } from './schemas/exam.schema.js';
+import { ExamSession, ExamSessionDocument, SessionStatus } from './schemas/exam-session.schema.js';
+import { ExamScore, ExamScoreDocument } from './schemas/exam-score.schema.js';
+import { CreateExamDto } from './dto/create-exam.dto.js';
+import { UpdateExamDto } from './dto/update-exam.dto.js';
+import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
+import { SubmitExamDto } from './dto/submit-exam.dto.js';
+
+@Injectable()
+export class ExamsService {
+  constructor(
+    @InjectModel(Exam.name) private readonly examModel: Model<ExamDocument>,
+    @InjectModel(ExamSession.name) private readonly sessionModel: Model<ExamSessionDocument>,
+    @InjectModel(ExamScore.name) private readonly scoreModel: Model<ExamScoreDocument>,
+  ) {}
+
+  private validateQuestions(questions: any[]) {
+    for (const q of questions) {
+      const optionLabels = q.options.map((opt: any) => opt.label);
+      if (!optionLabels.includes(q.correctOption)) {
+        throw new BadRequestException(`correctOption '${q.correctOption}' does not exist in options for question: '${q.text}'`);
+      }
+    }
+  }
+
+  async createExam(dto: CreateExamDto, userId: string): Promise<ExamDocument> {
+    this.validateQuestions(dto.questions);
+
+    const exam = new this.examModel({
+      ...dto,
+      subjectId: new Types.ObjectId(dto.subjectId),
+      createdBy: new Types.ObjectId(userId),
+    });
+    return exam.save();
+  }
+
+  async canAccessFreeSection(examId: string, studentId: string): Promise<{ allowed: boolean, remainingAttempts: number }> {
+    const exam = await this.examModel.findById(examId).exec();
+    if (!exam || !exam.hasFreeSection || exam.freeAttemptLimit === undefined) {
+      return { allowed: false, remainingAttempts: 0 };
+    }
+
+    const previousAttempts = await this.sessionModel.countDocuments({
+      examId: new Types.ObjectId(examId),
+      studentId: new Types.ObjectId(studentId),
+      isFreeAttempt: true,
+      status: SessionStatus.COMPLETED
+    }).exec();
+
+    const remainingAttempts = exam.freeAttemptLimit - previousAttempts;
+    return { allowed: remainingAttempts > 0, remainingAttempts: Math.max(0, remainingAttempts) };
+  }
+
+  async findExamById(id: string, includeAnswers: boolean = true): Promise<ExamDocument | any> {
+    const exam = await this.examModel.findById(id).lean().exec();
+    if (!exam) throw new NotFoundException('Exam not found');
+    
+    if (!includeAnswers) {
+      exam.questions.forEach((q: any) => {
+        delete q.correctOption;
+      });
+    }
+
+    return exam;
+  }
+
+  async startExam(examId: string, studentId: string, isFreeAttempt: boolean): Promise<ExamSessionDocument> {
+    const exam = await this.examModel.findById(examId).exec();
+    if (!exam) throw new NotFoundException('Exam not found');
+
+    const activeSession = await this.sessionModel.findOne({
+      examId,
+      studentId,
+      status: SessionStatus.STARTED,
+    }).exec();
+
+    if (activeSession) {
+      return activeSession; // Reconnect 
+    }
+
+    let timeLimit: number = 0;
+    // If standard time isn't explicitly defined globally, map over questions safely
+    if (isFreeAttempt) {
+      const qs = Array.isArray(exam.questions) ? exam.questions.slice(0, exam.freeQuestionCount || 0) : [];
+      timeLimit = qs.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60;
+    } else {
+      timeLimit = exam.questions.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60;
+    }
+
+    const session = new this.sessionModel({
+      studentId: new Types.ObjectId(studentId),
+      examId: exam._id,
+      status: SessionStatus.STARTED,
+      startedAt: new Date(),
+      timeLimitMinutes: Math.floor(timeLimit),
+      isFreeAttempt,
+    });
+
+    return session.save();
+  }
+
+  async submitExam(dto: SubmitExamDto, studentId: string): Promise<ExamScoreDocument> {
+    const session = await this.sessionModel.findById(dto.examSessionId).exec();
+    if (!session || session.studentId.toString() !== studentId) {
+      throw new NotFoundException('Exam session not found');
+    }
+
+    if (session.status !== SessionStatus.STARTED) {
+      throw new BadRequestException('Exam already submitted');
+    }
+
+    const exam = await this.examModel.findById(session.examId).exec();
+    if (!exam) throw new NotFoundException('Exam logic error: exam deleted');
+
+    // Auto grader
+    let correctAnswers = 0;
+    const questionsMap = new Map<string, Question>();
+    
+    // In free attempt mode, restrict evaluated total onto limits dynamically
+    let questionsPool = exam.questions;
+    if (session.isFreeAttempt && exam.hasFreeSection && exam.freeQuestionCount) {
+       questionsPool = exam.questions.slice(0, exam.freeQuestionCount);
+    }
+    
+    questionsPool.forEach(q => questionsMap.set(q._id.toString(), q));
+
+    for (const ans of dto.answers) {
+      const q = questionsMap.get(ans.questionId.toString());
+      if (q && q.correctOption === ans.selectedOption) {
+        correctAnswers++;
+      }
+    }
+
+    const totalQuestions = questionsPool.length;
+    const scorePercentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+
+    // Update session
+    session.status = SessionStatus.COMPLETED;
+    session.completedAt = new Date();
+    session.responses = dto.answers.map(a => ({
+      questionId: new Types.ObjectId(a.questionId),
+      selectedOption: a.selectedOption,
+    }));
+    await session.save();
+
+    // Generate score
+    const score = new this.scoreModel({
+      sessionId: session._id,
+      studentId: new Types.ObjectId(studentId),
+      examId: exam._id,
+      totalQuestions,
+      correctAnswers,
+      scorePercentage,
+    });
+
+    // Dummy certificate generation if score > 70
+    if (scorePercentage >= 70) {
+       // Typically uses PDF generator buffer pushed to GridFS `mediaBucket.openUploadStream`
+       // Left mocked to return true
+       score.certificateGridFsId = new Types.ObjectId(); 
+    }
+
+    return score.save();
+  }
+
+  async findAllExams(query: ListExamsQueryDto): Promise<{ data: ExamDocument[]; total: number }> {
+    const filter: Record<string, any> = {};
+    if (query.subjectId) {
+      filter.subjectId = new Types.ObjectId(query.subjectId);
+    }
+    if (query.search) {
+      filter.title = { $regex: query.search, $options: 'i' };
+    }
+
+    const skip = (query.page - 1) * query.limit;
+
+    const [data, total] = await Promise.all([
+      this.examModel.find(filter).skip(skip).limit(query.limit).sort({ createdAt: -1 }).exec(),
+      this.examModel.countDocuments(filter).exec(),
+    ]);
+
+    return { data, total };
+  }
+
+  async updateExam(id: string, dto: UpdateExamDto): Promise<ExamDocument> {
+    if (dto.questions) {
+      this.validateQuestions(dto.questions);
+    }
+
+    const updateData: any = { ...dto };
+    if (dto.subjectId) {
+      updateData.subjectId = new Types.ObjectId(dto.subjectId);
+    }
+
+    const exam = await this.examModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    if (!exam) throw new NotFoundException('Exam not found');
+    return exam;
+  }
+
+  async deleteExam(id: string): Promise<void> {
+    const exam = await this.examModel.findByIdAndUpdate(id, { isActive: false }).exec();
+    if (!exam) throw new NotFoundException('Exam not found');
+  }
+}

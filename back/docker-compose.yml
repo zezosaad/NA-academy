@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=dev_secret_key_change_me_in_prod
+      - MONGODB_URI=mongodb://mongodb:27017/na_academy
+    depends_on:
+      - mongodb
+    volumes:
+      - ./src:/usr/src/app/src
+    command: npm run start:dev
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
