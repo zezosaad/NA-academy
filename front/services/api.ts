@@ -1,104 +1,92 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { NativeModules, Platform } from 'react-native';
-import Constants from "expo-constants";
 
-// When testing locally on Android emulator use 10.0.2.2 instead of localhost
-// For iOS Simulator, localhost works. For physical devices, use your computer's IP.
-// ─── IP Discovery ────────────────────────────────────────────────────────────
-
-const getLocalIp = () => {
-  if (__DEV__) {
-    const scriptURL = NativeModules.SourceCode?.scriptURL;
-    if (scriptURL) {
-      const match = scriptURL.match(/https?:\/\/([^:]+)/);
-      if (
-        match &&
-        match[1] &&
-        match[1] !== "localhost" &&
-        match[1] !== "10.0.2.2"
-      ) {
-        return match[1];
-      }
-    }
-  }
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  if (debuggerHost) {
-    return debuggerHost.split(":")[0];
-  }
-  return Platform.OS === "android" ? "10.0.2.2" : "localhost";
-};
-
-const DEFAULT_LOCAL_IP = getLocalIp();
-
-export const SERVER_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.select({
-    android: `http://${DEFAULT_LOCAL_IP}:3000`,
-    ios: `http://${DEFAULT_LOCAL_IP}:3000`,
-    default: `http://${DEFAULT_LOCAL_IP}:3000`,
-  }) as string);
-
-export const API_BASE_URL = `${SERVER_URL}/api/v1`;
+const FALLBACK_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000/api/v1' : 'http://localhost:3000/api/v1';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || FALLBACK_URL;
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000, // 10s default timeout
+  baseURL: BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const TOKEN_KEY = 'na_academy_access_token';
-
-// Request Interceptor: Attach JWT Token implicitly
 api.interceptors.request.use(
   async (config) => {
-    try {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.error('Error fetching token from SecureStore', error);
+    const token = await SecureStore.getItemAsync('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Global Error Handling, 401s auto-logout
-api.interceptors.response.use(
-  (response) => {
-    // If the response is successful, just return the data directly
-    return response.data;
-  },
-  async (error: AxiosError) => {
-    if (error.response) {
-      const status = error.response.status;
+let isRefreshing = false;
+let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = [];
 
-      if (status === 401) {
-        // Token expired or Unauthorized - Handle Logout locally
-        console.warn('Session expired or Unauthorized. Logging out...');
-        try {
-          await SecureStore.deleteItemAsync(TOKEN_KEY);
-          // TODO: Trigger Context API or State Management to kick user to Login Screen
-        } catch (e) {
-          console.error('Error clearing token', e);
-        }
-      } else if (status === 403) {
-        // Forbidden - For instance 'Hardware Device mismatch' triggers this locally
-        console.warn('Forbidden: Check hardware ID or access constraints.');
-      } else if (status === 429) {
-        console.warn('Rate Limit hit! Slow down.');
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
+// Logout callback — set by AuthProvider at mount time
+let logoutCallback: (() => Promise<void>) | null = null;
+export const setLogoutCallback = (cb: () => Promise<void>) => {
+  logoutCallback = cb;
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
       }
-    } else if (error.request) {
-      console.warn('No response received from server. Check network connection.');
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        if (!refreshToken) throw new Error('No refresh token');
+
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+        const newToken = data.data?.accessToken || data.accessToken;
+        const newRefresh = data.data?.refreshToken || data.refreshToken;
+
+        await SecureStore.setItemAsync('accessToken', newToken);
+        if (newRefresh) {
+          await SecureStore.setItemAsync('refreshToken', newRefresh);
+        }
+
+        processQueue(null, newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        if (logoutCallback) await logoutCallback();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
-    // Pass the error back down the chain so individual components can catch it
     return Promise.reject(error);
   }
 );

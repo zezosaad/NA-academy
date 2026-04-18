@@ -7,6 +7,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
@@ -23,6 +24,20 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly devicesService: DevicesService,
   ) {}
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getMe(@Req() req: any) {
+    const user = await this.usersService.findById(req.user.sub);
+    if (!user) return null;
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    };
+  }
 
   @Get()
   @Roles('admin')
