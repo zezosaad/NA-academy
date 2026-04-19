@@ -45,7 +45,7 @@ export function SecurityFlagList({ flags, onDismiss }: SecurityFlagListProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Student</TableHead>
-          <TableHead>Description</TableHead>
+          <TableHead>Flag Type</TableHead>
           <TableHead>Created</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -60,32 +60,37 @@ export function SecurityFlagList({ flags, onDismiss }: SecurityFlagListProps) {
                 {flag.studentId.email}
               </p>
             </TableCell>
-            <TableCell>{flag.description}</TableCell>
+            <TableCell className="capitalize">{flag.flagType.replace("_", " ")}</TableCell>
             <TableCell className="text-muted-foreground">
               {format(new Date(flag.createdAt), "MMM d, yyyy 'at' h:mm a")}
             </TableCell>
             <TableCell>
-              {flag.actionTaken === "NONE" ? (
+              {flag.actionTaken === "none" ? (
                 <Badge variant="destructive">
                   <ShieldAlert className="mr-1 h-3 w-3" />
                   Pending
                 </Badge>
+              ) : flag.actionTaken === "session_terminated" ? (
+                <Badge variant="destructive">
+                  <ShieldAlert className="mr-1 h-3 w-3" />
+                  Session Terminated
+                </Badge>
               ) : (
                 <Badge variant="secondary">
                   <Check className="mr-1 h-3 w-3" />
-                  Reviewed
+                  {flag.actionTaken.replace("_", " ")}
                 </Badge>
               )}
             </TableCell>
             <TableCell className="text-right">
-              {flag.actionTaken === "NONE" && (
+              {(flag.actionTaken === "none" || flag.actionTaken === "session_terminated") && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDismiss(flag._id)}
                   disabled={dismissing === flag._id}
                 >
-                  {dismissing === flag._id ? "Dismissing..." : "Dismiss"}
+                  {dismissing === flag._id ? "Reviewing..." : "Mark Reviewed"}
                 </Button>
               )}
             </TableCell>

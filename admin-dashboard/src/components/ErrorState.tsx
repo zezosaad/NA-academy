@@ -1,5 +1,6 @@
 import { AlertCircle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { clearToken } from "@/lib/auth"
 
 interface ErrorStateProps {
   message: string
@@ -9,7 +10,8 @@ interface ErrorStateProps {
 
 export function ErrorState({ message, onRetry, authError = false }: ErrorStateProps) {
   const handleLoginRedirect = () => {
-    window.location.href = "/login"
+    clearToken()
+    window.location.reload()
   }
 
   return (

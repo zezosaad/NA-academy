@@ -7,16 +7,16 @@ export type SubjectDocument = HydratedDocument<Subject>;
 export class Subject {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   title!: string;
 
-  @Prop()
+  @Prop({ type: String })
   description?: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ type: String, required: true, index: true })
   category!: string;
 
-  @Prop({ default: true, index: true })
+  @Prop({ type: Boolean, default: true, index: true })
   isActive!: boolean;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })

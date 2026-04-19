@@ -82,12 +82,14 @@ export class AuthService {
       throw new ForbiddenException('Account is banned');
     }
 
-    // Validate device
-    const device = await this.devicesService.findByUserId(user._id.toString());
-    if (device && device.isActive && device.hardwareId !== data.hardwareId) {
-      throw new ForbiddenException(
-        'Device mismatch. This account is bound to a different device. Contact admin for device reset.',
-      );
+    // Validate device (skip for admins)
+    if (user.role !== UserRole.ADMIN) {
+      const device = await this.devicesService.findByUserId(user._id.toString());
+      if (device && device.isActive && device.hardwareId !== data.hardwareId) {
+        throw new ForbiddenException(
+          'Device mismatch. This account is bound to a different device. Contact admin for device reset.',
+        );
+      }
     }
 
     // Register/update device if needed

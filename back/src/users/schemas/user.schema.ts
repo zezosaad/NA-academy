@@ -19,19 +19,19 @@ export enum UserStatus {
 export class User {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
+  @Prop({ type: String, required: true, unique: true, lowercase: true, trim: true, index: true })
   email!: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   passwordHash!: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   name!: string;
 
-  @Prop({ required: true, enum: UserRole, index: true })
+  @Prop({ type: String, required: true, enum: UserRole, index: true })
   role!: UserRole;
 
-  @Prop({ enum: UserStatus, default: UserStatus.ACTIVE })
+  @Prop({ type: String, enum: UserStatus, default: UserStatus.ACTIVE })
   status!: UserStatus;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [] })

@@ -43,14 +43,22 @@ export class UsersService {
     return user.save();
   }
 
-  async createUser(dto: any): Promise<UserDocument> {
-    const user = new this.userModel(dto);
+  async createUser(data: any): Promise<UserDocument> {
+    const { password, ...rest } = data;
+    const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
+    const user = new this.userModel({ ...rest, passwordHash });
     return user.save();
   }
 
-  async createAdminUser(dto: any): Promise<UserDocument> {
-    const adminDto = { ...dto, role: 'admin' };
-    const user = new this.userModel(adminDto);
+  async createAdminUser(data: any): Promise<UserDocument> {
+    const { password, ...rest } = data;
+    const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
+    const user = new this.userModel({ 
+      ...rest, 
+      passwordHash, 
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE 
+    });
     return user.save();
   }
 

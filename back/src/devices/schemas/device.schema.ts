@@ -10,13 +10,13 @@ export class Device {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User', unique: true, index: true })
   userId!: Types.ObjectId;
 
-  @Prop({ required: true, index: true })
+  @Prop({ type: String, required: true, index: true })
   hardwareId!: string;
 
-  @Prop({ required: true, default: () => new Date() })
+  @Prop({ type: Date, required: true, default: () => new Date() })
   registeredAt!: Date;
 
-  @Prop({ default: true })
+  @Prop({ type: Boolean, default: true })
   isActive!: boolean;
 }
 

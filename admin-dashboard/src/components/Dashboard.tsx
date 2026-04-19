@@ -13,7 +13,7 @@ export function Dashboard() {
   const { data, loading, error, lastUpdated, refresh, isRefreshing, isRefreshQueued } = useDashboard()
 
   const handleDismiss = async (flagId: string) => {
-    await api.updateSecurityFlag(flagId, "REVIEWED")
+    await api.reviewSecurityFlag(flagId, "warning_issued")
     refresh()
   }
 
