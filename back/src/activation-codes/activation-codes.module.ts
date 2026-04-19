@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SubjectCode, SubjectCodeSchema } from './schemas/subject-code.schema.js';
 import { ExamCode, ExamCodeSchema } from './schemas/exam-code.schema.js';
@@ -20,7 +20,7 @@ import { SubjectBundle, SubjectBundleSchema } from '../subjects/schemas/subject-
       { name: SubjectBundle.name, schema: SubjectBundleSchema },
     ]),
     SubjectsModule,
-    ExamsModule,
+    forwardRef(() => ExamsModule),
   ],
   controllers: [ActivationCodesController],
   providers: [ActivationCodesService, AccessCheckHelper],

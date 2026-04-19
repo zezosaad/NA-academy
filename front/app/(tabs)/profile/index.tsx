@@ -1,27 +1,33 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import { useAppDialog } from '../../../contexts/AppDialogContext';
 import { colors, sizes } from '../../../constants/helpers';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthContext();
+  const { showDialog } = useAppDialog();
 
   const handleLogout = () => {
-    Alert.alert('Log out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
+    showDialog({
+      title: 'Log out',
+      message: 'Are you sure you want to log out?',
+      buttons: [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   const getRoleName = (role?: string) => {

@@ -16,16 +16,16 @@ export class ExamScore {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Exam', index: true })
   examId!: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number })
   totalQuestions!: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number })
   correctAnswers!: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number })
   scorePercentage!: number;
 
-  @Prop()
+  @Prop({ type: Types.ObjectId })
   certificateGridFsId?: Types.ObjectId;
 
   createdAt!: Date;

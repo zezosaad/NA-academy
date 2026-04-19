@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useExams } from '../../../hooks/useExams';
+import { useAppDialog } from '../../../contexts/AppDialogContext';
 import QuestionCard from '../../../components/QuestionCard';
 import ProgressBar from '../../../components/ProgressBar';
 import { colors, sizes } from '../../../constants/helpers';
 
 export default function ExamScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id: string | string[] }>();
+  const examId = Array.isArray(id) ? id[0] : id;
   const { exam, session, loading, startExam, submitExam } = useExams();
+  const { showDialog } = useAppDialog();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [examStarted, setExamStarted] = useState(false);
@@ -25,8 +28,13 @@ export default function ExamScreen() {
   const currentQuestion = questions[currentQuestionIndex];
 
   const handleStart = async (isFree: boolean) => {
+    if (!examId) {
+      showDialog({ title: 'Error', message: 'Invalid exam link' });
+      return;
+    }
+
     try {
-      const data = await startExam(id, isFree);
+      const data = await startExam(examId, isFree);
       setExamStarted(true);
       if (data.session.timeLimitMinutes) {
         setTimeLeft(data.session.timeLimitMinutes * 60);
@@ -36,7 +44,16 @@ export default function ExamScreen() {
       }
     } catch (error: any) {
       const msg = error.response?.data?.message || 'Failed to start exam';
-      Alert.alert('Error', typeof msg === 'string' ? msg : 'An error occurred');
+      const normalizedMsg = Array.isArray(msg) ? msg.join('\n') : msg;
+      const status = error?.response?.status;
+      const fallback =
+        status === 400
+          ? 'Invalid exam start request. Please activate the exam code first and try again.'
+          : 'An error occurred';
+      showDialog({
+        title: 'Error',
+        message: typeof normalizedMsg === 'string' ? normalizedMsg : fallback,
+      });
     }
   };
 
@@ -120,7 +137,10 @@ export default function ExamScreen() {
       });
     } catch (error: any) {
       const msg = error.response?.data?.message || 'Failed to submit exam';
-      Alert.alert('Error', typeof msg === 'string' ? msg : 'An error occurred');
+      showDialog({
+        title: 'Error',
+        message: typeof msg === 'string' ? msg : 'An error occurred',
+      });
     } finally {
       setSubmitting(false);
     }

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SubjectsService } from '../../../../services/subjects.service';
+import { useAppDialog } from '../../../../contexts/AppDialogContext';
 import { Subject } from '../../../../types/subject';
 import { colors, sizes } from '../../../../constants/helpers';
 import SubjectCard from '../../../../components/SubjectCard';
 
 export default function AdminSubjectsScreen() {
+  const { showDialog } = useAppDialog();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,7 +32,7 @@ export default function AdminSubjectsScreen() {
       setSubjects(res.data);
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Failed to fetch subjects');
+      showDialog({ title: 'Error', message: 'Failed to fetch subjects' });
     } finally {
       setLoading(false);
     }
@@ -38,7 +40,7 @@ export default function AdminSubjectsScreen() {
 
   const handleCreateSubject = async () => {
     if (!title || !category) {
-      Alert.alert('Error', 'Title and Category are required');
+      showDialog({ title: 'Error', message: 'Title and Category are required' });
       return;
     }
 
@@ -50,31 +52,35 @@ export default function AdminSubjectsScreen() {
       setDescription('');
       setCategory('');
       fetchSubjects();
-      Alert.alert('Success', 'Subject created successfully');
+      showDialog({ title: 'Success', message: 'Subject created successfully' });
     } catch (e: any) {
       console.error(e);
-      Alert.alert('Error', e.response?.data?.message || 'Failed to create subject');
+      showDialog({ title: 'Error', message: e.response?.data?.message || 'Failed to create subject' });
     } finally {
       setCreating(false);
     }
   };
 
   const handleDeleteSubject = (id: string) => {
-    Alert.alert('Delete Subject', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Delete', 
-        style: 'destructive', 
-        onPress: async () => {
-          try {
-            await SubjectsService.delete(id);
-            fetchSubjects();
-          } catch (e) {
-            Alert.alert('Error', 'Failed to delete');
-          }
-        }
-      }
-    ]);
+    showDialog({
+      title: 'Delete Subject',
+      message: 'Are you sure?',
+      buttons: [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await SubjectsService.delete(id);
+              fetchSubjects();
+            } catch (e) {
+              showDialog({ title: 'Error', message: 'Failed to delete' });
+            }
+          },
+        },
+      ],
+    });
   };
 
   return (

@@ -10,6 +10,7 @@ import { ExamsPage } from "./pages/ExamsPage"
 import { CodesPage } from "./pages/CodesPage"
 import { SecurityPage } from "./pages/SecurityPage"
 import { isAuthenticated } from "@/lib/auth"
+import { AppModalProvider } from "@/components/AppModalProvider"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) {
@@ -22,34 +23,36 @@ function App() {
   const [authed, setAuthed] = useState(isAuthenticated())
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            authed ? <Navigate to="/" replace /> : <LoginPage onLogin={() => setAuthed(true)} />
-          }
-        />
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <AdminLayout>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/users" element={<UsersPage />} />
-                  <Route path="/subjects" element={<SubjectsPage />} />
-                  <Route path="/exams" element={<ExamsPage />} />
-                  <Route path="/codes" element={<CodesPage />} />
-                  <Route path="/security" element={<SecurityPage />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <AppModalProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              authed ? <Navigate to="/" replace /> : <LoginPage onLogin={() => setAuthed(true)} />
+            }
+          />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/users" element={<UsersPage />} />
+                    <Route path="/subjects" element={<SubjectsPage />} />
+                    <Route path="/exams" element={<ExamsPage />} />
+                    <Route path="/codes" element={<CodesPage />} />
+                    <Route path="/security" element={<SecurityPage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AppModalProvider>
   )
 }
 

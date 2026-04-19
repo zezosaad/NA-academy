@@ -45,11 +45,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingState } from "@/components/LoadingState"
+import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
 import type { Subject, SubjectBundle, Exam, SubjectCode, ExamCode } from "@/types"
 import { format } from "date-fns"
 
 export function CodesPage() {
+  const { showError } = useAppModal()
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [bundles, setBundles] = useState<SubjectBundle[]>([])
   const [exams, setExams] = useState<Exam[]>([])
@@ -90,14 +92,14 @@ export function CodesPage() {
     (async () => {
       setLoading(true)
       try {
-        const [subRes, bunRes, examRes] = await Promise.all([
+        const [subRes, bunRes, examRes] = await Promise.allSettled([
           api.getSubjects({ limit: 100 }),
           api.getBundles(),
           api.getExams({ limit: 100 }),
         ])
-        setSubjects(subRes.data)
-        setBundles(bunRes)
-        setExams(examRes.data)
+        if (subRes.status === "fulfilled") setSubjects(subRes.value.data)
+        if (bunRes.status === "fulfilled") setBundles(bunRes.value)
+        if (examRes.status === "fulfilled") setExams(examRes.value.data)
       } catch {
         //
       } finally {
@@ -109,7 +111,7 @@ export function CodesPage() {
   const handleGenerate = async () => {
     setGenerating(true)
     try {
-      let result: { batchId: string; codes: (SubjectCode | ExamCode)[] }
+      let result: { batchId: string }
       if (genType === "subject") {
         const payload: { subjectId?: string; bundleId?: string; quantity: number } = {
           quantity: genForm.quantity,
@@ -126,11 +128,12 @@ export function CodesPage() {
           timeLimitMinutes: genForm.timeLimitMinutes || undefined,
         })
       }
-      setGeneratedCodes(result.codes)
+      const batchResult = await api.getBatchCodes(result.batchId)
+      setGeneratedCodes(batchResult.data ?? [])
       setGeneratedBatchId(result.batchId)
       setGenDialog(false)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Generation failed")
+      showError(err instanceof Error ? err.message : "Generation failed")
     } finally {
       setGenerating(false)
     }
@@ -146,7 +149,7 @@ export function CodesPage() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Export failed")
+      showError(err instanceof Error ? err.message : "Export failed")
     }
   }
 
@@ -154,11 +157,11 @@ export function CodesPage() {
     if (!batchInput.trim()) return
     setBatchLoading(true)
     try {
-      const codes = await api.getBatchCodes(batchInput.trim())
-      setBatchCodes(codes)
+      const response = await api.getBatchCodes(batchInput.trim())
+      setBatchCodes(response.data ?? [])
       setBatchId(batchInput.trim())
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Lookup failed")
+      showError(err instanceof Error ? err.message : "Lookup failed")
     } finally {
       setBatchLoading(false)
     }
@@ -175,11 +178,11 @@ export function CodesPage() {
       setRevokeTarget(null)
       // Refresh batch if viewing one
       if (batchId) {
-        const codes = await api.getBatchCodes(batchId)
-        setBatchCodes(codes)
+        const response = await api.getBatchCodes(batchId)
+        setBatchCodes(response.data ?? [])
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Revoke failed")
+      showError(err instanceof Error ? err.message : "Revoke failed")
     }
   }
 

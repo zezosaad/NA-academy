@@ -20,6 +20,17 @@ export class ExamsService {
   private validateQuestions(questions: any[]) {
     for (const q of questions) {
       const optionLabels = q.options.map((opt: any) => opt.label);
+      const normalizedLabels = optionLabels.map((label: string) => String(label || '').trim().toUpperCase());
+      const uniqueLabels = new Set(normalizedLabels);
+
+      if (normalizedLabels.some((label: string) => !label)) {
+        throw new BadRequestException(`Question '${q.text}' contains an empty option label`);
+      }
+
+      if (uniqueLabels.size !== normalizedLabels.length) {
+        throw new BadRequestException(`Duplicate option labels are not allowed for question: '${q.text}'`);
+      }
+
       if (!optionLabels.includes(q.correctOption)) {
         throw new BadRequestException(`correctOption '${q.correctOption}' does not exist in options for question: '${q.text}'`);
       }
@@ -35,6 +46,10 @@ export class ExamsService {
       createdBy: new Types.ObjectId(userId),
     });
     return exam.save();
+  }
+
+  async create(dto: CreateExamDto, userId: string): Promise<ExamDocument> {
+    return this.createExam(dto, userId);
   }
 
   async canAccessFreeSection(examId: string, studentId: string): Promise<{ allowed: boolean, remainingAttempts: number }> {

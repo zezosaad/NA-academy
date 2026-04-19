@@ -71,7 +71,14 @@ export class MediaController {
 
   @Get('subjects/:id/media')
   @ApiOperation({ summary: 'List media assets for a subject' })
-  async getSubjectMedia(@Param('id') subjectId: string) {
+  async getSubjectMedia(@Param('id') subjectId: string, @CurrentUser() user: any) {
+    if (user?.role === 'student') {
+      const hasAccess = await this.accessCheckHelper.hasSubjectAccess(user.userId, subjectId);
+      if (!hasAccess) {
+        throw new ForbiddenException('You do not have active code access to this subject content');
+      }
+    }
+
     return this.mediaService.findBySubjectId(subjectId);
   }
 }

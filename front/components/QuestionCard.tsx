@@ -47,9 +47,9 @@ export default function QuestionCard({
       <Text style={styles.counter}>Question {questionNumber} of {totalQuestions}</Text>
       <Text style={styles.questionText}>{question.text}</Text>
       <View style={styles.optionsList}>
-        {question.options.map((option) => (
+        {question.options.map((option, index) => (
           <TouchableOpacity
-            key={option.label}
+            key={`${question._id}-${option.label}-${option.text}-${index}`}
             style={getOptionStyle(option)}
             onPress={() => !showCorrectAnswer && onSelectOption(option.label)}
             activeOpacity={showCorrectAnswer ? 1 : 0.7}

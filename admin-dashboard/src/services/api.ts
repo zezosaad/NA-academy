@@ -55,6 +55,8 @@ class ApiClient {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("auth_token")
+        window.location.href = "/login"
+        return undefined as T // Exit early to prevent further errors
       }
 
       let message: string
@@ -72,7 +74,8 @@ class ApiClient {
           : `Access denied (403) - ${message}`
       }
 
-      const error: ApiError = { message, statusCode: response.status }
+      const error = new Error(message) as Error & ApiError
+      error.statusCode = response.status
       throw error
     }
 
@@ -80,6 +83,12 @@ class ApiClient {
     if (response.status === 204) return undefined as T
 
     const json = await response.json()
+    
+    // If it's a paginated response (contains total or page), return the whole object
+    if (json && typeof json === 'object' && ('total' in json || 'page' in json)) {
+      return json as T
+    }
+    
     return json.data !== undefined ? json.data : json
   }
 
@@ -244,10 +253,10 @@ class ApiClient {
       xhr.onerror = () => reject({ message: "Upload failed", statusCode: 0 })
 
       const fd = new FormData()
-      fd.append("file", file)
       fd.append("subjectId", subjectId)
       fd.append("mediaType", mediaType)
       if (title) fd.append("title", title)
+      fd.append("file", file)
       xhr.send(fd)
     })
   }
@@ -316,7 +325,7 @@ class ApiClient {
     subjectId?: string
     bundleId?: string
     quantity: number
-  }): Promise<{ batchId: string; codes: SubjectCode[] }> {
+  }): Promise<{ batchId: string; count: number; type: "subject"; linkedTo: { id?: string; name: string } }> {
     return this.request("/api/v1/activation-codes/subject/generate", {
       method: "POST",
       body: JSON.stringify(data),
@@ -329,14 +338,14 @@ class ApiClient {
     usageType: "single" | "multi"
     maxUses?: number
     timeLimitMinutes?: number
-  }): Promise<{ batchId: string; codes: ExamCode[] }> {
+  }): Promise<{ batchId: string; count: number; type: "exam"; linkedTo: { id?: string; name: string } }> {
     return this.request("/api/v1/activation-codes/exam/generate", {
       method: "POST",
       body: JSON.stringify(data),
     })
   }
 
-  async getBatchCodes(batchId: string): Promise<(SubjectCode | ExamCode)[]> {
+  async getBatchCodes(batchId: string): Promise<PaginatedResponse<SubjectCode | ExamCode>> {
     return this.request(`/api/v1/activation-codes/batch/${batchId}`)
   }
 

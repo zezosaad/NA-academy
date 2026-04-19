@@ -24,6 +24,10 @@ export class SubjectsService {
     return subject.save();
   }
 
+  async create(dto: CreateSubjectDto, userId: string): Promise<SubjectDocument> {
+    return this.createSubject(dto, userId);
+  }
+
   async findAllSubjects(query: ListSubjectsQueryDto, role?: string): Promise<{ data: SubjectDocument[], total: number }> {
     const filter: Record<string, any> = {};
     if (query.category) {

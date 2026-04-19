@@ -13,7 +13,7 @@ export enum CodeStatus {
 export class SubjectCode {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, unique: true, index: true, type: String })
   code!: string; // 12 characters
 
   @Prop({ type: Types.ObjectId, ref: 'Subject' })
@@ -22,19 +22,19 @@ export class SubjectCode {
   @Prop({ type: Types.ObjectId, ref: 'SubjectBundle' })
   bundleId?: Types.ObjectId;
 
-  @Prop({ required: true, enum: CodeStatus, default: CodeStatus.AVAILABLE })
+  @Prop({ required: true, enum: CodeStatus, default: CodeStatus.AVAILABLE, type: String })
   status!: CodeStatus;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true, index: true, type: String })
   batchId!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   activatedBy?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ type: Date })
   activatedAt?: Date;
 
-  @Prop()
+  @Prop({ type: String })
   activationDeviceId?: string;
 
   createdAt!: Date;

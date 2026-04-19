@@ -34,8 +34,24 @@ export default function ActivateScreen() {
     setLoading(true);
     try {
       const response = await ActivationService.activate(cleanCode);
+      const activatedExamId =
+        typeof response.examId === 'string'
+          ? response.examId
+          : (response.examId as any)?._id?.toString?.();
       setResult({ success: true, message: response.message || 'Activated successfully!' });
       Toast.show({ type: 'success', text1: 'Activated', text2: response.message || 'Code activated successfully!' });
+      setCode('');
+      setTimeout(() => {
+        if (response.type === 'exam' && activatedExamId) {
+          router.replace(`/(tabs)/exams/${activatedExamId}`);
+          return;
+        }
+        if (response.type === 'exam') {
+          router.replace('/(tabs)/exams');
+          return;
+        }
+        router.replace('/(tabs)');
+      }, 500);
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to activate code';
       setResult({ success: false, message: typeof message === 'string' ? message : 'An error occurred' });

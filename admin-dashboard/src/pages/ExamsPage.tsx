@@ -48,6 +48,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
+import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
 import type { Exam, Subject, Question } from "@/types"
 import { format } from "date-fns"
@@ -66,6 +67,7 @@ const EMPTY_QUESTION: Question = {
 }
 
 export function ExamsPage() {
+  const { showError } = useAppModal()
   const [exams, setExams] = useState<Exam[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,6 +139,22 @@ export function ExamsPage() {
   }
 
   const saveExam = async () => {
+    for (let i = 0; i < examForm.questions.length; i++) {
+      const q = examForm.questions[i]
+      const normalizedLabels = q.options.map((o) => String(o.label || "").trim().toUpperCase())
+      const uniqueLabels = new Set(normalizedLabels)
+
+      if (normalizedLabels.some((label) => !label)) {
+        showError(`Question ${i + 1} has an empty option label`)
+        return
+      }
+
+      if (uniqueLabels.size !== normalizedLabels.length) {
+        showError(`Question ${i + 1} has duplicate option labels. Each option label must be unique.`)
+        return
+      }
+    }
+
     setSaving(true)
     try {
       const data = {
@@ -151,7 +169,7 @@ export function ExamsPage() {
       setExamDialog(false)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save exam")
+      showError(err instanceof Error ? err.message : "Failed to save exam")
     } finally {
       setSaving(false)
     }
@@ -164,7 +182,7 @@ export function ExamsPage() {
       setDeleteId(null)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed")
+      showError(err instanceof Error ? err.message : "Delete failed")
     }
   }
 

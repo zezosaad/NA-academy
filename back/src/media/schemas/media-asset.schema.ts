@@ -12,28 +12,28 @@ export enum MediaType {
 export class MediaAsset {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Types.ObjectId })
   gridFsFileId!: Types.ObjectId;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'Subject' })
   subjectId!: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: String })
   filename!: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: String })
   contentType!: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number })
   fileSize!: number;
 
-  @Prop({ required: true, enum: MediaType, index: true })
+  @Prop({ required: true, enum: MediaType, index: true, type: String })
   mediaType!: MediaType;
 
-  @Prop()
+  @Prop({ type: String })
   title?: string;
 
-  @Prop()
+  @Prop({ type: Number })
   order?: number;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })

@@ -4,6 +4,7 @@ import { ExamsService } from './exams.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CreateExamDto } from './dto/create-exam.dto.js';
+import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
 import { ActivationCodesService } from '../activation-codes/activation-codes.service.js';
@@ -14,6 +15,7 @@ import { ActivationCodesService } from '../activation-codes/activation-codes.ser
 export class ExamsController {
   constructor(
     private readonly examsService: ExamsService,
+    private readonly activationCodesService: ActivationCodesService,
   ) {}
 
   @Post()
@@ -22,6 +24,13 @@ export class ExamsController {
   @ApiOperation({ summary: 'Create a new exam' })
   async createExam(@Body() dto: CreateExamDto, @CurrentUser('userId') userId: string) {
     return this.examsService.createExam(dto, userId);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'List exams' })
+  async findAllExams(@Query() query: ListExamsQueryDto) {
+    const { data, total } = await this.examsService.findAllExams(query);
+    return { data, total, page: query.page, limit: query.limit };
   }
 
   @Get(':id')
@@ -45,7 +54,8 @@ export class ExamsController {
   @Roles('student')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Start an exam session natively tracking timing bounds' })
-  async startExam(@Param('id') id: string, @CurrentUser('userId') userId: string, @Query('isFree') isFree?: string) {
+  async startExam(@Param('id') id: string, @CurrentUser() user: any, @Query('isFree') isFree?: string) {
+    const userId = user.userId as string;
     const isFreeAttempt = isFree === 'true';
 
     if (isFreeAttempt) {
@@ -54,10 +64,19 @@ export class ExamsController {
         throw new ForbiddenException('Free attempts exhausted or not available for this exam');
       }
     } else {
-      // In Production: We should check full `activationCodesService.hasExamAccess(userId, id)` here 
+      const hasAccess = await this.activationCodesService.hasExamAccess(userId, id, user.hardwareId);
+      if (!hasAccess) {
+        throw new ForbiddenException('You need to activate this exam code before starting the full exam');
+      }
     }
 
-    return this.examsService.startExam(id, userId, isFreeAttempt);
+    const session = await this.examsService.startExam(id, userId, isFreeAttempt);
+    const exam = await this.examsService.findExamById(id, false);
+    if (isFreeAttempt && exam?.hasFreeSection && exam?.freeQuestionCount) {
+      exam.questions = exam.questions.slice(0, exam.freeQuestionCount);
+    }
+
+    return { session, exam };
   }
 
   @Post('submit')

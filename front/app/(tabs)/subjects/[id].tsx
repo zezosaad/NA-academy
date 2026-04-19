@@ -17,16 +17,31 @@ export default function SubjectDetailScreen() {
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [subjectData, mediaData] = await Promise.all([
+        const [subjectResult, mediaResult] = await Promise.allSettled([
           SubjectsService.getById(id),
           MediaService.getBySubjectId(id),
         ]);
-        setSubject(subjectData);
-        setMediaAssets(mediaData);
+
+        if (subjectResult.status === 'fulfilled') {
+          setSubject(subjectResult.value);
+        } else {
+          throw subjectResult.reason;
+        }
+
+        if (mediaResult.status === 'fulfilled') {
+          setMediaAssets(mediaResult.value);
+          setAccessError(null);
+        } else if (mediaResult.reason?.response?.status === 403) {
+          setMediaAssets([]);
+          setAccessError('You need an active subject code to watch this content.');
+        } else {
+          throw mediaResult.reason;
+        }
       } catch (error) {
         console.error('Failed to fetch subject details', error);
       } finally {
@@ -135,7 +150,11 @@ export default function SubjectDetailScreen() {
           </View>
         }
         ListEmptyComponent={
-          <EmptyState icon="videocam-outline" title="No content" subtitle="No files have been added to this subject yet" />
+          <EmptyState
+            icon="videocam-outline"
+            title={accessError ? 'Content locked' : 'No content'}
+            subtitle={accessError || 'No files have been added to this subject yet'}
+          />
         }
       />
     </SafeAreaView>

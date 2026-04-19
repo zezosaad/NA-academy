@@ -30,7 +30,6 @@ export const useExams = () => {
       setExam(data.exam);
       return data;
     } catch (error) {
-      console.error('Failed to start exam', error);
       throw error;
     } finally {
       setLoading(false);

@@ -23,22 +23,22 @@ export class ExamSession {
   @Prop({ type: Types.ObjectId, ref: 'ExamCode' })
   examCodeId?: Types.ObjectId;
 
-  @Prop({ required: true, enum: SessionStatus, default: SessionStatus.STARTED })
+  @Prop({ required: true, enum: SessionStatus, default: SessionStatus.STARTED, type: String })
   status!: SessionStatus;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Date })
   startedAt!: Date;
 
-  @Prop()
+  @Prop({ type: Date })
   completedAt?: Date;
 
-  @Prop()
+  @Prop({ type: Number })
   timeLimitMinutes?: number;
 
   @Prop({ type: [{ questionId: { type: Types.ObjectId }, selectedOption: { type: String } }] })
   responses!: { questionId: Types.ObjectId; selectedOption: string }[];
 
-  @Prop({ default: false })
+  @Prop({ default: false, type: Boolean })
   isFreeAttempt!: boolean;
 
   createdAt!: Date;

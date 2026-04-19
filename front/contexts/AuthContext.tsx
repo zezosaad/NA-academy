@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import api, { setLogoutCallback } from '../services/api';
+import { normalizeToken } from '../utils/auth-token';
 
 interface User {
   id: string;
@@ -63,13 +64,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loginStateUpdate = async (newToken: string, newRefreshToken?: string, newUser?: User) => {
     try {
-      const tokenStr = typeof newToken === 'string' ? newToken : JSON.stringify(newToken);
+      const tokenStr = normalizeToken(typeof newToken === 'string' ? newToken : JSON.stringify(newToken));
+      if (!tokenStr) {
+        throw new Error('Invalid access token');
+      }
+
       setToken(tokenStr);
       if (newUser) setUser(newUser);
 
-      if (tokenStr) {
-        await SecureStore.setItemAsync('accessToken', tokenStr);
-      }
+      await SecureStore.setItemAsync('accessToken', tokenStr);
       if (newRefreshToken) {
         const refreshStr = typeof newRefreshToken === 'string' ? newRefreshToken : JSON.stringify(newRefreshToken);
         await SecureStore.setItemAsync('refreshToken', refreshStr);

@@ -122,6 +122,25 @@ export class ActivationCodesService {
     return { batchId, count: dto.quantity, type: 'exam', linkedTo: { id: exam._id, name: exam.title } };
   }
 
+  async hasExamAccess(studentId: string, examId: string, hardwareId?: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(studentId) || !Types.ObjectId.isValid(examId)) {
+      return false;
+    }
+
+    const filter: Record<string, any> = {
+      examId: new Types.ObjectId(examId),
+      activatedBy: new Types.ObjectId(studentId),
+      status: { $in: [ExamCodeStatus.USED, ExamCodeStatus.AVAILABLE] },
+    };
+
+    if (hardwareId) {
+      filter.activationDeviceId = hardwareId;
+    }
+
+    const examCode = await this.examCodeModel.findOne(filter).exec();
+    return !!examCode;
+  }
+
   async activateCode(codeStr: string, studentId: string, hardwareId: string) {
     const sId = new Types.ObjectId(studentId);
 

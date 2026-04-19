@@ -28,11 +28,13 @@ import {
 } from "@/components/ui/dialog"
 import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
+import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
 import type { User, UserStatus } from "@/types"
 import { format } from "date-fns"
 
 export function UsersPage() {
+  const { showError } = useAppModal()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -89,7 +91,7 @@ export function UsersPage() {
       setActionDialog(null)
       fetchUsers()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Action failed")
+      showError(err instanceof Error ? err.message : "Action failed")
     } finally {
       setActionLoading(false)
     }

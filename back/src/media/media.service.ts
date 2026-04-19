@@ -65,19 +65,28 @@ export class MediaService {
 
         stream.pipe(writeStream);
 
-        writeStream.on('finish', async (file: mongo.GridFSFile) => {
+        writeStream.on('finish', async () => {
           try {
+            const fileId = writeStream.id as Types.ObjectId;
+
             if (!uploadDto.subjectId || !uploadDto.mediaType) {
-              await this.mediaBucket.delete(file._id);
+              await this.mediaBucket.delete(fileId);
               return reject(new BadRequestException('subjectId and mediaType are required'));
             }
 
+            const files = await this.mediaBucket.find({ _id: fileId }).toArray();
+            const uploadedFile = files[0];
+
+            if (!uploadedFile) {
+              return reject(new Error('Uploaded file not found in GridFS'));
+            }
+
             const asset = new this.mediaAssetModel({
-              gridFsFileId: file._id,
+              gridFsFileId: fileId,
               subjectId: new Types.ObjectId(uploadDto.subjectId),
               filename,
               contentType,
-              fileSize: file.length,
+              fileSize: uploadedFile.length,
               mediaType: uploadDto.mediaType,
               title: uploadDto.title,
               uploadedBy: new Types.ObjectId(userId),
@@ -88,7 +97,7 @@ export class MediaService {
 
             resolve({
               id: asset._id.toString(),
-              gridFsFileId: file._id.toString(),
+              gridFsFileId: fileId.toString(),
               filename,
               contentType: asset.contentType,
               fileSize: asset.fileSize,
@@ -96,7 +105,9 @@ export class MediaService {
               title: asset.title,
             });
           } catch (error) {
-            await this.mediaBucket.delete(file._id);
+            if (writeStream.id) {
+               await this.mediaBucket.delete(writeStream.id as Types.ObjectId);
+            }
             reject(error);
           }
         });

@@ -24,13 +24,13 @@ export class SecurityFlag {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
   studentId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: FlagType, index: true })
+  @Prop({ required: true, enum: FlagType, index: true, type: String })
   flagType!: FlagType;
 
-  @Prop()
+  @Prop({ type: String })
   deviceId?: string;
 
-  @Prop({ required: true, enum: ActionTaken, default: ActionTaken.NONE })
+  @Prop({ required: true, enum: ActionTaken, default: ActionTaken.NONE, type: String })
   actionTaken!: ActionTaken;
 
   @Prop({ type: Object })
@@ -39,7 +39,7 @@ export class SecurityFlag {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   reviewedBy?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ type: Date })
   reviewedAt?: Date;
 
   createdAt!: Date;

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { buildBearerToken, normalizeToken } from '../utils/auth-token';
 
 const FALLBACK_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000/api/v1' : 'http://localhost:3000/api/v1';
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || FALLBACK_URL;
@@ -16,8 +17,9 @@ export const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await SecureStore.getItemAsync('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const authHeader = buildBearerToken(token);
+    if (authHeader) {
+      config.headers.Authorization = authHeader;
     }
     return config;
   },
@@ -54,7 +56,7 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+          originalRequest.headers.Authorization = buildBearerToken(token as string | null | undefined) ?? '';
           return api(originalRequest);
         });
       }
@@ -67,8 +69,10 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-        const newToken = data.data?.accessToken || data.accessToken;
+        const newToken = normalizeToken(data.data?.accessToken || data.accessToken);
         const newRefresh = data.data?.refreshToken || data.refreshToken;
+
+        if (!newToken) throw new Error('Invalid access token returned from refresh');
 
         await SecureStore.setItemAsync('accessToken', newToken);
         if (newRefresh) {
@@ -76,7 +80,7 @@ api.interceptors.response.use(
         }
 
         processQueue(null, newToken);
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers.Authorization = buildBearerToken(newToken) ?? '';
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);

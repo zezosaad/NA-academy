@@ -18,37 +18,37 @@ export enum CodeStatus {
 export class ExamCode {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, unique: true, index: true, type: String })
   code!: string;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'Exam', index: true })
   examId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: ExamUsageType })
+  @Prop({ required: true, enum: ExamUsageType, type: String })
   usageType!: ExamUsageType;
 
-  @Prop()
+  @Prop({ type: Number })
   maxUses?: number;
 
-  @Prop()
+  @Prop({ type: Number })
   remainingUses?: number;
 
-  @Prop()
+  @Prop({ type: Number })
   timeLimitMinutes?: number;
 
-  @Prop()
+  @Prop({ type: Date })
   firstActivatedAt?: Date;
 
-  @Prop({ required: true, enum: CodeStatus, default: CodeStatus.AVAILABLE })
+  @Prop({ required: true, enum: CodeStatus, default: CodeStatus.AVAILABLE, type: String })
   status!: CodeStatus;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true, index: true, type: String })
   batchId!: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   activatedBy?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ type: String })
   activationDeviceId?: string;
 
   createdAt!: Date;

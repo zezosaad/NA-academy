@@ -27,11 +27,13 @@ import {
 } from "@/components/ui/select"
 import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
+import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
 import type { SecurityFlag } from "@/types"
 import { format } from "date-fns"
 
 export function SecurityPage() {
+  const { showError } = useAppModal()
   const [flags, setFlags] = useState<SecurityFlag[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("")
@@ -67,7 +69,7 @@ export function SecurityPage() {
       setReviewFlag(null)
       fetchFlags()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Review failed")
+      showError(err instanceof Error ? err.message : "Review failed")
     } finally {
       setSaving(false)
     }

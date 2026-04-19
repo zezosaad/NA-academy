@@ -27,16 +27,16 @@ export class Message {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
   recipientId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: ChatMessageType, default: ChatMessageType.TEXT })
+  @Prop({ required: true, enum: ChatMessageType, default: ChatMessageType.TEXT, type: String })
   messageType!: ChatMessageType;
 
-  @Prop()
+  @Prop({ type: String })
   text?: string;
 
-  @Prop()
+  @Prop({ type: String })
   imageFileId?: string;
 
-  @Prop({ required: true, enum: MessageStatus, default: MessageStatus.SENT })
+  @Prop({ required: true, enum: MessageStatus, default: MessageStatus.SENT, type: String })
   status!: MessageStatus;
 
   createdAt!: Date;

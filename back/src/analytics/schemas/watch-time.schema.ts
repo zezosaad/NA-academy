@@ -16,10 +16,10 @@ export class WatchTime {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Subject', index: true })
   subjectId!: Types.ObjectId;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ required: true, default: 0, type: Number })
   durationSeconds!: number;
 
-  @Prop({ required: true, default: () => new Date() })
+  @Prop({ required: true, default: () => new Date(), type: Date })
   recordedAt!: Date;
 
   createdAt!: Date;

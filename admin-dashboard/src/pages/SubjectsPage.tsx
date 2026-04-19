@@ -33,12 +33,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
+import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
 import type { Subject, SubjectBundle, MediaAsset } from "@/types"
 import { format } from "date-fns"
 import { Progress } from "@/components/ui/progress"
 
 export function SubjectsPage() {
+  const { showError } = useAppModal()
   const [tab, setTab] = useState("subjects")
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [bundles, setBundles] = useState<SubjectBundle[]>([])
@@ -105,7 +107,7 @@ export function SubjectsPage() {
       setSubjectDialog(false)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save subject")
+      showError(err instanceof Error ? err.message : "Failed to save subject")
     } finally {
       setSaving(false)
     }
@@ -137,7 +139,7 @@ export function SubjectsPage() {
       setBundleDialog(false)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save bundle")
+      showError(err instanceof Error ? err.message : "Failed to save bundle")
     } finally {
       setSaving(false)
     }
@@ -152,7 +154,7 @@ export function SubjectsPage() {
       setDeleteTarget(null)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed")
+      showError(err instanceof Error ? err.message : "Delete failed")
     }
   }
 
@@ -180,7 +182,7 @@ export function SubjectsPage() {
       const assets = await api.getSubjectMedia(mediaSubject._id)
       setMediaAssets(assets)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Upload failed")
+      showError(err instanceof Error ? err.message : "Upload failed")
     } finally {
       setUploadProgress(null)
       e.target.value = ""
@@ -193,7 +195,7 @@ export function SubjectsPage() {
       await api.deleteMedia(id)
       setMediaAssets((prev) => prev.filter((m) => m._id !== id))
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed")
+      showError(err instanceof Error ? err.message : "Delete failed")
     }
   }
 

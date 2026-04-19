@@ -7,13 +7,13 @@ export type ConversationDocument = HydratedDocument<Conversation>;
 export class Conversation {
   _id!: Types.ObjectId;
 
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, unique: true, index: true, type: String })
   roomId!: string; // deterministic from sorted participant IDs
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], required: true, index: true })
   participants!: Types.ObjectId[];
 
-  @Prop({ required: true, default: () => new Date(), index: -1 })
+  @Prop({ required: true, default: () => new Date(), index: -1, type: Date })
   lastMessageAt!: Date;
 
   createdAt!: Date;

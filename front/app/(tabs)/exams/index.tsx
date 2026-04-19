@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, FlatList, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import api from '../../../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { ExamsService } from '../../../services/exams.service';
 import { Exam } from '../../../types/exam';
 import ExamCard from '../../../components/ExamCard';
 import EmptyState from '../../../components/EmptyState';
@@ -13,43 +14,24 @@ export default function ExamsListScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchExams = async (isRefresh = false) => {
+  const fetchExams = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) setRefreshing(true);
-      // The backend doesn't have a dedicated list exams endpoint for students,
-      // but we can fetch exams through subjects or use a generic approach
-      const response = await api.get('/subjects');
-      const subjects = response.data.data || response.data;
-
-      // Fetch exams for each subject
-      const allExams: Exam[] = [];
-      for (const subject of subjects.slice(0, 10)) {
-        try {
-          const examRes = await api.get(`/exams/${subject._id}`);
-          const examData = examRes.data.data || examRes.data;
-          if (examData) {
-            if (Array.isArray(examData)) {
-              allExams.push(...examData);
-            } else {
-              allExams.push(examData);
-            }
-          }
-        } catch {
-          // This subject may not have exams
-        }
-      }
-      setExams(allExams);
+      const response = await ExamsService.getAll({ page: 1, limit: 50 });
+      setExams(response.data || []);
     } catch (error) {
       console.error('Failed to fetch exams', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchExams();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchExams();
+    }, [fetchExams])
+  );
 
   return (
     <SafeAreaView style={styles.container}>

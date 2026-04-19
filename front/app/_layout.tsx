@@ -5,6 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { AuthProvider, useAuthContext } from "../contexts/AuthContext";
 import { ChatProvider } from "../contexts/ChatContext";
+import { AppDialogProvider } from "../contexts/AppDialogContext";
 import { StatusBar, View, StyleSheet, Dimensions } from "react-native";
 import { colors } from "@/constants/helpers";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -84,9 +85,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={AppTheme}>
-        <AuthProvider>
-          <RootNavigation />
-        </AuthProvider>
+        <AppDialogProvider>
+          <AuthProvider>
+            <RootNavigation />
+          </AuthProvider>
+        </AppDialogProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
