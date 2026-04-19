@@ -52,6 +52,17 @@ export default function ProfileScreen() {
     },
   ];
 
+  if (user?.role === 'admin') {
+    menuItems.push({
+      id: 'admin',
+      title: 'Admin Dashboard',
+      subtitle: 'Manage subjects, exams, and users',
+      icon: 'settings-outline' as const,
+      color: colors.secondary,
+      onPress: () => router.push('/(tabs)/profile/admin'),
+    });
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

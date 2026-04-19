@@ -14,7 +14,7 @@ export const sizes = {
 
 export const colors = {
     primary: "#007bff",
-    secondary: "#6c757d",
+    secondary: "#bdbec0ff",
     success: "#28a745",
     danger: "#dc3545",
     warning: "#ffc107",

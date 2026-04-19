@@ -11,4 +11,13 @@ export const SubjectsService = {
     const response = await api.get(`/subjects/${id}`);
     return response.data.data || response.data;
   },
+
+  create: async (data: Partial<Subject>): Promise<Subject> => {
+    const response = await api.post('/subjects', data);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/subjects/${id}`);
+  },
 };

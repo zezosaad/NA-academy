@@ -69,7 +69,7 @@ export default function VideoPlayer({ mediaId, streamUrl, title, mediaAssetId }:
     };
   }, [sendWatchTime]);
 
-  const getHeaders = async () => {
+  const getHeaders = async (): Promise<Record<string, string>> => {
     const token = await SecureStore.getItemAsync('accessToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
   };

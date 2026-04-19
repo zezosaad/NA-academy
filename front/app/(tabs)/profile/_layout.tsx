@@ -6,6 +6,8 @@ export default function ProfileLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="analytics" />
       <Stack.Screen name="activate" />
+      <Stack.Screen name="admin/index" />
+      <Stack.Screen name="admin/subjects" />
     </Stack>
   );
 }

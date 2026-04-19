@@ -31,6 +31,21 @@ export class AuthController {
     });
   }
 
+  @Post('register-admin')
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new ADMIN account' })
+  async registerAdmin(@Body() dto: RegisterDto) {
+    // Note: In production this should be protected, but open for initial testing/setup
+    return this.authService.register({
+      email: dto.email,
+      password: dto.password,
+      name: dto.name,
+      hardwareId: dto.hardwareId,
+      role: 'admin' as any,
+    });
+  }
+
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)

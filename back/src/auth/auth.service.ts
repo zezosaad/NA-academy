@@ -12,7 +12,7 @@ import * as crypto from 'crypto';
 import { Session, SessionDocument } from './schemas/session.schema.js';
 import { UsersService } from '../users/users.service.js';
 import { DevicesService } from '../devices/devices.service.js';
-import { UserDocument, UserStatus } from '../users/schemas/user.schema.js';
+import { UserDocument, UserStatus, UserRole } from '../users/schemas/user.schema.js';
 import { JwtPayload } from './strategies/jwt.strategy.js';
 
 @Injectable()
@@ -32,12 +32,14 @@ export class AuthService {
     password: string;
     name: string;
     hardwareId: string;
+    role?: UserRole;
   }) {
     // Create user
     const user = await this.usersService.create({
       email: data.email,
       password: data.password,
       name: data.name,
+      role: data.role,
     });
 
     // Register device

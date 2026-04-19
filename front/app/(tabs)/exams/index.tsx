@@ -101,13 +101,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    textAlign: 'right',
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 4,
-    textAlign: 'right',
   },
   loadingContainer: {
     flex: 1,
