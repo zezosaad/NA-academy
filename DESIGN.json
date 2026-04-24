@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-24T11:24:00Z",
+  "title": "Design System: NA-Academy",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Sage Teal", "canonical": "oklch(52.7% 0.082 188.5)", "tonalRamp": ["#0F1F1D", "#1D3D3A", "#2E5F5B", "#3F7D78", "#6CAAA4", "#99C7C2", "#C6E4E1", "#F2FBFA"] },
+      "secondary": { "role": "secondary", "displayName": "Clay", "canonical": "oklch(54.4% 0.125 45)", "tonalRamp": ["#2B1A10", "#583421", "#844E32", "#B06A43", "#C58D6E", "#DBB099", "#F1D3C4", "#FBF0E9"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Parchment Canvas", "canonical": "#F4EFE5" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Serif", "purpose": "Hero greetings and screen titles." },
+      "body": { "displayName": "Body Sans", "purpose": "Standard reading text." }
+    },
+    "shadows": [
+      { "name": "card-subtle", "value": "0 1px 2px rgba(31,28,22,0.04), 0 0 0 1px #E0D8C6", "purpose": "Default card depth." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main call to action.",
+      "html": "<button class=\"ds-btn-primary\">CONTINUE</button>",
+      "css": ".ds-btn-primary { background: #3F7D78; color: #fff; padding: 12px 24px; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 15px; border: none; border-radius: 999px; cursor: pointer; transition: transform 0.1s; } .ds-btn-primary:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Subject Card",
+      "kind": "card",
+      "refersTo": "card-standard",
+      "description": "Displays course progress and status.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-chip\">Lesson 12 of 18</div><div class=\"ds-title\">Calculus II</div><div class=\"ds-prog-track\"><div class=\"ds-prog-fill\"></div></div></div>",
+      "css": ".ds-card { background: #FBF8F1; border-radius: 18px; border: 1px solid #E0D8C6; padding: 16px; width: 200px; } .ds-chip { display: inline-block; background: #DDE9E6; color: #2E5F5B; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; margin-bottom: 12px; } .ds-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: #1F1C16; margin-bottom: 12px; } .ds-prog-track { height: 6px; background: #EAE3D4; border-radius: 999px; overflow: hidden; } .ds-prog-fill { height: 100%; width: 68%; background: #3F7D78; border-radius: 999px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Scholarly Sanctuary",
+    "overview": "NA-Academy is designed to be a calm, focused place for deep study. It rejects the clinical, high-density interfaces of traditional administrative tools in favor of a warm, archival aesthetic.",
+    "keyCharacteristics": ["Parchment Canvas", "Sophisticated Serifs", "Organic Shapes"],
+    "rules": [
+      { "name": "The Rarity Rule", "body": "The primary Sage-Teal is used on ≤10% of any given screen.", "section": "colors" }
+    ],
+    "dos": ["Do use Fraunces for screen titles", "Do maintain Parchment-to-Ink contrast"],
+    "donts": ["Don't use pure black (#000) or pure white (#FFF)", "Don't use high-vibrancy SaaS Blue", "Don't use sharp corners"]
+  }
+}
