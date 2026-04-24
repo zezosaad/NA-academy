@@ -28,19 +28,19 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Purpose**: Wire the Flutter app skeleton (deps, entrypoint, theme tokens, core plumbing) and confirm the backend is ready to accept the additions in later phases. None of these tasks require writing any user-visible UI.
 
-- [ ] T001 Add mobile dependencies to `na_app/pubspec.yaml`: `go_router ^14`, `flutter_riverpod ^2` + `riverpod_annotation` + `riverpod_generator` + `build_runner`, `dio ^5`, `socket_io_client ^2`, `flutter_secure_storage ^9`, `shared_preferences ^2`, `cached_network_image ^3`, `image_picker ^1`, `video_player ^2`, `chewie ^1`, `app_links ^6`, `device_info_plus ^10`, `logger ^2`, `freezed` + `freezed_annotation` + `json_serializable` + `json_annotation`, then run `flutter pub get`.
-- [ ] T002 [P] Add backend mail dependencies to `back/package.json`: `@nestjs-modules/mailer` and `nodemailer`; run `npm install` in `back/`.
-- [ ] T003 [P] Create Scholarly Sanctuary colour tokens in `na_app/lib/core/theme/app_colors.dart` (parchment `#F4EFE5`, ink `#1F1C16`, sage-teal `#3F7D78`, clay `#B06A43`, border-subtle `#E0D8C6`, dark-mode counterparts).
-- [ ] T004 [P] Create typography tokens in `na_app/lib/core/theme/app_typography.dart` using `google_fonts` (Fraunces for display/headline, Inter for body/UI, JetBrains Mono for `labelMono`).
-- [ ] T005 [P] Create shape tokens in `na_app/lib/core/theme/app_shapes.dart` (pill radius 999, card radius 18, hairline bone border) and motion helpers in `na_app/lib/core/theme/app_motion.dart` that read `MediaQuery.disableAnimations` and degrade transitions per FR-036.
-- [ ] T006 [P] Assemble `ThemeData` in `na_app/lib/core/theme/app_theme.dart` exposing `lightTheme()` and `darkTheme()` that consume T003–T005 tokens (no raw hex, satisfies Principle I).
-- [ ] T007 [P] Create API endpoint constants in `na_app/lib/core/api/endpoints.dart` for every route listed in `contracts/api-contracts.md` (auth, users, subjects, exams, activation-codes, chat, media, analytics).
-- [ ] T008 [P] Create Dio client skeleton in `na_app/lib/core/api/dio_client.dart` reading `API_BASE_URL` via `dart-define`; create `na_app/lib/core/api/api_exception.dart` sealed type (`ApiException { statusCode, code, message }`) for FR-034 normalised errors.
-- [ ] T009 [P] Create secure token store in `na_app/lib/core/storage/secure_token_store.dart` (wraps `flutter_secure_storage` for `accessToken`, `refreshToken`).
-- [ ] T010 [P] Create hardware-id store in `na_app/lib/core/storage/hardware_id_store.dart` — generates a UUID v4 on first read and persists in secure storage (research §9, data-model §1.2).
-- [ ] T011 [P] Create prefs store in `na_app/lib/core/storage/prefs_store.dart` using `shared_preferences` for `themeMode`, `language`, `notificationsEnabled`, `lastKnownUserName`.
-- [ ] T012 [P] Create utility helpers in `na_app/lib/core/utils/time_of_day_greeting.dart`, `na_app/lib/core/utils/time_ago.dart`, and `na_app/lib/core/utils/result.dart` (sealed `Result<T, E>`).
-- [ ] T013 Rewrite `na_app/lib/main.dart` to wrap the app in `ProviderScope` and use `MaterialApp.router` bound to a stub `app_router.dart` (full router comes in T015); confirm `flutter run` boots to a blank scaffold using the new theme.
+- [x] T001 Add mobile dependencies to `na_app/pubspec.yaml`: `go_router ^14`, `flutter_riverpod ^2` + `riverpod_annotation` + `riverpod_generator` + `build_runner`, `dio ^5`, `socket_io_client ^2`, `flutter_secure_storage ^9`, `shared_preferences ^2`, `cached_network_image ^3`, `image_picker ^1`, `video_player ^2`, `chewie ^1`, `app_links ^6`, `device_info_plus ^10`, `logger ^2`, `freezed` + `freezed_annotation` + `json_serializable` + `json_annotation`, then run `flutter pub get`.
+- [x] T002 [P] Add backend mail dependencies to `back/package.json`: `@nestjs-modules/mailer` and `nodemailer`; run `npm install` in `back/`.
+- [x] T003 [P] Create Scholarly Sanctuary colour tokens in `na_app/lib/core/theme/app_colors.dart` (parchment `#F4EFE5`, ink `#1F1C16`, sage-teal `#3F7D78`, clay `#B06A43`, border-subtle `#E0D8C6`, dark-mode counterparts).
+- [x] T004 [P] Create typography tokens in `na_app/lib/core/theme/app_typography.dart` using `google_fonts` (Fraunces for display/headline, Inter for body/UI, JetBrains Mono for `labelMono`).
+- [x] T005 [P] Create shape tokens in `na_app/lib/core/theme/app_shapes.dart` (pill radius 999, card radius 18, hairline bone border) and motion helpers in `na_app/lib/core/theme/app_motion.dart` that read `MediaQuery.disableAnimations` and degrade transitions per FR-036.
+- [x] T006 [P] Assemble `ThemeData` in `na_app/lib/core/theme/app_theme.dart` exposing `lightTheme()` and `darkTheme()` that consume T003–T005 tokens (no raw hex, satisfies Principle I).
+- [x] T007 [P] Create API endpoint constants in `na_app/lib/core/api/endpoints.dart` for every route listed in `contracts/api-contracts.md` (auth, users, subjects, exams, activation-codes, chat, media, analytics).
+- [x] T008 [P] Create Dio client skeleton in `na_app/lib/core/api/dio_client.dart` reading `API_BASE_URL` via `dart-define`; create `na_app/lib/core/api/api_exception.dart` sealed type (`ApiException { statusCode, code, message }`) for FR-034 normalised errors.
+- [x] T009 [P] Create secure token store in `na_app/lib/core/storage/secure_token_store.dart` (wraps `flutter_secure_storage` for `accessToken`, `refreshToken`).
+- [x] T010 [P] Create hardware-id store in `na_app/lib/core/storage/hardware_id_store.dart` — generates a UUID v4 on first read and persists in secure storage (research §9, data-model §1.2).
+- [x] T011 [P] Create prefs store in `na_app/lib/core/storage/prefs_store.dart` using `shared_preferences` for `themeMode`, `language`, `notificationsEnabled`, `lastKnownUserName`.
+- [x] T012 [P] Create utility helpers in `na_app/lib/core/utils/time_of_day_greeting.dart`, `na_app/lib/core/utils/time_ago.dart`, and `na_app/lib/core/utils/result.dart` (sealed `Result<T, E>`).
+- [x] T013 Rewrite `na_app/lib/main.dart` to wrap the app in `ProviderScope` and use `MaterialApp.router` bound to a stub `app_router.dart` (full router comes in T015); confirm `flutter run` boots to a blank scaffold using the new theme.
 
 ---
 

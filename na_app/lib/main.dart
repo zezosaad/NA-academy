@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/theme/app_theme.dart';
-import 'package:na_app/features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:na_app/core/router/app_router.dart';
 
 void main() {
-  runApp(const NAApp());
+  runApp(const ProviderScope(child: NAApp()));
 }
 
-class NAApp extends StatelessWidget {
+class NAApp extends ConsumerWidget {
   const NAApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+    return MaterialApp.router(
       title: 'NA-Academy',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const OnboardingScreen(),
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
     );
   }
 }
