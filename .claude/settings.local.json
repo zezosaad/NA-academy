@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(git -C C:/Users/zezo/Desktop/work/NA-Academy rev-parse --abbrev-ref HEAD)",
+      "Bash(git -C C:/Users/zezo/Desktop/work/NA-Academy branch --list 003-mobile-app-redesign)",
+      "Bash(xxd C:/Users/zezo/.claude/projects/C--Users-zezo-Desktop-work-NA-Academy/2f3f05ed-5721-4dba-9ebf-6cfd342bb009/tool-results/webfetch-1777035336421-ctyjai.bin)",
+      "Bash(mkdir -p C:/Users/zezo/Desktop/work/NA-Academy/.claude/tmp-design)",
+      "Bash(gunzip -c C:/Users/zezo/.claude/projects/C--Users-zezo-Desktop-work-NA-Academy/2f3f05ed-5721-4dba-9ebf-6cfd342bb009/tool-results/webfetch-1777035336421-ctyjai.bin)",
+      "Bash(tar -tf C:/Users/zezo/Desktop/work/NA-Academy/.claude/tmp-design/design.tar)",
+      "Bash(tar -xf design.tar)",
+      "Bash(git -C C:/Users/zezo/Desktop/work/NA-Academy checkout -b 003-mobile-app-redesign)",
+      "Bash(cp -r C:/Users/zezo/Desktop/work/NA-Academy/.claude/tmp-design/na-academy/* C:/Users/zezo/Desktop/work/NA-Academy/specs/003-mobile-app-redesign/design-bundle/)",
+      "PowerShell(& .specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -PathsOnly)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)",
+      "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\update-agent-context.ps1\" -AgentType claude 2>&1)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)"
+    ]
+  }
+}

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NA-Academy · Mobile Redesign</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #E7E1D2; font-family: 'Inter', system-ui, sans-serif; }
+    #root { height: 100vh; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="phone.jsx"></script>
+  <script type="text/babel" src="screens-a.jsx"></script>
+  <script type="text/babel" src="screens-b.jsx"></script>
+  <script type="text/babel" src="screens-unlock.jsx"></script>
+  <script type="text/babel" src="screens-extra.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "sage",
+      "dark": false
+    }/*EDITMODE-END*/;
+
+    const ACCENT_PRESETS = {
+      sage: { accent: '#3F7D78', accentSoft: '#DDE9E6', accentDeep: '#2E5F5B' },
+      clay: { accent: '#B06A43', accentSoft: '#F1E0D2', accentDeep: '#884B2C' },
+      ink:  { accent: '#1F1C16', accentSoft: '#E4DFD1', accentDeep: '#000' },
+      plum: { accent: '#7B4A6E', accentSoft: '#EADFE6', accentDeep: '#5A3250' },
+      moss: { accent: '#5B7A3C', accentSoft: '#E4EBD6', accentDeep: '#3F5A25' },
+    };
+
+    function App() {
+      const [tweaks, setTweaks] = useTweaks(TWEAK_DEFAULTS);
+
+      // Apply accent to CSS vars at root
+      useEffect(() => {
+        const p = ACCENT_PRESETS[tweaks.accent] || ACCENT_PRESETS.sage;
+        document.documentElement.style.setProperty('--accent', p.accent);
+        document.documentElement.style.setProperty('--accent-soft', p.accentSoft);
+        document.documentElement.style.setProperty('--accent-deep', p.accentDeep);
+      }, [tweaks.accent]);
+
+      const forceDark = tweaks.dark;
+
+      return (
+        <>
+          <DesignCanvas
+            title="NA-Academy"
+            subtitle="Mobile redesign · warm scholarly · 2026"
+            defaultZoom={0.62}
+          >
+            <DCSection id="onboarding" title="1. Onboarding & Auth">
+              <DCArtboard id="splash" label="Splash" width={390} height={844}>
+                <div className={forceDark ? 'na na-dark' : 'na'} style={{ width: '100%', height: '100%', display: 'flex' }}><ScreenSplash /></div>
+              </DCArtboard>
+              <DCArtboard id="onboarding-1" label="Onboarding · Welcome" width={390} height={844}>
+                <div className={forceDark ? 'na na-dark' : 'na'} style={{ width: '100%', height: '100%', display: 'flex' }}><ScreenOnboarding /></div>
+              </DCArtboard>
+              <DCArtboard id="register" label="Create account" width={390} height={844}>
+                <div className={forceDark ? 'na na-dark' : 'na'} style={{ width: '100%', height: '100%', display: 'flex' }}><ScreenRegister /></div>
+              </DCArtboard>
+              <DCArtboard id="login" label="Sign in" width={390} height={844}>
+                <div className={forceDark ? 'na na-dark' : 'na'} style={{ width: '100%', height: '100%', display: 'flex' }}><ScreenLogin /></div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="today" title="2. Today & Learning">
+              <DCArtboard id="home" label="Today (Home)" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenHome /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="subjects-locked" label="Subjects · locked + code CTA" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenSubjectsLocked /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="unlock-subject" label="Enter subject code" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenUnlockSubject /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="unlock-modal" label="Code · bottom sheet" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenCodeModal /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="unlock-loading" label="Code accepted · unlocking" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenCodeUnlocking /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="subjects" label="Subjects · unlocked grid" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenSubjects /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="subject-detail" label="Subject · detail" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenSubjectDetail /></Phone></div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="exams" title="3. Exams">
+              <DCArtboard id="exams-list" label="Exams list" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenExams /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="unlock-exam" label="Enter exam code" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenUnlockExam /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="code-expired" label="Code expired" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenCodeBad variant="expired" /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="code-used" label="Code already used" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenCodeBad variant="used" /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="exam-take" label="Take exam" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenExamTake /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="exam-result" label="Result" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenExamResult /></Phone></div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="chat" title="4. Chat · tutors & groups">
+              <DCArtboard id="chat-list" label="Conversations" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenChatList /></Phone></div>
+              </DCArtboard>
+              <DCArtboard id="chat-thread" label="Thread" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenChatThread /></Phone></div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="profile" title="5. Profile">
+              <DCArtboard id="profile" label="You" width={390} height={844}>
+                <div className={forceDark ? 'na-dark' : ''}><Phone><ScreenProfile /></Phone></div>
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="ds" title="6. Design system · tokens">
+              <DCArtboard id="tokens" label="Colors · type · components" width={1120} height={760}>
+                <DesignSystem dark={forceDark} />
+              </DCArtboard>
+            </DCSection>
+          </DesignCanvas>
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection title="Accent color">
+              <TweakRadio
+                value={tweaks.accent}
+                onChange={v => setTweaks({ accent: v })}
+                options={[
+                  { value: 'sage', label: 'Sage (default)' },
+                  { value: 'clay', label: 'Clay' },
+                  { value: 'ink',  label: 'Ink (mono)' },
+                  { value: 'plum', label: 'Plum' },
+                  { value: 'moss', label: 'Moss' },
+                ]}
+              />
+            </TweakSection>
+            <TweakSection title="Theme">
+              <TweakToggle
+                label="Dark mode"
+                value={tweaks.dark}
+                onChange={v => setTweaks({ dark: v })}
+              />
+            </TweakSection>
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    function DesignSystem({ dark }) {
+      const swatches = [
+        ['bg.canvas', 'var(--bg-canvas)'],
+        ['bg.surface', 'var(--bg-surface)'],
+        ['bg.sunken', 'var(--bg-sunken)'],
+        ['border.subtle', 'var(--border-subtle)'],
+        ['border.strong', 'var(--border-strong)'],
+        ['text.primary', 'var(--text-primary)'],
+        ['text.secondary', 'var(--text-secondary)'],
+        ['accent', 'var(--accent)'],
+        ['accent.soft', 'var(--accent-soft)'],
+        ['accent.deep', 'var(--accent-deep)'],
+        ['secondary (clay)', 'var(--secondary)'],
+        ['success', 'var(--success)'],
+        ['warning', 'var(--warning)'],
+        ['danger', 'var(--danger)'],
+      ];
+      return (
+        <div className={`na ${dark ? 'na-dark' : ''}`} style={{ width: '100%', height: '100%', padding: 36, overflow: 'auto', background: 'var(--bg-canvas)' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+            <div className="t-display na-serif">Design system</div>
+            <div className="t-body muted">NA-Academy — warm scholarly, v1</div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginTop: 24 }}>
+            {/* Colors */}
+            <div>
+              <div className="t-caption" style={{ marginBottom: 10 }}>Colors</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {swatches.map(([n, v]) => (
+                  <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-surface)', padding: 10, borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: v, border: '1px solid var(--border-subtle)' }} />
+                    <div>
+                      <div className="t-sm" style={{ fontWeight: 500 }}>{n}</div>
+                      <div className="t-meta na-mono" style={{ fontSize: 10 }}>{v}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Type */}
+            <div>
+              <div className="t-caption" style={{ marginBottom: 10 }}>Typography</div>
+              <div style={{ background: 'var(--bg-surface)', padding: 18, borderRadius: 14, boxShadow: 'var(--shadow-card)' }}>
+                <div className="t-display na-serif">Fraunces · Display 32</div>
+                <div className="t-title na-serif" style={{ marginTop: 10 }}>Fraunces · Title 24</div>
+                <div className="t-h1" style={{ marginTop: 14 }}>Inter · H1 20 / 600</div>
+                <div className="t-h2" style={{ marginTop: 6 }}>Inter · H2 17 / 600</div>
+                <div className="t-body" style={{ marginTop: 8 }}>Inter · Body 15. The quick brown fox jumps over the lazy dog.</div>
+                <div className="t-sm muted" style={{ marginTop: 6 }}>Inter · Small 13 muted</div>
+                <div className="t-caption" style={{ marginTop: 10 }}>Caption · uppercase · tracked</div>
+                <div className="na-mono" style={{ fontSize: 12, marginTop: 8, color: 'var(--text-secondary)' }}>JetBrains Mono — f(x) = ∫ sin(x) dx</div>
+              </div>
+
+              <div className="t-caption" style={{ marginTop: 20, marginBottom: 10 }}>Buttons & chips</div>
+              <div style={{ background: 'var(--bg-surface)', padding: 18, borderRadius: 14, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="btn btn-primary btn-accent">Primary</button>
+                  <button className="btn btn-primary">Ink</button>
+                  <button className="btn btn-secondary">Secondary</button>
+                  <button className="btn btn-ghost">Ghost</button>
+                  <button className="btn btn-danger btn-sm">Danger</button>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <span className="chip">Neutral</span>
+                  <span className="chip chip-accent">Accent</span>
+                  <span className="chip chip-secondary">Clay</span>
+                  <span className="chip chip-success">Completed</span>
+                </div>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <Ring value={68} size={42} stroke={4}><span style={{ fontSize: 11, fontWeight: 600 }}>68%</span></Ring>
+                  <div className="progress-track" style={{ flex: 1 }}><div className="progress-fill" style={{ width: '62%' }} /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
