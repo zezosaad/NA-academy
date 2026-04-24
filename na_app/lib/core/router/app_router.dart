@@ -1,34 +1,188 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:na_app/core/widgets/app_shell.dart';
+import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authControllerProvider);
+
   return GoRouter(
     initialLocation: '/splash',
+    redirect: (context, state) {
+      if (authState.isLoading) return null;
+
+      final isAuthenticated = authState.value != null;
+      final isAuthRoute = state.matchedLocation.startsWith('/auth');
+      final isSplash = state.matchedLocation == '/splash';
+      final isOnboarding = state.matchedLocation == '/onboarding';
+
+      if (isSplash) return null;
+
+      if (!isAuthenticated && !isAuthRoute && !isOnboarding) {
+        return '/splash';
+      }
+
+      if (isAuthenticated && (isAuthRoute || isOnboarding)) {
+        return '/today';
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const _StubPage(title: 'Splash'),
+        builder: (context, state) => const _PlaceholderPage(title: 'Splash'),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const _PlaceholderPage(title: 'Onboarding'),
       ),
       GoRoute(
         path: '/auth/login',
-        builder: (context, state) => const _StubPage(title: 'Login'),
+        builder: (context, state) => const _PlaceholderPage(title: 'Login'),
       ),
       GoRoute(
         path: '/auth/register',
-        builder: (context, state) => const _StubPage(title: 'Register'),
+        builder: (context, state) => const _PlaceholderPage(title: 'Register'),
       ),
       GoRoute(
-        path: '/today',
-        builder: (context, state) => const _StubPage(title: 'Today'),
+        path: '/auth/forgot-password',
+        builder: (context, state) => const _PlaceholderPage(title: 'Forgot Password'),
+      ),
+      GoRoute(
+        path: '/auth/reset-password',
+        builder: (context, state) => const _PlaceholderPage(title: 'Reset Password'),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AppShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/today',
+                builder: (context, state) =>
+                    const _PlaceholderPage(title: 'Today'),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/subjects',
+                builder: (context, state) =>
+                    const _PlaceholderPage(title: 'Subjects'),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final subjectId = state.pathParameters['id']!;
+                      return _PlaceholderPage(title: 'Subject $subjectId');
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/exams',
+                builder: (context, state) =>
+                    const _PlaceholderPage(title: 'Exams'),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final examId = state.pathParameters['id']!;
+                      return _PlaceholderPage(title: 'Exam $examId');
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id/take',
+                    builder: (context, state) {
+                      final examId = state.pathParameters['id']!;
+                      return _PlaceholderPage(title: 'Take Exam $examId');
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id/result',
+                    builder: (context, state) {
+                      final examId = state.pathParameters['id']!;
+                      return _PlaceholderPage(title: 'Exam Result $examId');
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (context, state) =>
+                    const _PlaceholderPage(title: 'Chat'),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final conversationId = state.pathParameters['id']!;
+                      return _PlaceholderPage(
+                          title: 'Chat $conversationId');
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) =>
+                    const _PlaceholderPage(title: 'Profile'),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) =>
+                        const _PlaceholderPage(title: 'Settings'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/subjects/:id/enter-code',
+        builder: (context, state) {
+          final subjectId = state.pathParameters['id']!;
+          return _PlaceholderPage(title: 'Enter Code for $subjectId');
+        },
+      ),
+      GoRoute(
+        path: '/subjects/:id/unlocking',
+        builder: (context, state) {
+          final subjectId = state.pathParameters['id']!;
+          return _PlaceholderPage(title: 'Unlocking $subjectId');
+        },
+      ),
+      GoRoute(
+        path: '/exams/:id/enter-code',
+        builder: (context, state) {
+          final examId = state.pathParameters['id']!;
+          return _PlaceholderPage(title: 'Enter Exam Code for $examId');
+        },
       ),
     ],
   );
 });
 
-class _StubPage extends StatelessWidget {
+class _PlaceholderPage extends StatelessWidget {
   final String title;
-  const _StubPage({required this.title});
+  const _PlaceholderPage({required this.title});
 
   @override
   Widget build(BuildContext context) {
