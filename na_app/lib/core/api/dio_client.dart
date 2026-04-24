@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_exception.dart';
 import '../storage/secure_token_store.dart';
 
+const _skipAuthExtraKey = 'skipAuth';
+const _retriedExtraKey = 'retriedAfterRefresh';
+
 final dioProvider = Provider<Dio>((ref) {
   final tokenStore = ref.watch(secureTokenStoreProvider);
   final dio = Dio(BaseOptions(
@@ -28,93 +31,99 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 class _AuthInterceptor extends Interceptor {
+  _AuthInterceptor(this._tokenStore, this._dio);
+
   final SecureTokenStore _tokenStore;
   final Dio _dio;
-  Completer<void>? _refreshCompleter;
-  bool _isRefreshing = false;
+  Future<bool>? _refreshInFlight;
 
-  _AuthInterceptor(this._tokenStore, this._dio);
+  bool _isAuthPublicPath(String path) {
+    return path.endsWith('/auth/login') ||
+        path.endsWith('/auth/register') ||
+        path.endsWith('/auth/refresh') ||
+        path.endsWith('/auth/forgot-password') ||
+        path.endsWith('/auth/reset-password');
+  }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    final token = await _tokenStore.accessToken;
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    final skipAuth = options.extra[_skipAuthExtraKey] == true ||
+        _isAuthPublicPath(options.path);
+    if (!skipAuth) {
+      final token = await _tokenStore.accessToken;
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
     }
     handler.next(options);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) {
-      try {
-        if (!_isRefreshing) {
-          _isRefreshing = true;
-          _refreshCompleter = Completer<void>();
+    final status = err.response?.statusCode;
+    final alreadyRetried = err.requestOptions.extra[_retriedExtraKey] == true;
+    final isRefreshCall = err.requestOptions.path.endsWith('/auth/refresh');
 
-          final refreshToken = await _tokenStore.refreshToken;
-          if (refreshToken == null) {
-            _isRefreshing = false;
-            _refreshCompleter = null;
-            await _tokenStore.clear();
-            handler.next(err);
-            return;
-          }
-
-          try {
-            final response = await _dio.fetch(RequestOptions(
-              path: '/auth/refresh',
-              method: 'POST',
-              data: {'refreshToken': refreshToken},
-              baseUrl: _dio.options.baseUrl,
-            ));
-
-            final newAccess = response.data['accessToken'] as String?;
-            final newRefresh = response.data['refreshToken'] as String?;
-            if (newAccess != null && newRefresh != null) {
-              await _tokenStore.saveTokens(
-                accessToken: newAccess,
-                refreshToken: newRefresh,
-              );
-            }
-            _refreshCompleter!.complete();
-          } catch (e) {
-            _refreshCompleter!.completeError(e);
-            _isRefreshing = false;
-            _refreshCompleter = null;
-            await _tokenStore.clear();
-            handler.next(err);
-            return;
-          }
-
-          _isRefreshing = false;
-        }
-
-        if (_refreshCompleter != null) {
-          await _refreshCompleter!.future;
-        }
-
-        final newToken = await _tokenStore.accessToken;
-        if (newToken != null) {
-          final opts = err.requestOptions;
-          opts.headers['Authorization'] = 'Bearer $newToken';
-          final clone = await _dio.fetch(opts);
-          handler.resolve(clone);
-          return;
-        }
-      } catch (_) {
-        _isRefreshing = false;
-        _refreshCompleter = null;
-        await _tokenStore.clear();
-      }
+    if (status != 401 || alreadyRetried || isRefreshCall) {
+      handler.next(err);
+      return;
     }
-    handler.next(err);
+
+    final refreshed = await (_refreshInFlight ??= _refresh());
+    _refreshInFlight = null;
+
+    if (!refreshed) {
+      await _tokenStore.clear();
+      handler.next(err);
+      return;
+    }
+
+    try {
+      final retriedOpts = err.requestOptions
+        ..extra[_retriedExtraKey] = true
+        ..headers.remove('Authorization');
+      final newToken = await _tokenStore.accessToken;
+      if (newToken != null && newToken.isNotEmpty) {
+        retriedOpts.headers['Authorization'] = 'Bearer $newToken';
+      }
+      final response = await _dio.fetch(retriedOpts);
+      handler.resolve(response);
+    } on DioException catch (retryErr) {
+      handler.next(retryErr);
+    }
+  }
+
+  Future<bool> _refresh() async {
+    final refreshToken = await _tokenStore.refreshToken;
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: {'refreshToken': refreshToken},
+        options: Options(extra: {_skipAuthExtraKey: true}),
+      );
+      final data = response.data;
+      final newAccess = data?['accessToken'] as String?;
+      final newRefresh = data?['refreshToken'] as String?;
+      if (newAccess == null || newRefresh == null) return false;
+      await _tokenStore.saveTokens(
+        accessToken: newAccess,
+        refreshToken: newRefresh,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 
 class _ErrorNormalizerInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.error is ApiException) {
+      handler.next(err);
+      return;
+    }
     if (err.response?.data is Map<String, dynamic>) {
       final apiException = ApiException.fromMap(
         err.response!.data as Map<String, dynamic>,

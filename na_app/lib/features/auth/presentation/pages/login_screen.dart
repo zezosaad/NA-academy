@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:na_app/core/theme/app_colors.dart';
-import 'package:na_app/features/home/presentation/pages/home_screen.dart';
 import 'package:na_app/features/home/presentation/widgets/main_navigation_shell.dart';
-import 'package:na_app/core/utils/responsive.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

@@ -15,7 +15,8 @@
       "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -PathsOnly)",
       "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\setup-plan.ps1\" -Json)",
       "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\update-agent-context.ps1\" -AgentType claude 2>&1)",
-      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)"
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)",
+      "Bash(flutter analyze *)"
     ]
   }
 }

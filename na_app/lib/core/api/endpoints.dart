@@ -14,7 +14,7 @@ class _AuthEndpoints {
 
   static const String _prefix = '/auth';
 
-  String get login => _prefix;
+  String get login => '$_prefix/login';
   String get register => '$_prefix/register';
   String get refresh => '$_prefix/refresh';
   String get logout => '$_prefix/logout';

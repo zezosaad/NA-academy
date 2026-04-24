@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/features/auth/presentation/pages/login_screen.dart';
-import 'package:na_app/core/utils/responsive.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

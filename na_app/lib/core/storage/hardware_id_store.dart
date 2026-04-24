@@ -9,7 +9,7 @@ final hardwareIdStoreProvider = Provider<HardwareIdStore>((ref) {
 
 class HardwareIdStore {
   final FlutterSecureStorage _storage;
-  final Random _random = Random();
+  final Random _random = Random.secure();
 
   static const _hardwareIdKey = 'hardware_id';
 
