@@ -12,7 +12,10 @@ class SectionHeader extends StatelessWidget {
     required this.title,
     this.actionLabel,
     this.onAction,
-  });
+  }) : assert(
+         (actionLabel == null) == (onAction == null),
+         'actionLabel and onAction must be provided together or neither',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -23,28 +26,39 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color:
-                  isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
             ),
           ),
-          if (actionLabel != null)
-            GestureDetector(
-              onTap: onAction,
+          if (actionLabel != null) ...[
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: onAction,
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    isDark ? AppColors.darkAccent : AppColors.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
                 actionLabel!,
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color:
-                      isDark ? AppColors.darkAccent : AppColors.accent,
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

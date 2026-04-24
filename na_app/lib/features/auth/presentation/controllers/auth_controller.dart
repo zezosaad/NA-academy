@@ -22,6 +22,8 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   User? _currentUser;
   User? get currentUser => _currentUser;
 
+  bool _wasAuthenticated = false;
+
   AuthController({
     required AuthRepository authRepository,
     required SecureTokenStore tokenStore,
@@ -30,6 +32,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         super(const AsyncValue.loading()) {
     _sessionExpiredSub = sessionExpiredStream.listen((_) {
       _currentUser = null;
+      _wasAuthenticated = false;
       state = const AsyncValue.data(null);
     });
   }
@@ -45,10 +48,12 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       final session = await _authRepository.refresh();
       final user = await _authRepository.me();
       _currentUser = user;
+      _wasAuthenticated = true;
       state = AsyncValue.data(session);
     } catch (e) {
       await _tokenStore.clear();
       _currentUser = null;
+      _wasAuthenticated = false;
       state = AsyncValue.data(null);
     }
   }
@@ -57,6 +62,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     try {
       final result = await _authRepository.login(email: email, password: password);
       _currentUser = result.user;
+      _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
       return true;
     } catch (e, st) {
@@ -77,6 +83,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         password: password,
       );
       _currentUser = result.user;
+      _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
       return true;
     } catch (e, st) {
@@ -88,11 +95,18 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   Future<void> logout() async {
     await _authRepository.logout();
     _currentUser = null;
+    _wasAuthenticated = false;
     state = const AsyncValue.data(null);
   }
 
-  Future<void> forgotPassword({required String email}) async {
-    await _authRepository.forgotPassword(email: email);
+  Future<bool> forgotPassword({required String email}) async {
+    try {
+      await _authRepository.forgotPassword(email: email);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
   }
 
   Future<bool> resetPassword({
@@ -105,6 +119,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
         newPassword: newPassword,
       );
       _currentUser = result.user;
+      _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
       return true;
     } catch (e, st) {
@@ -113,7 +128,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     }
   }
 
-  bool get isAuthenticated => state.value != null;
+  bool get isAuthenticated => state.valueOrNull != null || _wasAuthenticated;
 
   @override
   void dispose() {

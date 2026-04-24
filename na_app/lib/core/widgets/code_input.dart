@@ -25,29 +25,54 @@ class CodeInputField extends StatefulWidget {
 class _CodeInputFieldState extends State<CodeInputField> {
   late List<FocusNode> _focusNodes;
   late List<TextEditingController> _controllers;
+  late List<FocusNode> _keyboardFocusNodes;
 
   @override
   void initState() {
     super.initState();
-    _focusNodes = List.generate(widget.length, (_) => FocusNode());
-    _controllers = List.generate(widget.length, (_) => TextEditingController());
+    _initControllers(widget.length);
   }
 
-  @override
-  void dispose() {
+  void _initControllers(int length) {
+    _focusNodes = List.generate(length, (_) => FocusNode());
+    _controllers = List.generate(length, (_) => TextEditingController());
+    _keyboardFocusNodes = List.generate(length, (_) => FocusNode());
+  }
+
+  void _disposeControllers() {
     for (final c in _controllers) {
       c.dispose();
     }
     for (final f in _focusNodes) {
       f.dispose();
     }
+    for (final f in _keyboardFocusNodes) {
+      f.dispose();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CodeInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.length != widget.length) {
+      _disposeControllers();
+      _initControllers(widget.length);
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeControllers();
     super.dispose();
   }
 
   String get code => _controllers.map((c) => c.text).join();
 
   void _onChanged(int index, String value) {
-    if (value.isEmpty) return;
+    if (value.isEmpty) {
+      _notifyChanged();
+      return;
+    }
 
     if (value.length > 1) {
       _handlePaste(value);
@@ -57,6 +82,7 @@ class _CodeInputFieldState extends State<CodeInputField> {
     final char = value.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toUpperCase();
     if (char.isEmpty) {
       _controllers[index].clear();
+      _notifyChanged();
       return;
     }
 
@@ -125,7 +151,7 @@ class _CodeInputFieldState extends State<CodeInputField> {
               width: 48,
               height: 56,
               child: KeyboardListener(
-                focusNode: FocusNode(),
+                focusNode: _keyboardFocusNodes[index],
                 onKeyEvent: (event) => _onKeyDown(index, event),
                 child: TextField(
                   controller: _controllers[index],

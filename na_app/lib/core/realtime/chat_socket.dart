@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:na_app/core/storage/secure_token_store.dart';
@@ -17,6 +18,7 @@ final chatSocketProvider = Provider<ChatSocket>((ref) {
 class ChatSocket {
   final String _baseUrl;
   final SecureTokenStore _tokenStore;
+  final Future<bool> Function()? onRefreshToken;
   io.Socket? _socket;
 
   final _newMessageController = StreamController<Map<String, dynamic>>.broadcast();
@@ -36,8 +38,32 @@ class ChatSocket {
   ChatSocket({
     required String baseUrl,
     required SecureTokenStore tokenStore,
+    this.onRefreshToken,
   })  : _baseUrl = baseUrl,
         _tokenStore = tokenStore;
+
+  static Map<String, dynamic>? _tryCastMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) {
+      try {
+        return Map<String, dynamic>.from(data);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  static List<Map<String, dynamic>>? _tryCastList(dynamic data) {
+    if (data is List) {
+      try {
+        return data.cast<Map<String, dynamic>>();
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   Future<void> connect() async {
     final token = await _tokenStore.accessToken;
@@ -51,24 +77,48 @@ class ChatSocket {
     });
 
     _socket!.on('new_message', (data) {
-      _newMessageController.add(data as Map<String, dynamic>);
+      final map = _tryCastMap(data);
+      if (map != null) {
+        _newMessageController.add(map);
+      } else {
+        debugPrint('[ChatSocket] Invalid new_message payload: $data');
+      }
     });
 
     _socket!.on('status_update', (data) {
-      _statusUpdateController.add(data as Map<String, dynamic>);
+      final map = _tryCastMap(data);
+      if (map != null) {
+        _statusUpdateController.add(map);
+      } else {
+        debugPrint('[ChatSocket] Invalid status_update payload: $data');
+      }
     });
 
     _socket!.on('conversation_read', (data) {
-      _conversationReadController.add(data as Map<String, dynamic>);
+      final map = _tryCastMap(data);
+      if (map != null) {
+        _conversationReadController.add(map);
+      } else {
+        debugPrint('[ChatSocket] Invalid conversation_read payload: $data');
+      }
     });
 
     _socket!.on('typing_indicator', (data) {
-      _typingIndicatorController.add(data as Map<String, dynamic>);
+      final map = _tryCastMap(data);
+      if (map != null) {
+        _typingIndicatorController.add(map);
+      } else {
+        debugPrint('[ChatSocket] Invalid typing_indicator payload: $data');
+      }
     });
 
     _socket!.on('pending_messages', (data) {
-      final messages = (data as List).cast<Map<String, dynamic>>();
-      _pendingMessagesController.add(messages);
+      final list = _tryCastList(data);
+      if (list != null) {
+        _pendingMessagesController.add(list);
+      } else {
+        debugPrint('[ChatSocket] Invalid pending_messages payload: $data');
+      }
     });
 
     _socket!.on('connect_error', (_) async {
@@ -118,6 +168,13 @@ class ChatSocket {
     if (refreshToken == null) {
       disconnect();
       return;
+    }
+    if (onRefreshToken != null) {
+      final refreshed = await onRefreshToken!();
+      if (!refreshed) {
+        disconnect();
+        return;
+      }
     }
     await connect();
   }

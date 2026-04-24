@@ -21,23 +21,17 @@ class ScoreRing extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final clampedScore = score.clamp(0.0, 1.0);
 
-    Color ringColor;
-    if (clampedScore >= 0.8) {
-      ringColor = AppColors.success;
-    } else if (clampedScore >= 0.5) {
-      ringColor = AppColors.warning;
-    } else {
-      ringColor = AppColors.danger;
-    }
+    final successColor = isDark ? AppColors.darkSuccess : AppColors.success;
+    final warningColor = isDark ? AppColors.darkWarning : AppColors.warning;
+    final dangerColor = isDark ? AppColors.darkDanger : AppColors.danger;
 
-    if (isDark) {
-      if (clampedScore >= 0.8) {
-        ringColor = AppColors.darkSuccess;
-      } else if (clampedScore >= 0.5) {
-        ringColor = AppColors.darkWarning;
-      } else {
-        ringColor = AppColors.darkDanger;
-      }
+    final Color ringColor;
+    if (clampedScore >= 0.8) {
+      ringColor = successColor;
+    } else if (clampedScore >= 0.5) {
+      ringColor = warningColor;
+    } else {
+      ringColor = dangerColor;
     }
 
     return SizedBox(
@@ -114,6 +108,9 @@ class _ScoreRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ScoreRingPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

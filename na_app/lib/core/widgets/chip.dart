@@ -27,33 +27,41 @@ class AppChip extends StatelessWidget {
     final textColor = labelColor ??
         (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: bgColor,
+    return Semantics(
+      label: label,
+      button: onTap != null,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(AppShapes.pillRadius),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              icon!,
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: textColor,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(AppShapes.pillRadius),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  icon!,
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

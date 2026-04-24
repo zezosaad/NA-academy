@@ -22,10 +22,24 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String? ?? json['_id'] as String?;
+    final name = json['name'] as String?;
+    final email = json['email'] as String?;
+
+    if (id == null || id.isEmpty) {
+      throw FormatException('User.fromJson: missing or empty "id" field in $json');
+    }
+    if (name == null || name.isEmpty) {
+      throw FormatException('User.fromJson: missing or empty "name" field in $json');
+    }
+    if (email == null || email.isEmpty) {
+      throw FormatException('User.fromJson: missing or empty "email" field in $json');
+    }
+
     return User(
-      id: json['id'] as String? ?? json['_id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      email: json['email'] as String? ?? '',
+      id: id,
+      name: name,
+      email: email,
       avatarUrl: json['avatarUrl'] as String?,
       role: _parseRole(json['role'] as String?),
       status: _parseStatus(json['status'] as String?),
@@ -129,16 +143,12 @@ class AuthSession {
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
       final decoded = utf8.decode(base64Url.decode(normalized));
-      final json = _jsonDecode(decoded) as Map<String, dynamic>;
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
       final exp = json['exp'] as int?;
       if (exp == null) return DateTime.now().add(const Duration(minutes: 15));
       return DateTime.fromMillisecondsSinceEpoch(exp * 1000);
     } catch (_) {
       return DateTime.now().add(const Duration(minutes: 15));
     }
-  }
-
-  static dynamic _jsonDecode(String source) {
-    return jsonDecode(source);
   }
 }

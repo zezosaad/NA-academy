@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_motion.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -100,7 +101,7 @@ class _TabPill extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppMotion.medium,
         curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(
           horizontal: isActive ? 20 : 12,

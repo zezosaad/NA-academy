@@ -73,7 +73,7 @@ class _TypingIndicatorWidgetState extends State<TypingIndicatorWidget>
             final animValue =
                 (_controller.value - index * 0.2).clamp(0.0, 1.0);
             final scale =
-                0.5 + 0.5 * (0.5 + 0.5 * sin(animValue * 2 * pi));
+                0.5 + 0.5 * (0.5 + 0.5 * math.sin(animValue * 2 * math.pi));
             return Container(
               width: 6,
               height: 6,
@@ -89,24 +89,5 @@ class _TypingIndicatorWidgetState extends State<TypingIndicatorWidget>
         );
       },
     );
-  }
-}
-
-const double pi = math.pi;
-
-double sin(double x) => math.sin(x);
-
-class AnimatedBuilder extends AnimatedWidget {
-  final Widget Function(BuildContext context, Widget? child) builder;
-
-  const AnimatedBuilder({
-    super.key,
-    required Animation<double> animation,
-    required this.builder,
-  }) : super(listenable: animation);
-
-  @override
-  Widget build(BuildContext context) {
-    return builder(context, null);
   }
 }

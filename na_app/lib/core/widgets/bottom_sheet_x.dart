@@ -14,6 +14,7 @@ Future<T?> showAppBottomSheet<T>({
     builder: (context) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       return Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
           borderRadius: BorderRadius.vertical(

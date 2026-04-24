@@ -75,7 +75,21 @@ class AuthRepository {
       data: {'refreshToken': refreshToken},
       options: Options(extra: {'skipAuth': true}),
     );
-    final data = response.data!;
+    final data = response.data;
+    if (data == null) {
+      throw ApiException(
+        statusCode: 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Refresh response body is null',
+      );
+    }
+    if (data['accessToken'] is! String || data['refreshToken'] is! String) {
+      throw ApiException(
+        statusCode: 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Refresh response missing accessToken or refreshToken',
+      );
+    }
     final session = AuthSession.fromTokens(
       accessToken: data['accessToken'] as String,
       refreshToken: data['refreshToken'] as String,
@@ -113,11 +127,32 @@ class AuthRepository {
 
   Future<({User user, AuthSession session})> _parseAuthResponse(
       Map<String, dynamic> data) async {
+    if (data['user'] is! Map<String, dynamic>) {
+      throw ApiException(
+        statusCode: 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Auth response missing or invalid "user" object',
+      );
+    }
+    final tokensRaw = data['tokens'];
+    if (tokensRaw is! Map<String, dynamic>) {
+      throw ApiException(
+        statusCode: 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Auth response missing or invalid "tokens" object',
+      );
+    }
+    if (tokensRaw['accessToken'] is! String || tokensRaw['refreshToken'] is! String) {
+      throw ApiException(
+        statusCode: 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Auth response tokens missing accessToken or refreshToken',
+      );
+    }
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
-    final tokens = data['tokens'] as Map<String, dynamic>;
     final session = AuthSession.fromTokens(
-      accessToken: tokens['accessToken'] as String,
-      refreshToken: tokens['refreshToken'] as String,
+      accessToken: tokensRaw['accessToken'] as String,
+      refreshToken: tokensRaw['refreshToken'] as String,
     );
     await _tokenStore.saveTokens(
       accessToken: session.accessToken,

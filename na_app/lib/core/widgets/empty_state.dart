@@ -17,7 +17,10 @@ class EmptyState extends StatelessWidget {
     this.icon = LucideIcons.inbox,
     this.actionLabel,
     this.onAction,
-  });
+  }) : assert(
+         (actionLabel == null) == (onAction == null),
+         'actionLabel and onAction must be provided together or neither',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class EmptyState extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            if (message != null) ...[
+            if (message != null && message!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 message!,
