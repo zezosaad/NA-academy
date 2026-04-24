@@ -144,9 +144,19 @@ class _Content extends StatelessWidget {
   }
 
   Widget _buildStats(BuildContext context, bool isDark, List<Lesson> lessons) {
-    final done = lessons.where((l) => l.status == LessonStatus.done).length;
-    final active = lessons.where((l) => l.status == LessonStatus.active).length;
-    final locked = lessons.where((l) => l.status == LessonStatus.locked).length;
+    var done = 0;
+    var active = 0;
+    var locked = 0;
+    for (final l in lessons) {
+      switch (l.status) {
+        case LessonStatus.done:
+          done++;
+        case LessonStatus.active:
+          active++;
+        case LessonStatus.locked:
+          locked++;
+      }
+    }
 
     final stats = [
       {'n': '$done', 'l': 'done'},

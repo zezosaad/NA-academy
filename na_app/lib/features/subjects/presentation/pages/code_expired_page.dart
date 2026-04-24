@@ -19,7 +19,13 @@ class CodeExpiredPage extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/subjects');
+            }
+          },
         ),
       ),
       body: Padding(
@@ -46,7 +52,7 @@ class CodeExpiredPage extends StatelessWidget {
             if (expiredAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'This code expired on ${formatDateTime(expiredAt!)}',
+                'This code expired on ${formatDateTime(context, expiredAt!)}',
                 style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
               ),
             ],

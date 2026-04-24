@@ -58,14 +58,15 @@ describe('Subjects - isUnlocked (e2e)', () => {
   });
 
   it('should register admin and student, seed data, and verify isUnlocked', async () => {
+    const suffix = Date.now();
     // 1. Register admin
     const adminRes = await request(app.getHttpServer())
       .post(`${PREFIX}/auth/register-admin`)
       .send({
         name: 'Admin',
-        email: 'admin-subj-test@na.local',
+        email: `admin-subj-test-${suffix}@na.local`,
         password: 'Passw0rd!',
-        hardwareId: 'admin-subj-dev',
+        hardwareId: `admin-subj-dev-${suffix}`,
       })
       .expect(201);
     adminToken = adminRes.body.data.accessToken ?? adminRes.body.accessToken;
@@ -75,9 +76,9 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .post(`${PREFIX}/auth/register`)
       .send({
         name: 'Student',
-        email: 'student-subj-test@na.local',
+        email: `student-subj-test-${suffix}@na.local`,
         password: 'Passw0rd!',
-        hardwareId: 'student-subj-dev',
+        hardwareId: `student-subj-dev-${suffix}`,
       })
       .expect(201);
     studentToken = studentRes.body.data.accessToken ?? studentRes.body.accessToken;
@@ -105,7 +106,10 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .get(`${PREFIX}/activation-codes/batch/${batchId}?page=1&limit=1`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-    const codeItem = (batchRes.body.data ?? batchRes.body).data[0];
+    const batchData = batchRes.body.data ?? batchRes.body;
+    const batchItems = batchData.data ?? batchData;
+    expect(batchItems.length, 'Batch should contain at least one code').toBeGreaterThan(0);
+    const codeItem = batchItems[0];
     codeValue = codeItem.code;
     if (codeItem._id || codeItem.id) {
       createdSubjectCodeIds.push(codeItem._id ?? codeItem.id);

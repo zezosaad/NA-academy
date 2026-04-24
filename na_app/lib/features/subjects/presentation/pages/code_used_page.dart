@@ -31,7 +31,7 @@ class CodeUsedPage extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.12),
+                color: AppColors.warning.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(LucideIcons.triangleAlert, size: 28, color: AppColors.warning),
@@ -52,7 +52,7 @@ class CodeUsedPage extends StatelessWidget {
             if (consumedAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'Used on ${formatDateTime(consumedAt!)}',
+                'Used on ${formatDateTime(context, consumedAt!)}',
                 style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
               ),
             ],

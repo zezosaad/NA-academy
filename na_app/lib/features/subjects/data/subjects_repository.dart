@@ -24,9 +24,13 @@ class SubjectsRepository {
       final data = response.data;
       if (data == null) return [];
       final rawList = data['data'] as List<dynamic>? ?? [];
-      return rawList.map((e) => Subject.fromJson(e as Map<String, dynamic>)).toList();
+      return rawList
+          .map((e) => Subject.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _mapDioException(e);
+    } on FormatException catch (e) {
+      throw ApiException(statusCode: 0, code: 'PARSE_ERROR', message: e.message);
     }
   }
 
@@ -47,6 +51,8 @@ class SubjectsRepository {
       return (subject: subject, lessons: lessons);
     } on DioException catch (e) {
       throw _mapDioException(e);
+    } on FormatException catch (e) {
+      throw ApiException(statusCode: 0, code: 'PARSE_ERROR', message: e.message);
     }
   }
 

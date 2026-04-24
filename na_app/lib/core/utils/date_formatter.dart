@@ -1,7 +1,7 @@
-String formatDateTime(DateTime dt) {
-  final day = dt.day.toString().padLeft(2, '0');
-  final month = dt.month.toString().padLeft(2, '0');
-  final hour = dt.hour.toString().padLeft(2, '0');
-  final minute = dt.minute.toString().padLeft(2, '0');
-  return '$day/$month/${dt.year} at $hour:$minute';
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+
+String formatDateTime(BuildContext context, DateTime dt) {
+  final locale = Localizations.localeOf(context).toString();
+  return '${DateFormat.yMd(locale).format(dt)} at ${DateFormat.jm(locale).format(dt)}';
 }

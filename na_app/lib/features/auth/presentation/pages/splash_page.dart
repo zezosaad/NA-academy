@@ -30,6 +30,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     if (authState.isLoading) {
       await Future.doWhile(() async {
         await Future.delayed(const Duration(milliseconds: 100));
+        if (!mounted || _navigated) return false;
         return ref.read(authControllerProvider).isLoading;
       });
     }
@@ -75,7 +76,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.08),
+                      color: AppColors.accent.withOpacity(0.08),
                       blurRadius: 32,
                       spreadRadius: 8,
                     ),
@@ -97,7 +98,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.accent.withValues(alpha: 0.5),
+                  color: AppColors.accent.withOpacity(0.5),
                 ),
               ),
             ],

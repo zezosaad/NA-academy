@@ -4,10 +4,21 @@ import 'package:integration_test/integration_test.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
 import 'package:na_app/main.dart' as app;
 
-// This activation code must exist in the test backend.
-// In a full setup, seed the backend before running this test or mock the
-// activation repository so the UI accepts any code.
-const _testActivationCode = 'NA24CH';
+// Generate a unique code at runtime or mock the activation repository.
+// A 12-character alphanumeric code matching the expected format is produced
+// by generating a random string. If the backend uses a different format or
+// requires seeding, replace the generator below or mock the repository.
+String _generateTestActivationCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  final rng = DateTime.now().millisecondsSinceEpoch;
+  final code = StringBuffer();
+  for (var i = 0; i < 12; i++) {
+    code.write(chars[(rng + i * 7) % chars.length]);
+  }
+  return code.toString();
+}
+
+late final String _testActivationCode;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +26,8 @@ void main() {
   group('P1 Unlock Flow', () {
     testWidgets('Splash → Register → empty Subjects → enter code → Code Accepted → Subject detail',
         (tester) async {
+      _testActivationCode = _generateTestActivationCode();
+      final accountEmail = 'student-p1-${DateTime.now().millisecondsSinceEpoch}@na.local';
       app.main();
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
@@ -38,7 +51,7 @@ void main() {
       // Fill registration form
       final textFields = find.byType(TextField);
       await tester.enterText(textFields.at(0), 'Test Student');
-      await tester.enterText(textFields.at(1), 'student-p1-test@na.local');
+      await tester.enterText(textFields.at(1), accountEmail);
       await tester.enterText(textFields.at(2), 'Passw0rd!');
 
       // Accept terms
