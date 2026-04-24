@@ -48,13 +48,15 @@ describe('Subjects - isUnlocked (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (createdSubjectIds.length > 0) {
+    if (subjectModel && createdSubjectIds.length > 0) {
       await subjectModel.deleteMany({ _id: { $in: createdSubjectIds } });
     }
-    if (createdSubjectCodeIds.length > 0) {
+    if (subjectCodeModel && createdSubjectCodeIds.length > 0) {
       await subjectCodeModel.deleteMany({ _id: { $in: createdSubjectCodeIds } });
     }
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('should register admin and student, seed data, and verify isUnlocked', async () => {
@@ -70,6 +72,7 @@ describe('Subjects - isUnlocked (e2e)', () => {
       })
       .expect(201);
     adminToken = adminRes.body.data.accessToken ?? adminRes.body.accessToken;
+    expect(adminToken).toBeTruthy();
 
     // 2. Register student
     const studentRes = await request(app.getHttpServer())
@@ -82,6 +85,7 @@ describe('Subjects - isUnlocked (e2e)', () => {
       })
       .expect(201);
     studentToken = studentRes.body.data.accessToken ?? studentRes.body.accessToken;
+    expect(studentToken).toBeTruthy();
 
     // 3. Create a subject as admin
     const subjectRes = await request(app.getHttpServer())
@@ -91,6 +95,7 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .expect(201);
     subjectId =
       (subjectRes.body.data ?? subjectRes.body)._id ?? (subjectRes.body.data ?? subjectRes.body).id;
+    expect(subjectId).toBeDefined();
     createdSubjectIds.push(subjectId);
 
     // 4. Generate subject activation codes as admin
@@ -100,6 +105,7 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .send({ subjectId, quantity: 1 })
       .expect(201);
     const batchId = (codesRes.body.data ?? codesRes.body).batchId;
+    expect(batchId).toBeDefined();
 
     // 5. Get the code value from the batch
     const batchRes = await request(app.getHttpServer())

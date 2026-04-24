@@ -9,6 +9,7 @@ import 'package:na_app/core/widgets/empty_state.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/features/subjects/presentation/controllers/subjects_controller.dart';
+import 'package:flutter/foundation.dart';
 
 class SubjectDetailPage extends ConsumerWidget {
   final String subjectId;
@@ -24,16 +25,19 @@ class SubjectDetailPage extends ConsumerWidget {
         appBar: AppBar(leading: const _BackButton()),
         body: const Center(child: CircularProgressIndicator(color: AppColors.accent)),
       ),
-      error: (e, _) => Scaffold(
-        appBar: AppBar(leading: const _BackButton()),
-        body: EmptyState(
-          icon: LucideIcons.circleAlert,
-          title: 'Could not load subject',
-          message: e.toString(),
-          actionLabel: 'Retry',
-          onAction: () => ref.invalidate(subjectDetailProvider(subjectId)),
-        ),
-      ),
+      error: (e, _) {
+        debugPrint('[SubjectDetail] load error: $e');
+        return Scaffold(
+          appBar: AppBar(leading: const _BackButton()),
+          body: EmptyState(
+            icon: LucideIcons.circleAlert,
+            title: 'Could not load subject',
+            message: 'Unable to load subject. Please try again.',
+            actionLabel: 'Retry',
+            onAction: () => ref.invalidate(subjectDetailProvider(subjectId)),
+          ),
+        );
+      },
       data: (data) => _Content(subject: data.subject, lessons: data.lessons),
     );
   }
