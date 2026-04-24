@@ -3,12 +3,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GenerateSubjectCodesDto {
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439011' })
-  @ValidateIf(o => !o.bundleId)
+  @ValidateIf((o) => !o.bundleId)
   @IsMongoId()
   subjectId?: string;
 
   @ApiPropertyOptional({ example: '507f1f77bcf86cd799439012' })
-  @ValidateIf(o => !o.subjectId)
+  @ValidateIf((o) => !o.subjectId)
   @IsMongoId()
   bundleId?: string;
 

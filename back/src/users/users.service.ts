@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -15,9 +10,7 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   private readonly SALT_ROUNDS = 12;
 
-  constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
 
   async create(data: {
     email: string;
@@ -53,11 +46,11 @@ export class UsersService {
   async createAdminUser(data: any): Promise<UserDocument> {
     const { password, ...rest } = data;
     const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
-    const user = new this.userModel({ 
-      ...rest, 
-      passwordHash, 
+    const user = new this.userModel({
+      ...rest,
+      passwordHash,
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE 
+      status: UserStatus.ACTIVE,
     });
     return user.save();
   }

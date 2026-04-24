@@ -3,6 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Subject, SubjectDocument } from './schemas/subject.schema.js';
 import { SubjectBundle, SubjectBundleDocument } from './schemas/subject-bundle.schema.js';
+import {
+  SubjectCode,
+  SubjectCodeDocument,
+  CodeStatus as SubjectCodeStatus,
+} from '../activation-codes/schemas/subject-code.schema.js';
 import { CreateSubjectDto } from './dto/create-subject.dto.js';
 import { UpdateSubjectDto } from './dto/update-subject.dto.js';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
@@ -14,6 +19,7 @@ export class SubjectsService {
   constructor(
     @InjectModel(Subject.name) private readonly subjectModel: Model<SubjectDocument>,
     @InjectModel(SubjectBundle.name) private readonly bundleModel: Model<SubjectBundleDocument>,
+    @InjectModel(SubjectCode.name) private readonly subjectCodeModel: Model<SubjectCodeDocument>,
   ) {}
 
   async createSubject(dto: CreateSubjectDto, userId: string): Promise<SubjectDocument> {
@@ -28,7 +34,11 @@ export class SubjectsService {
     return this.createSubject(dto, userId);
   }
 
-  async findAllSubjects(query: ListSubjectsQueryDto, role?: string): Promise<{ data: SubjectDocument[], total: number }> {
+  async findAllSubjects(
+    query: ListSubjectsQueryDto,
+    role?: string,
+    userId?: string,
+  ): Promise<{ data: any[]; total: number }> {
     const filter: Record<string, any> = {};
     if (query.category) {
       filter.category = query.category;
@@ -42,12 +52,79 @@ export class SubjectsService {
 
     const skip = (query.page - 1) * query.limit;
 
-    const [data, total] = await Promise.all([
-      this.subjectModel.find(filter).skip(skip).limit(query.limit).sort({ createdAt: -1 }).exec(),
+    const [subjects, total] = await Promise.all([
+      this.subjectModel
+        .find(filter)
+        .skip(skip)
+        .limit(query.limit)
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
       this.subjectModel.countDocuments(filter).exec(),
     ]);
 
+    if (role === 'student' && userId) {
+      const unlockedIds = await this.getUnlockedSubjectIds(userId);
+      const data = subjects.map((subject) => ({
+        ...subject,
+        isUnlocked: unlockedIds.has(subject._id.toString()),
+      }));
+      return { data, total };
+    }
+
+    const data = subjects.map((subject) => ({
+      ...subject,
+      isUnlocked: false,
+    }));
     return { data, total };
+  }
+
+  private async getUnlockedSubjectIds(userId: string): Promise<Set<string>> {
+    const sId = new Types.ObjectId(userId);
+
+    const directCodes = await this.subjectCodeModel
+      .find({
+        activatedBy: sId,
+        status: SubjectCodeStatus.USED,
+        subjectId: { $exists: true },
+      })
+      .select('subjectId')
+      .lean()
+      .exec();
+
+    const unlockedIds = new Set<string>();
+    for (const code of directCodes) {
+      if (code.subjectId) unlockedIds.add(code.subjectId.toString());
+    }
+
+    const bundleCodes = await this.subjectCodeModel
+      .find({
+        activatedBy: sId,
+        status: SubjectCodeStatus.USED,
+        bundleId: { $exists: true },
+      })
+      .select('bundleId')
+      .lean()
+      .exec();
+
+    if (bundleCodes.length > 0) {
+      const bundleIds = bundleCodes.map((bc) => bc.bundleId!).filter(Boolean);
+      const bundles = await this.bundleModel
+        .find({
+          _id: { $in: bundleIds },
+        })
+        .select('subjects')
+        .lean()
+        .exec();
+
+      for (const bundle of bundles) {
+        for (const subId of bundle.subjects) {
+          unlockedIds.add(subId.toString());
+        }
+      }
+    }
+
+    return unlockedIds;
   }
 
   async findSubjectById(id: string): Promise<SubjectDocument> {
@@ -76,7 +153,7 @@ export class SubjectsService {
 
     const bundle = new this.bundleModel({
       name: dto.name,
-      subjects: dto.subjectIds.map(id => new Types.ObjectId(id)),
+      subjects: dto.subjectIds.map((id) => new Types.ObjectId(id)),
     });
     return bundle.save();
   }
@@ -95,7 +172,7 @@ export class SubjectsService {
 
     const updateData: any = { ...dto };
     if (dto.subjectIds) {
-      updateData.subjects = dto.subjectIds.map(subId => new Types.ObjectId(subId));
+      updateData.subjects = dto.subjectIds.map((subId) => new Types.ObjectId(subId));
       delete updateData.subjectIds;
     }
 

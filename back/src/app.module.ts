@@ -36,10 +36,12 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     }),
 
     // Rate limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
 
     // Feature modules
     AuthModule,

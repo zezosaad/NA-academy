@@ -10,7 +10,10 @@ export class Question {
   @Prop({ required: true, type: String })
   text!: string;
 
-  @Prop({ type: [{ label: { type: String, required: true }, text: { type: String, required: true } }], required: true })
+  @Prop({
+    type: [{ label: { type: String, required: true }, text: { type: String, required: true } }],
+    required: true,
+  })
   options!: { label: string; text: string }[];
 
   @Prop({ required: true, type: String })
@@ -38,7 +41,11 @@ export class Exam {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Subject', index: true })
   subjectId!: Types.ObjectId;
 
-  @Prop({ type: [QuestionSchema], required: true, validate: [(val: Question[]) => val.length > 0, 'Must contain at least 1 question'] })
+  @Prop({
+    type: [QuestionSchema],
+    required: true,
+    validate: [(val: Question[]) => val.length > 0, 'Must contain at least 1 question'],
+  })
   questions!: Question[];
 
   @Prop({ default: false, type: Boolean })

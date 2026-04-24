@@ -3,6 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:na_app/core/widgets/app_shell.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:na_app/features/auth/presentation/pages/splash_page.dart';
+import 'package:na_app/features/auth/presentation/pages/login_page.dart';
+import 'package:na_app/features/auth/presentation/pages/register_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/subjects_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/enter_subject_code_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/code_unlocking_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/code_expired_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/code_used_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -32,7 +41,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const _PlaceholderPage(title: 'Splash'),
+        builder: (context, state) => const SplashPage(),
       ),
       GoRoute(
         path: '/onboarding',
@@ -40,11 +49,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/auth/login',
-        builder: (context, state) => const _PlaceholderPage(title: 'Login'),
+        builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
         path: '/auth/register',
-        builder: (context, state) => const _PlaceholderPage(title: 'Register'),
+        builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: '/auth/forgot-password',
@@ -72,15 +81,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/subjects',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Subjects'),
+                builder: (context, state) => const SubjectsPage(),
                 routes: [
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
                       final subjectId = state.pathParameters['id']!;
-                      return _PlaceholderPage(title: 'Subject $subjectId');
+                      return SubjectDetailPage(subjectId: subjectId);
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'lessons/:lessonId',
+                        builder: (context, state) {
+                          final lessonId = state.pathParameters['lessonId']!;
+                          return _PlaceholderPage(title: 'Lesson $lessonId');
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -156,17 +173,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/subjects/:id/enter-code',
-        builder: (context, state) {
-          final subjectId = state.pathParameters['id']!;
-          return _PlaceholderPage(title: 'Enter Code for $subjectId');
-        },
+        path: '/subjects/enter-code',
+        builder: (context, state) => const EnterSubjectCodePage(),
       ),
       GoRoute(
         path: '/subjects/:id/unlocking',
         builder: (context, state) {
           final subjectId = state.pathParameters['id']!;
-          return _PlaceholderPage(title: 'Unlocking $subjectId');
+          return CodeUnlockingPage(subjectId: subjectId);
+        },
+      ),
+      GoRoute(
+        path: '/subjects/code-expired',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return CodeExpiredPage(
+            code: extra['code'] as String? ?? '',
+            expiredAt: extra['expiredAt'] as DateTime?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/subjects/code-used',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return CodeUsedPage(
+            code: extra['code'] as String? ?? '',
+            consumedAt: extra['consumedAt'] as DateTime?,
+          );
         },
       ),
       GoRoute(

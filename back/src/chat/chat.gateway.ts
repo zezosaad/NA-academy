@@ -1,4 +1,12 @@
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -25,18 +33,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
+      const token =
+        client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
       if (!token) {
         client.disconnect();
         return;
       }
-      
+
       const secret = this.configService.get<string>('jwt.secret');
       const payload = this.jwtService.verify(token, { secret });
-      
+
       const userId = payload.sub;
       client.data.user = payload;
-      
+
       this.userSockets.set(userId.toString(), client.id);
 
       // Send pending offline messages
@@ -64,16 +73,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('send_message')
-  async handleMessage(@MessageBody() payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any }, @ConnectedSocket() client: Socket) {
+  async handleMessage(
+    @MessageBody()
+    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any },
+    @ConnectedSocket() client: Socket,
+  ) {
     const senderId = client.data.user.sub;
-    
+
     // Authorization check
     const canChat = await this.chatService.canChat(senderId, payload.recipientId);
     if (!canChat) {
       return { event: 'error', data: 'Unauthorized to chat with this user' };
     }
 
-    const conversation = await this.chatService.findOrCreateConversation(senderId, payload.recipientId);
+    const conversation = await this.chatService.findOrCreateConversation(
+      senderId,
+      payload.recipientId,
+    );
 
     const savedMessage = await this.chatService.saveMessage({
       conversationId: conversation._id.toString(),
@@ -89,34 +105,49 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(recipientSocketId).emit('new_message', savedMessage);
     }
 
-    return { event: 'message_ack', data: { messageId: savedMessage._id, status: MessageStatus.SENT } };
+    return {
+      event: 'message_ack',
+      data: { messageId: savedMessage._id, status: MessageStatus.SENT },
+    };
   }
 
   @SubscribeMessage('delivery_ack')
-  async handleDelivery(@MessageBody() payload: { messageId: string, senderId: string }) {
+  async handleDelivery(@MessageBody() payload: { messageId: string; senderId: string }) {
     await this.chatService.updateMessageStatus(payload.messageId, MessageStatus.DELIVERED);
     const senderSocketId = this.userSockets.get(payload.senderId);
     if (senderSocketId) {
-      this.server.to(senderSocketId).emit('status_update', { messageId: payload.messageId, status: MessageStatus.DELIVERED });
+      this.server
+        .to(senderSocketId)
+        .emit('status_update', { messageId: payload.messageId, status: MessageStatus.DELIVERED });
     }
   }
 
   @SubscribeMessage('mark_read')
-  async handleMarkRead(@MessageBody() payload: { conversationId: string, senderId: string }, @ConnectedSocket() client: Socket) {
+  async handleMarkRead(
+    @MessageBody() payload: { conversationId: string; senderId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
     const readerId = client.data.user.sub;
     await this.chatService.markConversationRead(payload.conversationId, readerId);
-    
+
     const senderSocketId = this.userSockets.get(payload.senderId);
     if (senderSocketId) {
-      this.server.to(senderSocketId).emit('conversation_read', { conversationId: payload.conversationId });
+      this.server
+        .to(senderSocketId)
+        .emit('conversation_read', { conversationId: payload.conversationId });
     }
   }
 
   @SubscribeMessage('typing')
-  handleTyping(@MessageBody() payload: { recipientId: string; isTyping: boolean }, @ConnectedSocket() client: Socket) {
+  handleTyping(
+    @MessageBody() payload: { recipientId: string; isTyping: boolean },
+    @ConnectedSocket() client: Socket,
+  ) {
     const recipientSocketId = this.userSockets.get(payload.recipientId);
     if (recipientSocketId) {
-      this.server.to(recipientSocketId).emit('typing_indicator', { userId: client.data.user.sub, isTyping: payload.isTyping });
+      this.server
+        .to(recipientSocketId)
+        .emit('typing_indicator', { userId: client.data.user.sub, isTyping: payload.isTyping });
     }
   }
 }

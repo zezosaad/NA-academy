@@ -2,7 +2,12 @@ import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Conversation, ConversationDocument } from './schemas/conversation.schema.js';
-import { Message, MessageDocument, MessageStatus, ChatMessageType } from './schemas/message.schema.js';
+import {
+  Message,
+  MessageDocument,
+  MessageStatus,
+  ChatMessageType,
+} from './schemas/message.schema.js';
 import { AccessCheckHelper } from '../activation-codes/helpers/access-check.helper.js';
 
 @Injectable()
@@ -23,7 +28,7 @@ export class ChatService {
   async findOrCreateConversation(userId1: string, userId2: string): Promise<ConversationDocument> {
     const roomId = this.generateRoomId(userId1, userId2);
     let conv = await this.conversationModel.findOne({ roomId }).exec();
-    
+
     if (!conv) {
       conv = new this.conversationModel({
         roomId,
@@ -38,10 +43,17 @@ export class ChatService {
   async canChat(studentId: string, teacherId: string): Promise<boolean> {
     // Ideally we cross-reference assigned subjects to teacher vs activated student bundles.
     // Assuming for now the teacher has global access or bypass till teacher schedules matrix exists.
-    return true; 
+    return true;
   }
 
-  async saveMessage(data: { conversationId: string, senderId: string, recipientId: string, text?: string, imageFileId?: string, messageType: ChatMessageType }): Promise<MessageDocument> {
+  async saveMessage(data: {
+    conversationId: string;
+    senderId: string;
+    recipientId: string;
+    text?: string;
+    imageFileId?: string;
+    messageType: ChatMessageType;
+  }): Promise<MessageDocument> {
     const msg = new this.messageModel({
       ...data,
       conversationId: new Types.ObjectId(data.conversationId),
@@ -49,13 +61,12 @@ export class ChatService {
       recipientId: new Types.ObjectId(data.recipientId),
       status: MessageStatus.SENT,
     });
-    
+
     await msg.save();
 
-    await this.conversationModel.updateOne(
-      { _id: msg.conversationId },
-      { lastMessageAt: new Date() }
-    ).exec();
+    await this.conversationModel
+      .updateOne({ _id: msg.conversationId }, { lastMessageAt: new Date() })
+      .exec();
 
     return msg.populate('senderId', 'name role email');
   }
@@ -65,16 +76,25 @@ export class ChatService {
   }
 
   async markConversationRead(conversationId: string, recipientId: string): Promise<void> {
-    await this.messageModel.updateMany(
-      { conversationId: new Types.ObjectId(conversationId), recipientId: new Types.ObjectId(recipientId), status: { $ne: MessageStatus.READ } },
-      { $set: { status: MessageStatus.READ } }
-    ).exec();
+    await this.messageModel
+      .updateMany(
+        {
+          conversationId: new Types.ObjectId(conversationId),
+          recipientId: new Types.ObjectId(recipientId),
+          status: { $ne: MessageStatus.READ },
+        },
+        { $set: { status: MessageStatus.READ } },
+      )
+      .exec();
   }
 
   async getPendingMessages(recipientId: string): Promise<MessageDocument[]> {
-    return this.messageModel.find({
-      recipientId: new Types.ObjectId(recipientId),
-      status: MessageStatus.SENT,
-    }).populate('senderId', 'name role email').exec();
+    return this.messageModel
+      .find({
+        recipientId: new Types.ObjectId(recipientId),
+        status: MessageStatus.SENT,
+      })
+      .populate('senderId', 'name role email')
+      .exec();
   }
 }

@@ -10,7 +10,11 @@ export class SubjectBundle {
   @Prop({ required: true, type: String })
   name!: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Subject' }], required: true, validate: [(val: Types.ObjectId[]) => val.length > 0, 'Must contain at least 1 subject'] })
+  @Prop({
+    type: [{ type: Types.ObjectId, ref: 'Subject' }],
+    required: true,
+    validate: [(val: Types.ObjectId[]) => val.length > 0, 'Must contain at least 1 subject'],
+  })
   subjects!: Types.ObjectId[];
 
   @Prop({ default: true, type: Boolean })

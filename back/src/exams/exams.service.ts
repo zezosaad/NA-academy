@@ -20,7 +20,11 @@ export class ExamsService {
   private validateQuestions(questions: any[]) {
     for (const q of questions) {
       const optionLabels = q.options.map((opt: any) => opt.label);
-      const normalizedLabels = optionLabels.map((label: string) => String(label || '').trim().toUpperCase());
+      const normalizedLabels = optionLabels.map((label: string) =>
+        String(label || '')
+          .trim()
+          .toUpperCase(),
+      );
       const uniqueLabels = new Set(normalizedLabels);
 
       if (normalizedLabels.some((label: string) => !label)) {
@@ -28,11 +32,15 @@ export class ExamsService {
       }
 
       if (uniqueLabels.size !== normalizedLabels.length) {
-        throw new BadRequestException(`Duplicate option labels are not allowed for question: '${q.text}'`);
+        throw new BadRequestException(
+          `Duplicate option labels are not allowed for question: '${q.text}'`,
+        );
       }
 
       if (!optionLabels.includes(q.correctOption)) {
-        throw new BadRequestException(`correctOption '${q.correctOption}' does not exist in options for question: '${q.text}'`);
+        throw new BadRequestException(
+          `correctOption '${q.correctOption}' does not exist in options for question: '${q.text}'`,
+        );
       }
     }
   }
@@ -52,18 +60,23 @@ export class ExamsService {
     return this.createExam(dto, userId);
   }
 
-  async canAccessFreeSection(examId: string, studentId: string): Promise<{ allowed: boolean, remainingAttempts: number }> {
+  async canAccessFreeSection(
+    examId: string,
+    studentId: string,
+  ): Promise<{ allowed: boolean; remainingAttempts: number }> {
     const exam = await this.examModel.findById(examId).exec();
     if (!exam || !exam.hasFreeSection || exam.freeAttemptLimit === undefined) {
       return { allowed: false, remainingAttempts: 0 };
     }
 
-    const previousAttempts = await this.sessionModel.countDocuments({
-      examId: new Types.ObjectId(examId),
-      studentId: new Types.ObjectId(studentId),
-      isFreeAttempt: true,
-      status: SessionStatus.COMPLETED
-    }).exec();
+    const previousAttempts = await this.sessionModel
+      .countDocuments({
+        examId: new Types.ObjectId(examId),
+        studentId: new Types.ObjectId(studentId),
+        isFreeAttempt: true,
+        status: SessionStatus.COMPLETED,
+      })
+      .exec();
 
     const remainingAttempts = exam.freeAttemptLimit - previousAttempts;
     return { allowed: remainingAttempts > 0, remainingAttempts: Math.max(0, remainingAttempts) };
@@ -72,7 +85,7 @@ export class ExamsService {
   async findExamById(id: string, includeAnswers: boolean = true): Promise<ExamDocument | any> {
     const exam = await this.examModel.findById(id).lean().exec();
     if (!exam) throw new NotFoundException('Exam not found');
-    
+
     if (!includeAnswers) {
       exam.questions.forEach((q: any) => {
         delete q.correctOption;
@@ -82,24 +95,32 @@ export class ExamsService {
     return exam;
   }
 
-  async startExam(examId: string, studentId: string, isFreeAttempt: boolean): Promise<ExamSessionDocument> {
+  async startExam(
+    examId: string,
+    studentId: string,
+    isFreeAttempt: boolean,
+  ): Promise<ExamSessionDocument> {
     const exam = await this.examModel.findById(examId).exec();
     if (!exam) throw new NotFoundException('Exam not found');
 
-    const activeSession = await this.sessionModel.findOne({
-      examId,
-      studentId,
-      status: SessionStatus.STARTED,
-    }).exec();
+    const activeSession = await this.sessionModel
+      .findOne({
+        examId,
+        studentId,
+        status: SessionStatus.STARTED,
+      })
+      .exec();
 
     if (activeSession) {
-      return activeSession; // Reconnect 
+      return activeSession; // Reconnect
     }
 
     let timeLimit: number = 0;
     // If standard time isn't explicitly defined globally, map over questions safely
     if (isFreeAttempt) {
-      const qs = Array.isArray(exam.questions) ? exam.questions.slice(0, exam.freeQuestionCount || 0) : [];
+      const qs = Array.isArray(exam.questions)
+        ? exam.questions.slice(0, exam.freeQuestionCount || 0)
+        : [];
       timeLimit = qs.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60;
     } else {
       timeLimit = exam.questions.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60;
@@ -133,14 +154,14 @@ export class ExamsService {
     // Auto grader
     let correctAnswers = 0;
     const questionsMap = new Map<string, Question>();
-    
+
     // In free attempt mode, restrict evaluated total onto limits dynamically
     let questionsPool = exam.questions;
     if (session.isFreeAttempt && exam.hasFreeSection && exam.freeQuestionCount) {
-       questionsPool = exam.questions.slice(0, exam.freeQuestionCount);
+      questionsPool = exam.questions.slice(0, exam.freeQuestionCount);
     }
-    
-    questionsPool.forEach(q => questionsMap.set(q._id.toString(), q));
+
+    questionsPool.forEach((q) => questionsMap.set(q._id.toString(), q));
 
     for (const ans of dto.answers) {
       const q = questionsMap.get(ans.questionId.toString());
@@ -155,7 +176,7 @@ export class ExamsService {
     // Update session
     session.status = SessionStatus.COMPLETED;
     session.completedAt = new Date();
-    session.responses = dto.answers.map(a => ({
+    session.responses = dto.answers.map((a) => ({
       questionId: new Types.ObjectId(a.questionId),
       selectedOption: a.selectedOption,
     }));
@@ -173,9 +194,9 @@ export class ExamsService {
 
     // Dummy certificate generation if score > 70
     if (scorePercentage >= 70) {
-       // Typically uses PDF generator buffer pushed to GridFS `mediaBucket.openUploadStream`
-       // Left mocked to return true
-       score.certificateGridFsId = new Types.ObjectId(); 
+      // Typically uses PDF generator buffer pushed to GridFS `mediaBucket.openUploadStream`
+      // Left mocked to return true
+      score.certificateGridFsId = new Types.ObjectId();
     }
 
     return score.save();

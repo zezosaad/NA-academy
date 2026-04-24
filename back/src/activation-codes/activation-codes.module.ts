@@ -2,7 +2,10 @@ import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { SubjectCode, SubjectCodeSchema } from './schemas/subject-code.schema.js';
 import { ExamCode, ExamCodeSchema } from './schemas/exam-code.schema.js';
-import { ActivationRateLimit, ActivationRateLimitSchema } from './schemas/activation-rate-limit.schema.js';
+import {
+  ActivationRateLimit,
+  ActivationRateLimitSchema,
+} from './schemas/activation-rate-limit.schema.js';
 import { ActivationCodesService } from './activation-codes.service.js';
 import { ActivationCodesController } from './activation-codes.controller.js';
 import { AccessCheckHelper } from './helpers/access-check.helper.js';

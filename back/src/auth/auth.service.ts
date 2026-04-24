@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ForbiddenException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -43,10 +38,7 @@ export class AuthService {
     });
 
     // Register device
-    await this.devicesService.registerDevice(
-      user._id.toString(),
-      data.hardwareId,
-    );
+    await this.devicesService.registerDevice(user._id.toString(), data.hardwareId);
 
     // Create session and tokens
     const tokens = await this.createSession(user, data.hardwareId);
@@ -115,9 +107,7 @@ export class AuthService {
   async refresh(refreshToken: string) {
     const refreshTokenHash = this.hashToken(refreshToken);
 
-    const session = await this.sessionModel
-      .findOne({ refreshTokenHash, isActive: true })
-      .exec();
+    const session = await this.sessionModel.findOne({ refreshTokenHash, isActive: true }).exec();
 
     if (!session) {
       throw new UnauthorizedException('Invalid or expired refresh token');

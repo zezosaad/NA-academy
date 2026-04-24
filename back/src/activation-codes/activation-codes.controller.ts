@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Res, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Res,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ActivationCodesService } from './activation-codes.service.js';
@@ -46,7 +57,11 @@ export class ActivationCodesController {
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Export batch to CSV or XLSX' })
-  async exportBatch(@Param('batchId') batchId: string, @Query() query: BatchExportQueryDto, @Res() res: Response) {
+  async exportBatch(
+    @Param('batchId') batchId: string,
+    @Query() query: BatchExportQueryDto,
+    @Res() res: Response,
+  ) {
     await this.activationCodesService.exportBatch(batchId, query.format, res);
   }
 
