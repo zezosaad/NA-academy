@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubjectsService } from './subjects.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -26,9 +37,13 @@ export class SubjectsController {
   }
 
   @Get('subjects')
-  @ApiOperation({ summary: 'List subjects' })
-  async findAllSubjects(@Query() query: ListSubjectsQueryDto, @CurrentUser('role') role: string) {
-    const { data, total } = await this.subjectsService.findAllSubjects(query, role);
+  @ApiOperation({ summary: 'List subjects with per-student unlock status' })
+  async findAllSubjects(
+    @Query() query: ListSubjectsQueryDto,
+    @CurrentUser('role') role: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const { data, total } = await this.subjectsService.findAllSubjects(query, role, userId);
     return { data, total, page: query.page, limit: query.limit };
   }
 

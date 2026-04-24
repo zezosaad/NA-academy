@@ -73,29 +73,29 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Backend gap B2 — MUST land before T028**:
 
-- [ ] T024 [US1] Modify `back/src/subjects/subjects.service.ts` `findAllSubjects` to accept `(query, role, userId)` and, when `role === 'student'`, join against `SubjectCode` (or existing access helper) to project `isUnlocked: boolean` on each subject in the response (contracts §3 Δ / B2).
-- [ ] T025 [US1] Update `back/src/subjects/subjects.controller.ts` `GET /subjects` handler to pass the authenticated `userId` into the service and update the Swagger response schema to include `isUnlocked`.
-- [ ] T026 [US1] Update `back/src/subjects/dto/subject-response.dto.ts` (or equivalent) to add the `isUnlocked: boolean` field; add Jest test in `back/test/subjects.e2e-spec.ts` asserting the flag is `true` for a student with a redeemed code and `false` otherwise.
+- [x] T024 [US1] Modify `back/src/subjects/subjects.service.ts` `findAllSubjects` to accept `(query, role, userId)` and, when `role === 'student'`, join against `SubjectCode` (or existing access helper) to project `isUnlocked: boolean` on each subject in the response (contracts §3 Δ / B2).
+- [x] T025 [US1] Update `back/src/subjects/subjects.controller.ts` `GET /subjects` handler to pass the authenticated `userId` into the service and update the Swagger response schema to include `isUnlocked`.
+- [x] T026 [US1] Update `back/src/subjects/dto/subject-response.dto.ts` (or equivalent) to add the `isUnlocked: boolean` field; add Jest test in `back/test/subjects.e2e-spec.ts` asserting the flag is `true` for a student with a redeemed code and `false` otherwise.
 
 **Mobile implementation**:
 
-- [ ] T027 [P] [US1] Create `Subject` and `Lesson` freezed models in `na_app/lib/features/subjects/domain/subject_models.dart` matching data-model §1.3–§1.4 (including `isUnlocked` from B2).
-- [ ] T028 [P] [US1] Create `ActivationResult` sealed class in `na_app/lib/features/subjects/domain/activation_result.dart` with `ActivationSuccess` / `ActivationFailure` variants and `ActivationErrorReason` enum (data-model §1.5).
-- [ ] T029 [US1] Create `na_app/lib/features/subjects/data/subjects_repository.dart` with `listSubjects()`, `getSubject(id)`, and `activateCode(code)` methods; maps Dio errors (400/403/429) onto `ActivationFailure` reasons per contracts §4.
-- [ ] T030 [US1] Create `na_app/lib/features/auth/presentation/pages/splash_page.dart` — NA monogram, parchment background, soft radial glow, ≤3 s loader, routes to Login or Today based on `AuthController` state (FR-028, FR-029, acceptance US5 #1).
-- [ ] T031 [P] [US1] Create `na_app/lib/features/auth/presentation/pages/login_page.dart` — email + password, "Forgot password?" link (routes to `/auth/forgot-password`, page built in US5), primary pill CTA, secondary "Create account" ghost link.
-- [ ] T032 [P] [US1] Create `na_app/lib/features/auth/presentation/pages/register_page.dart` — full name, email, password (with show toggle + strength meter), Terms checkbox, primary pill CTA; on success stores tokens via `AuthController` and routes to `/subjects` (FR-001, FR-028).
-- [ ] T033 [P] [US1] Create `na_app/lib/features/subjects/presentation/widgets/subject_card.dart` rendering unlocked vs. locked states (lock icon + "Needs code" chip when `!isUnlocked`) per FR-005.
-- [ ] T034 [US1] Create `na_app/lib/features/subjects/presentation/pages/subjects_page.dart` — grid of `SubjectCard`s, "Have a subject code?" prominent card at the top, pull-to-refresh bound to the subjects provider (FR-005, acceptance US1 #1).
-- [ ] T035 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/enter_subject_code_page.dart` — full-screen code entry using `CodeInputField` from T019, "Unlock" pill CTA disabled until 6 chars, FR-006/FR-007.
-- [ ] T036 [P] [US1] Create `na_app/lib/features/subjects/presentation/widgets/bottom_sheet_code.dart` — bottom-sheet variant of code entry for locked-card taps (FR-006, edge case: code entry from within a screen).
-- [ ] T037 [US1] Create `na_app/lib/features/subjects/presentation/pages/code_unlocking_page.dart` — 3-step progress list ("Verifying → Linking to teacher → Downloading lesson index") with reduced-motion degrade to instant state swap (FR-008, FR-036).
-- [ ] T038 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/code_expired_page.dart` — preserves entered code in JetBrains Mono, shows expiry timestamp, two CTAs "Try another code" + "Message teacher" (FR-009, acceptance US1 #3).
-- [ ] T039 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/code_used_page.dart` — same layout as `code_expired_page.dart` with "Code already used" copy that does NOT distinguish "used by you" vs. "used by someone else" (FR-009 clarified, acceptance US1 #4).
-- [ ] T040 [US1] Create `na_app/lib/features/subjects/presentation/pages/subject_detail_page.dart` — lesson list with status chips (Done / Active / Locked), opens Active or Done lessons, blocks Locked with inline hint (FR-011, acceptance US1 #5).
-- [ ] T041 [US1] Wire rate-limit handling in `subjects_repository.dart` and the activation flow: on 429 show an inline wait-time hint using `Retry-After` header / response body; disable the Unlock button for the advertised duration (FR-010).
-- [ ] T042 [US1] Add `flutter_test` widget test `na_app/test/features/subjects/enter_subject_code_page_test.dart` asserting `CodeInputField` auto-advance, paste distribution across cells, and Unlock button enable-on-6-chars.
-- [ ] T043 [US1] Add `integration_test` in `na_app/integration_test/p1_unlock_flow_test.dart` walking Splash → Register → empty Subjects → enter code → Code Accepted → Subject detail (quickstart.md §3, plan.md Testing).
+- [x] T027 [P] [US1] Create `Subject` and `Lesson` freezed models in `na_app/lib/features/subjects/domain/subject_models.dart` matching data-model §1.3–§1.4 (including `isUnlocked` from B2).
+- [x] T028 [P] [US1] Create `ActivationResult` sealed class in `na_app/lib/features/subjects/domain/activation_result.dart` with `ActivationSuccess` / `ActivationFailure` variants and `ActivationErrorReason` enum (data-model §1.5).
+- [x] T029 [US1] Create `na_app/lib/features/subjects/data/subjects_repository.dart` with `listSubjects()`, `getSubject(id)`, and `activateCode(code)` methods; maps Dio errors (400/403/429) onto `ActivationFailure` reasons per contracts §4.
+- [x] T030 [US1] Create `na_app/lib/features/auth/presentation/pages/splash_page.dart` — NA monogram, parchment background, soft radial glow, ≤3 s loader, routes to Login or Today based on `AuthController` state (FR-028, FR-029, acceptance US5 #1).
+- [x] T031 [P] [US1] Create `na_app/lib/features/auth/presentation/pages/login_page.dart` — email + password, "Forgot password?" link (routes to `/auth/forgot-password`, page built in US5), primary pill CTA, secondary "Create account" ghost link.
+- [x] T032 [P] [US1] Create `na_app/lib/features/auth/presentation/pages/register_page.dart` — full name, email, password (with show toggle + strength meter), Terms checkbox, primary pill CTA; on success stores tokens via `AuthController` and routes to `/subjects` (FR-001, FR-028).
+- [x] T033 [P] [US1] Create `na_app/lib/features/subjects/presentation/widgets/subject_card.dart` rendering unlocked vs. locked states (lock icon + "Needs code" chip when `!isUnlocked`) per FR-005.
+- [x] T034 [US1] Create `na_app/lib/features/subjects/presentation/pages/subjects_page.dart` — grid of `SubjectCard`s, "Have a subject code?" prominent card at the top, pull-to-refresh bound to the subjects provider (FR-005, acceptance US1 #1).
+- [x] T035 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/enter_subject_code_page.dart` — full-screen code entry using `CodeInputField` from T019, "Unlock" pill CTA disabled until 6 chars, FR-006/FR-007.
+- [x] T036 [P] [US1] Create `na_app/lib/features/subjects/presentation/widgets/bottom_sheet_code.dart` — bottom-sheet variant of code entry for locked-card taps (FR-006, edge case: code entry from within a screen).
+- [x] T037 [US1] Create `na_app/lib/features/subjects/presentation/pages/code_unlocking_page.dart` — 3-step progress list ("Verifying → Linking to teacher → Downloading lesson index") with reduced-motion degrade to instant state swap (FR-008, FR-036).
+- [x] T038 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/code_expired_page.dart` — preserves entered code in JetBrains Mono, shows expiry timestamp, two CTAs "Try another code" + "Message teacher" (FR-009, acceptance US1 #3).
+- [x] T039 [P] [US1] Create `na_app/lib/features/subjects/presentation/pages/code_used_page.dart` — same layout as `code_expired_page.dart` with "Code already used" copy that does NOT distinguish "used by you" vs. "used by someone else" (FR-009 clarified, acceptance US1 #4).
+- [x] T040 [US1] Create `na_app/lib/features/subjects/presentation/pages/subject_detail_page.dart` — lesson list with status chips (Done / Active / Locked), opens Active or Done lessons, blocks Locked with inline hint (FR-011, acceptance US1 #5).
+- [x] T041 [US1] Wire rate-limit handling in `subjects_repository.dart` and the activation flow: on 429 show an inline wait-time hint using `Retry-After` header / response body; disable the Unlock button for the advertised duration (FR-010).
+- [x] T042 [US1] Add `flutter_test` widget test `na_app/test/features/subjects/enter_subject_code_page_test.dart` asserting `CodeInputField` auto-advance, paste distribution across cells, and Unlock button enable-on-6-chars.
+- [x] T043 [US1] Add `integration_test` in `na_app/integration_test/p1_unlock_flow_test.dart` walking Splash → Register → empty Subjects → enter code → Code Accepted → Subject detail (quickstart.md §3, plan.md Testing).
 
 **Checkpoint**: User Story 1 should be fully functional and demoable as the MVP.
 
