@@ -8,6 +8,10 @@ import '../storage/secure_token_store.dart';
 const _skipAuthExtraKey = 'skipAuth';
 const _retriedExtraKey = 'retriedAfterRefresh';
 
+final _sessionExpiredController = StreamController<void>.broadcast();
+
+Stream<void> get sessionExpiredStream => _sessionExpiredController.stream;
+
 final dioProvider = Provider<Dio>((ref) {
   final tokenStore = ref.watch(secureTokenStoreProvider);
   final dio = Dio(BaseOptions(
@@ -74,6 +78,7 @@ class _AuthInterceptor extends Interceptor {
 
     if (!refreshed) {
       await _tokenStore.clear();
+      _sessionExpiredController.add(null);
       handler.next(err);
       return;
     }
