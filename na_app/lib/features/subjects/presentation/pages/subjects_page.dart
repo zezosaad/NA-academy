@@ -22,6 +22,7 @@ class SubjectsPage extends ConsumerWidget {
           color: AppColors.accent,
           onRefresh: () => ref.read(subjectsListProvider.notifier).refresh(),
           child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(child: _buildHeader(context)),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -146,7 +147,7 @@ class SubjectsPage extends ConsumerWidget {
               subject: subject,
               onTap: () {
                 if (subject.isUnlocked) {
-                  context.go('/subjects/${subject.id}');
+                  context.push('/subjects/${subject.id}');
                 } else {
                   context.push('/subjects/enter-code');
                 }

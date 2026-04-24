@@ -33,7 +33,7 @@ class TestSeedModule {}
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(TestSeedModule);
-  
+
   const usersService = app.get(UsersService);
   const subjectsService = app.get(SubjectsService);
   const examsService = app.get(ExamsService);
@@ -42,9 +42,24 @@ async function bootstrap() {
 
   // 1. Create some students
   const students = [
-    { name: 'Ahmed Mohamed', email: 'ahmed@example.com', password: 'password123', role: UserRole.STUDENT },
-    { name: 'Sara Ahmed', email: 'sara@example.com', password: 'password123', role: UserRole.STUDENT },
-    { name: 'Zaid Khalid', email: 'zaid@example.com', password: 'password123', role: UserRole.STUDENT },
+    {
+      name: 'Ahmed Mohamed',
+      email: 'ahmed@example.com',
+      password: 'password123',
+      role: UserRole.STUDENT,
+    },
+    {
+      name: 'Sara Ahmed',
+      email: 'sara@example.com',
+      password: 'password123',
+      role: UserRole.STUDENT,
+    },
+    {
+      name: 'Zaid Khalid',
+      email: 'zaid@example.com',
+      password: 'password123',
+      role: UserRole.STUDENT,
+    },
   ];
 
   for (const s of students) {
@@ -77,8 +92,16 @@ async function bootstrap() {
   // 2. Create some subjects
   const subjects = [
     { title: 'Mathematics - Algebra', category: 'Math', description: 'Advanced algebra course' },
-    { title: 'Physics - Mechanics', category: 'Science', description: 'Basic mechanics principles' },
-    { title: 'English Literature', category: 'Languages', description: 'Introduction to Shakespeare' },
+    {
+      title: 'Physics - Mechanics',
+      category: 'Science',
+      description: 'Basic mechanics principles',
+    },
+    {
+      title: 'English Literature',
+      category: 'Languages',
+      description: 'Introduction to Shakespeare',
+    },
   ];
 
   const createdSubjects = [];
@@ -88,31 +111,34 @@ async function bootstrap() {
       createdSubjects.push(s);
       console.log(`Created subject: ${sub.title}`);
     } catch (e) {
-       console.error(`Failed to create subject ${sub.title}:`, e);
+      console.error(`Failed to create subject ${sub.title}:`, e);
     }
   }
 
   // 3. Create an exam
   if (createdSubjects.length > 0) {
     try {
-      await examsService.createExam({
-        title: 'Monthly Math Quiz',
-        subjectId: createdSubjects[0]._id.toString(),
-        questions: [
-          {
-            text: 'What is 2 + 2?',
-            options: [
-              { label: 'A', text: '3' },
-              { label: 'B', text: '4' },
-              { label: 'C', text: '5' },
-              { label: 'D', text: '6' }
-            ],
-            correctOption: 'B',
-            timeLimitSeconds: 30,
-            order: 0
-          }
-        ]
-      } as any, systemUserId);
+      await examsService.createExam(
+        {
+          title: 'Monthly Math Quiz',
+          subjectId: createdSubjects[0]._id.toString(),
+          questions: [
+            {
+              text: 'What is 2 + 2?',
+              options: [
+                { label: 'A', text: '3' },
+                { label: 'B', text: '4' },
+                { label: 'C', text: '5' },
+                { label: 'D', text: '6' },
+              ],
+              correctOption: 'B',
+              timeLimitSeconds: 30,
+              order: 0,
+            },
+          ],
+        } as any,
+        systemUserId,
+      );
       console.log('Created test exam');
     } catch (e) {
       console.log('Exam might already exist or failed');
@@ -124,7 +150,7 @@ async function bootstrap() {
   process.exit(0);
 }
 
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
   console.error('Failed to seed test data:', err);
   process.exit(1);
 });

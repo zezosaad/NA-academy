@@ -23,10 +23,7 @@ export default () => ({
 
   rateLimit: {
     activationRateLimit: parseInt(process.env.ACTIVATION_RATE_LIMIT || '5', 10),
-    activationRateWindowMinutes: parseInt(
-      process.env.ACTIVATION_RATE_WINDOW_MINUTES || '15',
-      10,
-    ),
+    activationRateWindowMinutes: parseInt(process.env.ACTIVATION_RATE_WINDOW_MINUTES || '15', 10),
   },
 
   gridfs: {

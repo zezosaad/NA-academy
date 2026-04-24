@@ -6,8 +6,17 @@ import exceljs from 'exceljs';
 import * as fastCsv from '@fast-csv/format';
 import { Response } from 'express';
 
-import { SubjectCode, SubjectCodeDocument, CodeStatus as SubjectCodeStatus } from './schemas/subject-code.schema.js';
-import { ExamCode, ExamCodeDocument, CodeStatus as ExamCodeStatus, ExamUsageType } from './schemas/exam-code.schema.js';
+import {
+  SubjectCode,
+  SubjectCodeDocument,
+  CodeStatus as SubjectCodeStatus,
+} from './schemas/subject-code.schema.js';
+import {
+  ExamCode,
+  ExamCodeDocument,
+  CodeStatus as ExamCodeStatus,
+  ExamUsageType,
+} from './schemas/exam-code.schema.js';
 import { generateBatch, generateBatchId, formatCode } from './utils/code-generator.js';
 import { GenerateSubjectCodesDto } from './dto/generate-subject-codes.dto.js';
 import { GenerateExamCodesDto } from './dto/generate-exam-codes.dto.js';
@@ -54,7 +63,7 @@ export class ActivationCodesService {
       const needed = dto.quantity - generatedCount;
       const rawCodes = generateBatch(needed);
 
-      const docs = rawCodes.map(c => ({
+      const docs = rawCodes.map((c) => ({
         code: c,
         subjectId: dto.subjectId ? new Types.ObjectId(dto.subjectId) : undefined,
         bundleId: dto.bundleId ? new Types.ObjectId(dto.bundleId) : undefined,
@@ -77,12 +86,17 @@ export class ActivationCodesService {
     }
 
     this.logger.log(`Generated ${dto.quantity} subject codes for batch ${batchId}`);
-    return { batchId, count: dto.quantity, type: 'subject', linkedTo: { id: dto.subjectId || dto.bundleId, name: linkedName } };
+    return {
+      batchId,
+      count: dto.quantity,
+      type: 'subject',
+      linkedTo: { id: dto.subjectId || dto.bundleId, name: linkedName },
+    };
   }
 
   async generateExamCodes(dto: GenerateExamCodesDto) {
     const exam = await this.examsService.findExamById(dto.examId);
-    
+
     if (dto.usageType === ExamUsageType.MULTI && !dto.maxUses) {
       throw new BadRequestException('maxUses is required for multi-use codes');
     }
@@ -94,7 +108,7 @@ export class ActivationCodesService {
       const needed = dto.quantity - generatedCount;
       const rawCodes = generateBatch(needed);
 
-      const docs = rawCodes.map(c => ({
+      const docs = rawCodes.map((c) => ({
         code: c,
         examId: new Types.ObjectId(dto.examId),
         usageType: dto.usageType,
@@ -119,7 +133,12 @@ export class ActivationCodesService {
     }
 
     this.logger.log(`Generated ${dto.quantity} exam codes for batch ${batchId}`);
-    return { batchId, count: dto.quantity, type: 'exam', linkedTo: { id: exam._id, name: exam.title } };
+    return {
+      batchId,
+      count: dto.quantity,
+      type: 'exam',
+      linkedTo: { id: exam._id, name: exam.title },
+    };
   }
 
   async hasExamAccess(studentId: string, examId: string, hardwareId?: string): Promise<boolean> {
@@ -161,17 +180,17 @@ export class ActivationCodesService {
     if (codeDoc.status === SubjectCodeStatus.EXPIRED) {
       throw new BadRequestException('This activation code has expired');
     }
-    
+
     if (codeDoc.status === SubjectCodeStatus.USED && isSubject) {
-       throw new BadRequestException('Code has already been used');
+      throw new BadRequestException('Code has already been used');
     }
 
     if (codeDoc.activatedBy && codeDoc.activatedBy.toString() !== studentId) {
-       throw new BadRequestException('Code has already been used by another user');
+      throw new BadRequestException('Code has already been used by another user');
     }
 
     if (codeDoc.activationDeviceId && codeDoc.activationDeviceId !== hardwareId) {
-       throw new BadRequestException('Device mismatch for this code activation');
+      throw new BadRequestException('Device mismatch for this code activation');
     }
 
     if (isSubject) {
@@ -189,7 +208,9 @@ export class ActivationCodesService {
       } else if (subjectDoc.bundleId) {
         // Find bundle subjects
         const bundles = await this.subjectsService.findAllBundles();
-        const targetedBundle = bundles.find(b => b._id.toString() === subjectDoc.bundleId?.toString());
+        const targetedBundle = bundles.find(
+          (b) => b._id.toString() === subjectDoc.bundleId?.toString(),
+        );
         if (targetedBundle && targetedBundle.subjects) {
           targetItems = targetedBundle.subjects;
         }
@@ -197,10 +218,12 @@ export class ActivationCodesService {
 
       return {
         type: 'subject',
-        activatedSubjects: targetItems.map((s: any) => ({ id: s._id, title: s.title || 'Subject' })),
-        message: 'Subject unlocked successfully'
+        activatedSubjects: targetItems.map((s: any) => ({
+          id: s._id,
+          title: s.title || 'Subject',
+        })),
+        message: 'Subject unlocked successfully',
       };
-
     } else {
       const examDoc = codeDoc;
       if (examDoc.usageType === ExamUsageType.SINGLE && examDoc.status === ExamCodeStatus.USED) {
@@ -215,12 +238,16 @@ export class ActivationCodesService {
       }
 
       examDoc.status = ExamCodeStatus.USED; // Can stay used for SINGLE, irrelevant for MULTI basically, or mark USED on 0 remaining
-      if (examDoc.usageType === ExamUsageType.MULTI && examDoc.remainingUses && examDoc.remainingUses > 0) {
+      if (
+        examDoc.usageType === ExamUsageType.MULTI &&
+        examDoc.remainingUses &&
+        examDoc.remainingUses > 0
+      ) {
         examDoc.status = ExamCodeStatus.AVAILABLE;
       }
 
       if (!examDoc.firstActivatedAt) {
-         examDoc.firstActivatedAt = new Date();
+        examDoc.firstActivatedAt = new Date();
       }
 
       examDoc.activatedBy = sId;
@@ -232,7 +259,7 @@ export class ActivationCodesService {
         type: 'exam',
         examId: examDoc.examId,
         message: 'Exam unlocked successfully',
-        timeLimitMinutes: examDoc.timeLimitMinutes
+        timeLimitMinutes: examDoc.timeLimitMinutes,
       };
     }
   }
@@ -241,7 +268,7 @@ export class ActivationCodesService {
     // Try to find in subject codes first
     let isSubject = true;
     let total = await this.subjectCodeModel.countDocuments({ batchId }).exec();
-    
+
     if (total === 0) {
       isSubject = false;
       total = await this.examCodeModel.countDocuments({ batchId }).exec();
@@ -267,9 +294,13 @@ export class ActivationCodesService {
   }
 
   async revokeCode(id: string) {
-    let updated: any = await this.subjectCodeModel.findByIdAndUpdate(id, { status: SubjectCodeStatus.EXPIRED }, { new: true }).exec();
+    let updated: any = await this.subjectCodeModel
+      .findByIdAndUpdate(id, { status: SubjectCodeStatus.EXPIRED }, { new: true })
+      .exec();
     if (!updated) {
-      updated = await this.examCodeModel.findByIdAndUpdate(id, { status: ExamCodeStatus.EXPIRED }, { new: true }).exec();
+      updated = await this.examCodeModel
+        .findByIdAndUpdate(id, { status: ExamCodeStatus.EXPIRED }, { new: true })
+        .exec();
     }
     if (!updated) {
       throw new NotFoundException('Code not found');
@@ -278,24 +309,31 @@ export class ActivationCodesService {
   }
 
   async revokeBatch(batchId: string) {
-    const subjectResult = await this.subjectCodeModel.updateMany(
-      { batchId, status: SubjectCodeStatus.AVAILABLE },
-      { $set: { status: SubjectCodeStatus.EXPIRED } }
-    ).exec();
+    const subjectResult = await this.subjectCodeModel
+      .updateMany(
+        { batchId, status: SubjectCodeStatus.AVAILABLE },
+        { $set: { status: SubjectCodeStatus.EXPIRED } },
+      )
+      .exec();
 
-    const examResult = await this.examCodeModel.updateMany(
-      { batchId, status: ExamCodeStatus.AVAILABLE },
-      { $set: { status: ExamCodeStatus.EXPIRED } }
-    ).exec();
+    const examResult = await this.examCodeModel
+      .updateMany(
+        { batchId, status: ExamCodeStatus.AVAILABLE },
+        { $set: { status: ExamCodeStatus.EXPIRED } },
+      )
+      .exec();
 
-    return { revampedSubjectCodes: subjectResult.modifiedCount, revokedExamCodes: examResult.modifiedCount };
+    return {
+      revampedSubjectCodes: subjectResult.modifiedCount,
+      revokedExamCodes: examResult.modifiedCount,
+    };
   }
 
   // T051 Export Functionality
   async exportBatch(batchId: string, format: ExportFormat, res: Response) {
     const { data: subjectCodes } = await this.findByBatch(batchId, { page: 1, limit: 1000000 });
-    const isSubject = (subjectCodes.length > 0) && (subjectCodes[0] instanceof this.subjectCodeModel);
-    
+    const isSubject = subjectCodes.length > 0 && subjectCodes[0] instanceof this.subjectCodeModel;
+
     const codes = subjectCodes;
 
     const rows = codes.map((c: any) => ({
@@ -306,9 +344,12 @@ export class ActivationCodesService {
     }));
 
     if (format === ExportFormat.XLSX) {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
       res.setHeader('Content-Disposition', `attachment; filename=batch_${batchId}.xlsx`);
-      
+
       const options = { stream: res, useStyles: true, useSharedStrings: true };
       const workbook = new exceljs.stream.xlsx.WorkbookWriter(options);
       const worksheet = workbook.addWorksheet('Codes');
@@ -329,7 +370,7 @@ export class ActivationCodesService {
     } else if (format === ExportFormat.CSV) {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=batch_${batchId}.csv`);
-      
+
       const csvStream = fastCsv.format({ headers: true });
       csvStream.pipe(res);
       for (const row of rows) {

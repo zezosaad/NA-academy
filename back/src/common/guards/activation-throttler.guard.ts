@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { ThrottlerException } from '@nestjs/throttler';
-import { ActivationRateLimit, ActivationRateLimitDocument } from '../../activation-codes/schemas/activation-rate-limit.schema.js';
+import {
+  ActivationRateLimit,
+  ActivationRateLimitDocument,
+} from '../../activation-codes/schemas/activation-rate-limit.schema.js';
 
 @Injectable()
 export class ActivationThrottlerGuard implements CanActivate {
@@ -11,7 +14,8 @@ export class ActivationThrottlerGuard implements CanActivate {
   private readonly windowMinutes: number;
 
   constructor(
-    @InjectModel(ActivationRateLimit.name) private readonly rateLimitModel: Model<ActivationRateLimitDocument>,
+    @InjectModel(ActivationRateLimit.name)
+    private readonly rateLimitModel: Model<ActivationRateLimitDocument>,
     configService: ConfigService,
   ) {
     this.limit = configService.get<number>('rateLimit.activationRateLimit') || 5;
@@ -21,7 +25,7 @@ export class ActivationThrottlerGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    
+
     if (!user || user.role !== 'student') {
       return true; // Apply only to students
     }
@@ -43,11 +47,9 @@ export class ActivationThrottlerGuard implements CanActivate {
       } catch (err: any) {
         if (err.code === 11000) {
           // Concurrency - another request created it, fetch and increment
-          record = await this.rateLimitModel.findOneAndUpdate(
-            { key },
-            { $inc: { attempts: 1 } },
-            { new: true }
-          ).exec();
+          record = await this.rateLimitModel
+            .findOneAndUpdate({ key }, { $inc: { attempts: 1 } }, { new: true })
+            .exec();
         } else {
           throw err;
         }
@@ -58,12 +60,14 @@ export class ActivationThrottlerGuard implements CanActivate {
     // Record exists
     if (record.attempts >= this.limit) {
       const remainingMinutes = Math.ceil((record.expiresAt.getTime() - now.getTime()) / 60000);
-      throw new ThrottlerException(`Rate limit exceeded. Try again in ${remainingMinutes} minutes.`);
+      throw new ThrottlerException(
+        `Rate limit exceeded. Try again in ${remainingMinutes} minutes.`,
+      );
     }
 
     // Increment attempts
     await this.rateLimitModel.updateOne({ key }, { $inc: { attempts: 1 } }).exec();
-    
+
     return true;
   }
 }

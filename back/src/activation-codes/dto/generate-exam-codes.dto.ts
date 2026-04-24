@@ -18,7 +18,7 @@ export class GenerateExamCodesDto {
   usageType!: ExamUsageType;
 
   @ApiPropertyOptional({ example: 5 })
-  @ValidateIf(o => o.usageType === ExamUsageType.MULTI)
+  @ValidateIf((o) => o.usageType === ExamUsageType.MULTI)
   @IsInt()
   @Min(2)
   maxUses?: number;

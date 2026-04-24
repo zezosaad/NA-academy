@@ -7,9 +7,7 @@ import { Device, DeviceDocument } from './schemas/device.schema.js';
 export class DevicesService {
   private readonly logger = new Logger(DevicesService.name);
 
-  constructor(
-    @InjectModel(Device.name) private readonly deviceModel: Model<DeviceDocument>,
-  ) {}
+  constructor(@InjectModel(Device.name) private readonly deviceModel: Model<DeviceDocument>) {}
 
   async registerDevice(userId: string, hardwareId: string): Promise<DeviceDocument> {
     // Check if user already has a device
@@ -59,11 +57,7 @@ export class DevicesService {
 
   async resetDevice(userId: string): Promise<void> {
     const device = await this.deviceModel
-      .findOneAndUpdate(
-        { userId: new Types.ObjectId(userId) },
-        { isActive: false },
-        { new: true },
-      )
+      .findOneAndUpdate({ userId: new Types.ObjectId(userId) }, { isActive: false }, { new: true })
       .exec();
 
     if (device) {

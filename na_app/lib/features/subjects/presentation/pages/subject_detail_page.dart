@@ -207,7 +207,7 @@ class _Content extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: lessons.length,
-        separatorBuilder: (_, __) => Divider(
+        separatorBuilder: (_, _) => Divider(
           height: 1,
           color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
         ),
@@ -254,7 +254,7 @@ class _LessonRow extends StatelessWidget {
       onTap: lesson.status == LessonStatus.locked
           ? null
           : () {
-              // TODO: Navigate to lesson content
+              context.push('/subjects/${lesson.subjectId}/lessons/${lesson.id}');
             },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -55,7 +55,7 @@ async function bootstrap() {
   process.exit(0);
 }
 
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
   console.error('Failed to seed admin user:', err);
   process.exit(1);
 });

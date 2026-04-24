@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SecurityService } from './security.service.js';
 import { ReportFlagDto, ReviewFlagDto, ListFlagsQueryDto } from './dto/security.dto.js';
@@ -29,7 +39,11 @@ export class SecurityController {
   @Patch('flags/:id/review')
   @Roles('admin')
   @ApiOperation({ summary: 'Review and update action taken on a security flag' })
-  async reviewFlag(@Param('id') id: string, @Body() dto: ReviewFlagDto, @CurrentUser('userId') adminId: string) {
+  async reviewFlag(
+    @Param('id') id: string,
+    @Body() dto: ReviewFlagDto,
+    @CurrentUser('userId') adminId: string,
+  ) {
     return this.securityService.reviewFlag(id, adminId, dto);
   }
 }

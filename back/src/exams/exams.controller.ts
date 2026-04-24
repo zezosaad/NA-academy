@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ExamsService } from './exams.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -35,7 +47,11 @@ export class ExamsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get exam details with free-section filtering logic natively.' })
-  async findExamById(@Param('id') id: string, @CurrentUser('role') role: string, @Query('isFree') isFree?: string) {
+  async findExamById(
+    @Param('id') id: string,
+    @CurrentUser('role') role: string,
+    @Query('isFree') isFree?: string,
+  ) {
     const includeAnswers = ['admin', 'teacher'].includes(role);
     const exam = await this.examsService.findExamById(id, includeAnswers);
 
@@ -46,7 +62,7 @@ export class ExamsController {
         throw new ForbiddenException('This exam does not offer a free section');
       }
     }
-    
+
     return exam;
   }
 
@@ -54,7 +70,11 @@ export class ExamsController {
   @Roles('student')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Start an exam session natively tracking timing bounds' })
-  async startExam(@Param('id') id: string, @CurrentUser() user: any, @Query('isFree') isFree?: string) {
+  async startExam(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Query('isFree') isFree?: string,
+  ) {
     const userId = user.userId as string;
     const isFreeAttempt = isFree === 'true';
 
@@ -64,9 +84,15 @@ export class ExamsController {
         throw new ForbiddenException('Free attempts exhausted or not available for this exam');
       }
     } else {
-      const hasAccess = await this.activationCodesService.hasExamAccess(userId, id, user.hardwareId);
+      const hasAccess = await this.activationCodesService.hasExamAccess(
+        userId,
+        id,
+        user.hardwareId,
+      );
       if (!hasAccess) {
-        throw new ForbiddenException('You need to activate this exam code before starting the full exam');
+        throw new ForbiddenException(
+          'You need to activate this exam code before starting the full exam',
+        );
       }
     }
 

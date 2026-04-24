@@ -23,7 +23,7 @@ export class MediaService {
     if (!db) {
       throw new Error('Database connection not established');
     }
-    
+
     this.mediaBucket = new mongo.GridFSBucket(db, {
       bucketName: 'media',
       chunkSizeBytes: this.configService.get<number>('gridfs.videoChunkSize') || 1048576,
@@ -38,12 +38,12 @@ export class MediaService {
   async uploadMedia(req: Request, userId: string): Promise<MediaResponseDto> {
     return new Promise((resolve, reject) => {
       const bb = busboy({ headers: req.headers });
-      
-      let uploadDto: Partial<UploadMediaDto> = {};
+
+      const uploadDto: Partial<UploadMediaDto> = {};
       let fileStream: NodeJS.ReadableStream | null = null;
       let filename = '';
       let contentType = '';
-      
+
       bb.on('field', (name, val) => {
         uploadDto[name as keyof UploadMediaDto] = val as any;
       });
@@ -106,7 +106,7 @@ export class MediaService {
             });
           } catch (error) {
             if (writeStream.id) {
-               await this.mediaBucket.delete(writeStream.id as Types.ObjectId);
+              await this.mediaBucket.delete(writeStream.id as Types.ObjectId);
             }
             reject(error);
           }
@@ -125,8 +125,16 @@ export class MediaService {
     return this.mediaAssetModel.findById(id).exec();
   }
 
-  async streamFile(id: string, headers: any, preFetchedAsset?: MediaAssetDocument | null): Promise<{ stream: NodeJS.ReadableStream, headers: Record<string, string | number>, status: number }> {
-    const asset = preFetchedAsset || await this.mediaAssetModel.findById(id).exec();
+  async streamFile(
+    id: string,
+    headers: any,
+    preFetchedAsset?: MediaAssetDocument | null,
+  ): Promise<{
+    stream: NodeJS.ReadableStream;
+    headers: Record<string, string | number>;
+    status: number;
+  }> {
+    const asset = preFetchedAsset || (await this.mediaAssetModel.findById(id).exec());
     if (!asset) throw new NotFoundException('Media asset not found');
 
     const range = headers.range;
@@ -140,7 +148,7 @@ export class MediaService {
     };
 
     if (range) {
-      const parts = range.replace(/bytes=/, "").split("-");
+      const parts = range.replace(/bytes=/, '').split('-');
       start = parseInt(parts[0], 10);
       end = parts[1] ? parseInt(parts[1], 10) : asset.fileSize - 1;
 
@@ -149,7 +157,7 @@ export class MediaService {
       }
 
       resHeaders['Content-Range'] = `bytes ${start}-${end}/${asset.fileSize}`;
-      resHeaders['Content-Length'] = (end - start) + 1;
+      resHeaders['Content-Length'] = end - start + 1;
       status = 206;
     } else {
       resHeaders['Content-Length'] = asset.fileSize;
@@ -157,7 +165,7 @@ export class MediaService {
 
     const stream = this.mediaBucket.openDownloadStream(asset.gridFsFileId, {
       start,
-      end: end + 1 // exclusive end
+      end: end + 1, // exclusive end
     });
 
     return { stream, headers: resHeaders, status };
@@ -169,11 +177,14 @@ export class MediaService {
 
     await this.mediaBucket.delete(asset.gridFsFileId);
     await this.mediaAssetModel.deleteOne({ _id: asset._id }).exec();
-    
+
     this.logger.log(`Deleted media asset: ${id}`);
   }
 
   async findBySubjectId(subjectId: string): Promise<MediaAssetDocument[]> {
-    return this.mediaAssetModel.find({ subjectId: new Types.ObjectId(subjectId) }).sort({ order: 1, createdAt: 1 }).exec();
+    return this.mediaAssetModel
+      .find({ subjectId: new Types.ObjectId(subjectId) })
+      .sort({ order: 1, createdAt: 1 })
+      .exec();
   }
 }

@@ -1,28 +1,25 @@
-class Subject {
-  final String id;
-  final String title;
-  final String? description;
-  final String? coverImageUrl;
-  final int lessonCount;
-  final bool isUnlocked;
-  final double progressPercent;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const Subject({
-    required this.id,
-    required this.title,
-    this.description,
-    this.coverImageUrl,
-    this.lessonCount = 0,
-    this.isUnlocked = false,
-    this.progressPercent = 0.0,
-  });
+part 'subject_models.freezed.dart';
+
+@freezed
+class Subject with _$Subject {
+  const factory Subject({
+    required String id,
+    required String title,
+    String? description,
+    String? coverImageUrl,
+    @Default(0) int lessonCount,
+    @Default(false) bool isUnlocked,
+    @Default(0.0) double progressPercent,
+  }) = _Subject;
 
   factory Subject.fromJson(Map<String, dynamic> json) {
     final id = json['_id'] as String? ?? json['id'] as String?;
     if (id == null || id.isEmpty) {
       throw FormatException('Subject.fromJson: missing "id" in $json');
     }
-    return Subject(
+    return _Subject(
       id: id,
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
@@ -32,55 +29,28 @@ class Subject {
       progressPercent: (json['progressPercent'] as num?)?.toDouble() ?? 0.0,
     );
   }
-
-  Subject copyWith({
-    String? id,
-    String? title,
-    String? description,
-    String? coverImageUrl,
-    int? lessonCount,
-    bool? isUnlocked,
-    double? progressPercent,
-  }) {
-    return Subject(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
-      lessonCount: lessonCount ?? this.lessonCount,
-      isUnlocked: isUnlocked ?? this.isUnlocked,
-      progressPercent: progressPercent ?? this.progressPercent,
-    );
-  }
 }
 
 enum LessonStatus { done, active, locked }
 
-class Lesson {
-  final String id;
-  final String subjectId;
-  final String title;
-  final int order;
-  final LessonStatus status;
-  final String? mediaAssetId;
-  final int? estimatedMinutes;
-
-  const Lesson({
-    required this.id,
-    required this.subjectId,
-    required this.title,
-    required this.order,
-    this.status = LessonStatus.locked,
-    this.mediaAssetId,
-    this.estimatedMinutes,
-  });
+@freezed
+class Lesson with _$Lesson {
+  const factory Lesson({
+    required String id,
+    required String subjectId,
+    required String title,
+    required int order,
+    @Default(LessonStatus.locked) LessonStatus status,
+    String? mediaAssetId,
+    int? estimatedMinutes,
+  }) = _Lesson;
 
   factory Lesson.fromJson(Map<String, dynamic> json, {required String subjectId}) {
     final id = json['_id'] as String? ?? json['id'] as String?;
     if (id == null || id.isEmpty) {
       throw FormatException('Lesson.fromJson: missing "id" in $json');
     }
-    return Lesson(
+    return _Lesson(
       id: id,
       subjectId: subjectId,
       title: json['title'] as String? ?? '',
@@ -91,34 +61,9 @@ class Lesson {
     );
   }
 
-  static LessonStatus _parseStatus(String? value) {
-    switch (value) {
-      case 'done':
-        return LessonStatus.done;
-      case 'active':
-        return LessonStatus.active;
-      default:
-        return LessonStatus.locked;
-    }
-  }
-
-  Lesson copyWith({
-    String? id,
-    String? subjectId,
-    String? title,
-    int? order,
-    LessonStatus? status,
-    String? mediaAssetId,
-    int? estimatedMinutes,
-  }) {
-    return Lesson(
-      id: id ?? this.id,
-      subjectId: subjectId ?? this.subjectId,
-      title: title ?? this.title,
-      order: order ?? this.order,
-      status: status ?? this.status,
-      mediaAssetId: mediaAssetId ?? this.mediaAssetId,
-      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
-    );
-  }
+  static LessonStatus _parseStatus(String? value) => switch (value) {
+        'done' => LessonStatus.done,
+        'active' => LessonStatus.active,
+        _ => LessonStatus.locked,
+      };
 }

@@ -34,9 +34,7 @@ class SubjectCard extends StatelessWidget {
             const SizedBox(height: 12),
             if (subject.description != null && subject.description!.isNotEmpty)
               Text(
-                subject.description!.length > 40
-                    ? '${subject.description!.substring(0, 40)}…'
-                    : subject.description!,
+                subject.description!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
@@ -55,7 +53,7 @@ class SubjectCard extends StatelessWidget {
             if (subject.isUnlocked)
               _buildUnlockedFooter(context)
             else
-              _buildLockedFooter(context),
+              _buildLockedFooter(),
           ],
         ),
       ),
@@ -71,8 +69,8 @@ class SubjectCard extends StatelessWidget {
           height: 60,
           width: double.infinity,
           fit: BoxFit.cover,
-          placeholder: (_, __) => _buildCoverPlaceholder(),
-          errorWidget: (_, __, ___) => _buildCoverPlaceholder(),
+          placeholder: (_, _) => _buildCoverPlaceholder(),
+          errorWidget: (_, _, _) => _buildCoverPlaceholder(),
         ),
       );
     }
@@ -144,7 +142,7 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLockedFooter(BuildContext context) {
+  Widget _buildLockedFooter() {
     return Row(
       children: [
         Icon(LucideIcons.lock, size: 13, color: AppColors.textMuted),

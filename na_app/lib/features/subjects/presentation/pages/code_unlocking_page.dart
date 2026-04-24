@@ -52,7 +52,9 @@ class _CodeUnlockingPageState extends ConsumerState<CodeUnlockingPage> {
     if (!mounted) return;
     setState(() => _complete = true);
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    if (!shouldReduce) {
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
     if (!mounted) return;
     ref.invalidate(subjectsListProvider);
     context.go('/subjects/${widget.subjectId}');

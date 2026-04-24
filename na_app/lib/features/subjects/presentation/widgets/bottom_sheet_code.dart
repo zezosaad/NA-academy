@@ -13,12 +13,14 @@ class BottomSheetCode extends StatefulWidget {
   State<BottomSheetCode> createState() => _BottomSheetCodeState();
 }
 
+const _bottomSheetCodeLength = 12;
+
 class _BottomSheetCodeState extends State<BottomSheetCode> {
   String _code = '';
   bool _isSubmitting = false;
 
   Future<void> _submit() async {
-    if (_code.length != 6 || _isSubmitting) return;
+    if (_code.length != _bottomSheetCodeLength || _isSubmitting) return;
     setState(() => _isSubmitting = true);
     try {
       await widget.onsubmit(_code);
@@ -62,7 +64,7 @@ class _BottomSheetCodeState extends State<BottomSheetCode> {
           const SizedBox(height: 12),
           Center(
             child: CodeInputField(
-              length: 6,
+              length: _bottomSheetCodeLength,
               onCompleted: () => setState(() {}),
               onChanged: (code) => setState(() => _code = code),
             ),
@@ -70,7 +72,7 @@ class _BottomSheetCodeState extends State<BottomSheetCode> {
           const SizedBox(height: 20),
           AppButton(
             label: 'Unlock',
-            onPressed: _code.length == 6 ? _submit : null,
+            onPressed: _code.length == _bottomSheetCodeLength ? _submit : null,
             isLoading: _isSubmitting,
           ),
         ],

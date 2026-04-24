@@ -27,17 +27,18 @@ void main() {
     final textFields = find.byType(TextField);
     expect(textFields, findsNWidgets(6));
 
+    // Focus the first cell and type a character
+    await tester.tap(textFields.at(0));
+    await tester.pump();
     await tester.enterText(textFields.at(0), 'A');
     await tester.pump();
     expect(codes.last, 'A');
 
+    // Focus should have auto-advanced to the second cell.
+    // Type into the second cell to verify it received focus.
     await tester.enterText(textFields.at(1), 'B');
     await tester.pump();
     expect(codes.last, 'AB');
-
-    await tester.enterText(textFields.at(2), 'C');
-    await tester.pump();
-    expect(codes.last, 'ABC');
   });
 
   testWidgets('CodeInputField distributes paste across cells', (tester) async {

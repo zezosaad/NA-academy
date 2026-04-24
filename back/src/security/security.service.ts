@@ -14,7 +14,11 @@ export class SecurityService {
     private readonly authService: AuthService,
   ) {}
 
-  async reportFlag(studentId: string, deviceId: string, dto: ReportFlagDto): Promise<SecurityFlagDocument> {
+  async reportFlag(
+    studentId: string,
+    deviceId: string,
+    dto: ReportFlagDto,
+  ): Promise<SecurityFlagDocument> {
     const flag = new this.flagModel({
       studentId: new Types.ObjectId(studentId),
       deviceId,
@@ -26,7 +30,9 @@ export class SecurityService {
 
     // Terminate sessions proactively
     await this.authService.deleteAllSessions(studentId);
-    this.logger.warn(`Security flag ${dto.flagType} triggered for user ${studentId}. Sessions terminated.`);
+    this.logger.warn(
+      `Security flag ${dto.flagType} triggered for user ${studentId}. Sessions terminated.`,
+    );
 
     return flag;
   }
@@ -36,19 +42,30 @@ export class SecurityService {
     if (query.studentId) filter.studentId = new Types.ObjectId(query.studentId);
     if (query.flagType) filter.flagType = query.flagType;
 
-    return this.flagModel.find(filter).sort({ createdAt: -1 }).populate('studentId', 'name email').populate('reviewedBy', 'name').exec();
+    return this.flagModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .populate('studentId', 'name email')
+      .populate('reviewedBy', 'name')
+      .exec();
   }
 
-  async reviewFlag(flagId: string, reviewerId: string, dto: ReviewFlagDto): Promise<SecurityFlagDocument> {
-    const flag = await this.flagModel.findByIdAndUpdate(
-      flagId,
-      {
-        actionTaken: dto.actionTaken,
-        reviewedBy: new Types.ObjectId(reviewerId),
-        reviewedAt: new Date(),
-      },
-      { new: true }
-    ).exec();
+  async reviewFlag(
+    flagId: string,
+    reviewerId: string,
+    dto: ReviewFlagDto,
+  ): Promise<SecurityFlagDocument> {
+    const flag = await this.flagModel
+      .findByIdAndUpdate(
+        flagId,
+        {
+          actionTaken: dto.actionTaken,
+          reviewedBy: new Types.ObjectId(reviewerId),
+          reviewedAt: new Date(),
+        },
+        { new: true },
+      )
+      .exec();
 
     if (!flag) throw new NotFoundException('Flag not found');
     return flag;

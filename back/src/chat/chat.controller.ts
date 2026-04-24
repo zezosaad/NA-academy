@@ -17,4 +17,3 @@ export class ChatController {
     return this.chatService.getPendingMessages(userId);
   }
 }
-

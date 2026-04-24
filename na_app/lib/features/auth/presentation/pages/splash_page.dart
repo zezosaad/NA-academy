@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,13 +25,22 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   Future<void> _startSplash() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted || _navigated) return;
-    _navigate();
+
+    final authState = ref.read(authControllerProvider);
+    if (authState.isLoading) {
+      await Future.doWhile(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+        return ref.read(authControllerProvider).isLoading;
+      });
+    }
+    if (!mounted || _navigated) return;
+    _navigate(ref.read(authControllerProvider).valueOrNull);
   }
 
-  void _navigate() {
+  void _navigate(Object? user) {
+    if (_navigated) return;
     _navigated = true;
-    final authState = ref.read(authControllerProvider);
-    if (authState.valueOrNull != null) {
+    if (user != null) {
       context.go('/today');
     } else {
       context.go('/onboarding');
@@ -42,7 +53,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     ref.listen(authControllerProvider, (prev, next) {
       if (!next.isLoading && !_navigated && mounted) {
-        _navigate();
+        _navigate(next.valueOrNull);
       }
     });
 

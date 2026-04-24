@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
 import 'package:na_app/main.dart' as app;
+
+// This activation code must exist in the test backend.
+// In a full setup, seed the backend before running this test or mock the
+// activation repository so the UI accepts any code.
+const _testActivationCode = 'NA24CH';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -75,7 +81,7 @@ void main() {
 
       // Enter code in the CodeInputField
       final codeFields = find.byType(TextField);
-      await tester.enterText(codeFields.first, 'NA24CH');
+      await tester.enterText(codeFields.first, _testActivationCode);
       await tester.pumpAndSettle();
 
       // Tap unlock
@@ -83,9 +89,8 @@ void main() {
       await tester.tap(unlockButton);
       await tester.pumpAndSettle(const Duration(seconds: 5));
 
-      // Should navigate to either unlocking page, subject detail, or error page
-      final subjectDetail = find.byType(Scaffold);
-      expect(subjectDetail.evaluate().isNotEmpty, isTrue);
+      // Should land on SubjectDetailPage
+      expect(find.byType(SubjectDetailPage), findsOneWidget);
     });
   });
 }

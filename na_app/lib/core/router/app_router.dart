@@ -89,6 +89,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       final subjectId = state.pathParameters['id']!;
                       return SubjectDetailPage(subjectId: subjectId);
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'lessons/:lessonId',
+                        builder: (context, state) {
+                          final lessonId = state.pathParameters['lessonId']!;
+                          return _PlaceholderPage(title: 'Lesson $lessonId');
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -16,14 +16,7 @@ class SubjectsListNotifier extends AsyncNotifier<List<Subject>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    try {
-      final repo = ref.read(subjectsRepositoryProvider);
-      final subjects = await repo.listSubjects();
-      state = AsyncData(subjects);
-    } catch (e, st) {
-      state = AsyncError(e, st);
-    }
+    ref.invalidateSelf();
   }
 }
 

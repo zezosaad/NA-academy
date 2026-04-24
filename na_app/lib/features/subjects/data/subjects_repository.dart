@@ -16,30 +16,38 @@ class SubjectsRepository {
   SubjectsRepository({required Dio dio}) : _dio = dio;
 
   Future<List<Subject>> listSubjects({int page = 1, int limit = 50}) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      Endpoints.subjects.list,
-      queryParameters: {'page': page, 'limit': limit},
-    );
-    final data = response.data;
-    if (data == null) return [];
-    final rawList = data['data'] as List<dynamic>? ?? [];
-    return rawList.map((e) => Subject.fromJson(e as Map<String, dynamic>)).toList();
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        Endpoints.subjects.list,
+        queryParameters: {'page': page, 'limit': limit},
+      );
+      final data = response.data;
+      if (data == null) return [];
+      final rawList = data['data'] as List<dynamic>? ?? [];
+      return rawList.map((e) => Subject.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
   }
 
   Future<({Subject subject, List<Lesson> lessons})> getSubject(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      Endpoints.subjects.byId(id),
-    );
-    final data = response.data;
-    if (data == null) {
-      throw ApiException(statusCode: 0, code: 'INVALID_RESPONSE', message: 'Subject response is null');
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        Endpoints.subjects.byId(id),
+      );
+      final data = response.data;
+      if (data == null) {
+        throw ApiException(statusCode: 0, code: 'INVALID_RESPONSE', message: 'Subject response is null');
+      }
+      final subject = Subject.fromJson(data);
+      final lessonsRaw = data['lessons'] as List<dynamic>? ?? [];
+      final lessons = lessonsRaw
+          .map((e) => Lesson.fromJson(e as Map<String, dynamic>, subjectId: id))
+          .toList();
+      return (subject: subject, lessons: lessons);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
     }
-    final subject = Subject.fromJson(data);
-    final lessonsRaw = data['lessons'] as List<dynamic>? ?? [];
-    final lessons = lessonsRaw
-        .map((e) => Lesson.fromJson(e as Map<String, dynamic>, subjectId: id))
-        .toList();
-    return (subject: subject, lessons: lessons);
   }
 
   Future<ActivationResult> activateCode(String code) async {
@@ -63,6 +71,15 @@ class SubjectsRepository {
     }
   }
 
+  ApiException _mapDioException(DioException e) {
+    if (e.error is ApiException) return e.error as ApiException;
+    return ApiException(
+      statusCode: e.response?.statusCode ?? 0,
+      code: 'UNKNOWN',
+      message: e.message ?? '',
+    );
+  }
+
   ActivationResult _mapActivationError(DioException e) {
     final apiException = e.error is ApiException
         ? e.error as ApiException
@@ -74,22 +91,6 @@ class SubjectsRepository {
     final statusCode = apiException.statusCode;
     final code = apiException.code;
 
-    if (statusCode == 429 || code == 'RATE_LIMITED') {
-      final retryAfter = _parseRetryAfter(e.response);
-      return ActivationFailure(
-        reason: ActivationErrorReason.rateLimited,
-        retryAfter: retryAfter,
-      );
-    }
-    if (statusCode == 400 || code == 'INVALID') {
-      return ActivationFailure(reason: ActivationErrorReason.invalid);
-    }
-    if (statusCode == 403) {
-      if (code == 'DEVICE_MISMATCH') {
-        return ActivationFailure(reason: ActivationErrorReason.deviceMismatch);
-      }
-      return ActivationFailure(reason: ActivationErrorReason.alreadyUsed);
-    }
     if (code == 'EXPIRED') {
       return ActivationFailure(
         reason: ActivationErrorReason.expired,
@@ -101,6 +102,22 @@ class SubjectsRepository {
         reason: ActivationErrorReason.alreadyUsed,
         consumedAt: _parseDate(e.response?.data, 'consumedAt'),
       );
+    }
+    if (code == 'DEVICE_MISMATCH') {
+      return ActivationFailure(reason: ActivationErrorReason.deviceMismatch);
+    }
+    if (statusCode == 429 || code == 'RATE_LIMITED') {
+      final retryAfter = _parseRetryAfter(e.response);
+      return ActivationFailure(
+        reason: ActivationErrorReason.rateLimited,
+        retryAfter: retryAfter,
+      );
+    }
+    if (statusCode == 400 || code == 'INVALID') {
+      return ActivationFailure(reason: ActivationErrorReason.invalid);
+    }
+    if (statusCode == 403) {
+      return ActivationFailure(reason: ActivationErrorReason.alreadyUsed);
     }
     return ActivationFailure(reason: ActivationErrorReason.invalid);
   }

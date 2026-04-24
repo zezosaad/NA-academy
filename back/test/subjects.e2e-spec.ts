@@ -24,6 +24,9 @@ describe('Subjects - isUnlocked (e2e)', () => {
   let subjectId: string;
   let codeValue: string;
 
+  const createdSubjectIds: string[] = [];
+  const createdSubjectCodeIds: string[] = [];
+
   const PREFIX = '/api/v1';
 
   beforeAll(async () => {
@@ -45,8 +48,12 @@ describe('Subjects - isUnlocked (e2e)', () => {
   });
 
   afterAll(async () => {
-    await subjectModel.deleteMany({});
-    await subjectCodeModel.deleteMany({});
+    if (createdSubjectIds.length > 0) {
+      await subjectModel.deleteMany({ _id: { $in: createdSubjectIds } });
+    }
+    if (createdSubjectCodeIds.length > 0) {
+      await subjectCodeModel.deleteMany({ _id: { $in: createdSubjectCodeIds } });
+    }
     await app.close();
   });
 
@@ -83,6 +90,7 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .expect(201);
     subjectId =
       (subjectRes.body.data ?? subjectRes.body)._id ?? (subjectRes.body.data ?? subjectRes.body).id;
+    createdSubjectIds.push(subjectId);
 
     // 4. Generate subject activation codes as admin
     const codesRes = await request(app.getHttpServer())
@@ -97,7 +105,11 @@ describe('Subjects - isUnlocked (e2e)', () => {
       .get(`${PREFIX}/activation-codes/batch/${batchId}?page=1&limit=1`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-    codeValue = (batchRes.body.data ?? batchRes.body).data[0].code;
+    const codeItem = (batchRes.body.data ?? batchRes.body).data[0];
+    codeValue = codeItem.code;
+    if (codeItem._id || codeItem.id) {
+      createdSubjectCodeIds.push(codeItem._id ?? codeItem.id);
+    }
 
     // 6. As student, GET /subjects → isUnlocked should be false
     const beforeActivate = await request(app.getHttpServer())
