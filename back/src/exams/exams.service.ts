@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Exam, ExamDocument, Question } from './schemas/exam.schema.js';
 import { ExamSession, ExamSessionDocument, SessionStatus } from './schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreDocument } from './schemas/exam-score.schema.js';
+import {
+  ExamCode,
+  ExamCodeDocument,
+  CodeStatus as ExamCodeStatus,
+} from '../activation-codes/schemas/exam-code.schema.js';
 import { CreateExamDto } from './dto/create-exam.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
+import { SaveAnswerDto } from './dto/save-answer.dto.js';
 
 @Injectable()
 export class ExamsService {
@@ -15,6 +26,7 @@ export class ExamsService {
     @InjectModel(Exam.name) private readonly examModel: Model<ExamDocument>,
     @InjectModel(ExamSession.name) private readonly sessionModel: Model<ExamSessionDocument>,
     @InjectModel(ExamScore.name) private readonly scoreModel: Model<ExamScoreDocument>,
+    @InjectModel(ExamCode.name) private readonly examCodeModel: Model<ExamCodeDocument>,
   ) {}
 
   private validateQuestions(questions: any[]) {
@@ -202,7 +214,11 @@ export class ExamsService {
     return score.save();
   }
 
-  async findAllExams(query: ListExamsQueryDto): Promise<{ data: ExamDocument[]; total: number }> {
+  async findAllExams(
+    query: ListExamsQueryDto,
+    role?: string,
+    userId?: string,
+  ): Promise<{ data: any[]; total: number }> {
     const filter: Record<string, any> = {};
     if (query.subjectId) {
       filter.subjectId = new Types.ObjectId(query.subjectId);
@@ -210,14 +226,86 @@ export class ExamsService {
     if (query.search) {
       filter.title = { $regex: query.search, $options: 'i' };
     }
+    if (role === 'student') {
+      filter.isActive = true;
+    }
 
     const skip = (query.page - 1) * query.limit;
 
-    const [data, total] = await Promise.all([
-      this.examModel.find(filter).skip(skip).limit(query.limit).sort({ createdAt: -1 }).exec(),
+    const [exams, total] = await Promise.all([
+      this.examModel
+        .find(filter)
+        .skip(skip)
+        .limit(query.limit)
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
       this.examModel.countDocuments(filter).exec(),
     ]);
 
+    if (role === 'student' && userId) {
+      const uId = new Types.ObjectId(userId);
+      const examIds = exams.map((e) => e._id);
+
+      const attemptCounts = await this.examCodeModel
+        .aggregate<{
+          _id: Types.ObjectId;
+          count: number;
+        }>([
+          {
+            $match: {
+              examId: { $in: examIds },
+              status: ExamCodeStatus.AVAILABLE,
+              $or: [{ activatedBy: uId }, { activatedBy: { $exists: false } }],
+            },
+          },
+          { $group: { _id: '$examId', count: { $sum: 1 } } },
+        ])
+        .exec();
+
+      const attemptMap = new Map<string, number>();
+      for (const ac of attemptCounts) {
+        attemptMap.set(ac._id.toString(), ac.count);
+      }
+
+      const completedSessionCounts = await this.sessionModel
+        .aggregate<{
+          _id: Types.ObjectId;
+          count: number;
+        }>([
+          {
+            $match: {
+              examId: { $in: examIds },
+              studentId: uId,
+              status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED] },
+            },
+          },
+          { $group: { _id: '$examId', count: { $sum: 1 } } },
+        ])
+        .exec();
+
+      const sessionMap = new Map<string, number>();
+      for (const sc of completedSessionCounts) {
+        sessionMap.set(sc._id.toString(), sc.count);
+      }
+
+      const data = exams.map((exam) => {
+        const availableCodes = attemptMap.get(exam._id.toString()) ?? 0;
+        const usedAttempts = sessionMap.get(exam._id.toString()) ?? 0;
+        return {
+          ...exam,
+          attemptsRemaining: Math.max(0, availableCodes),
+          status: usedAttempts > 0 ? 'completed' : availableCodes > 0 ? 'available' : 'locked',
+        };
+      });
+      return { data, total };
+    }
+
+    const data = exams.map((exam) => ({
+      ...exam,
+      attemptsRemaining: 0,
+      status: 'available' as string,
+    }));
     return { data, total };
   }
 
@@ -239,5 +327,38 @@ export class ExamsService {
   async deleteExam(id: string): Promise<void> {
     const exam = await this.examModel.findByIdAndUpdate(id, { isActive: false }).exec();
     if (!exam) throw new NotFoundException('Exam not found');
+  }
+
+  async saveAnswer(sessionId: string, userId: string, dto: SaveAnswerDto): Promise<void> {
+    const session = await this.sessionModel.findById(sessionId).exec();
+    if (!session) {
+      throw new NotFoundException('Exam session not found');
+    }
+    if (session.studentId.toString() !== userId) {
+      throw new ForbiddenException('You can only answer your own exam session');
+    }
+    if (session.status !== SessionStatus.STARTED) {
+      throw new BadRequestException('Exam session is not in progress');
+    }
+
+    const existingResponses = session.responses ?? [];
+    const existingIndex = existingResponses.findIndex(
+      (r) => r.questionId.toString() === dto.questionId,
+    );
+
+    if (existingIndex >= 0) {
+      existingResponses[existingIndex].selectedOption = Array.isArray(dto.value)
+        ? dto.value.join(',')
+        : dto.value;
+    } else {
+      existingResponses.push({
+        questionId: new Types.ObjectId(dto.questionId),
+        selectedOption: Array.isArray(dto.value) ? dto.value.join(',') : dto.value,
+      });
+    }
+
+    session.responses = existingResponses;
+    session.updatedAt = new Date();
+    await session.save();
   }
 }

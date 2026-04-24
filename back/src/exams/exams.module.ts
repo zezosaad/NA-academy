@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Exam, ExamSchema } from './schemas/exam.schema.js';
 import { ExamSession, ExamSessionSchema } from './schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreSchema } from './schemas/exam-score.schema.js';
+import { ExamCode, ExamCodeSchema } from '../activation-codes/schemas/exam-code.schema.js';
 import { ExamsService } from './exams.service.js';
 import { ExamsController } from './exams.controller.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
@@ -13,6 +14,7 @@ import { ActivationCodesModule } from '../activation-codes/activation-codes.modu
       { name: Exam.name, schema: ExamSchema },
       { name: ExamSession.name, schema: ExamSessionSchema },
       { name: ExamScore.name, schema: ExamScoreSchema },
+      { name: ExamCode.name, schema: ExamCodeSchema },
     ]),
     forwardRef(() => ActivationCodesModule),
   ],

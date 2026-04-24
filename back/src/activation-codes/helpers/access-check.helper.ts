@@ -47,7 +47,9 @@ export class AccessCheckHelper {
 
     if (bundleCodes.length === 0) return false;
 
-    const bundleIds = bundleCodes.map((bc) => bc.bundleId).filter((id): id is Types.ObjectId => id !== undefined);
+    const bundleIds = bundleCodes
+      .map((bc) => bc.bundleId)
+      .filter((id): id is Types.ObjectId => id !== undefined);
 
     // Check if any of these bundles contain the subject
     const bundleWithSubject = await this.bundleModel
