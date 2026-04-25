@@ -84,6 +84,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
       } else {
         _messages.add(message);
       }
+      _messages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
     });
 
     _scrollToBottom();

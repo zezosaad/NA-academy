@@ -12,7 +12,7 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ChatService } from './chat.service.js';
-import { MessageStatus } from './schemas/message.schema.js';
+import { MessageStatus, ChatMessageType } from './schemas/message.schema.js';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -75,7 +75,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleMessage(
     @MessageBody()
-    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any; clientMessageId?: string },
+    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: ChatMessageType; clientMessageId?: string },
     @ConnectedSocket() client: Socket,
   ) {
     const senderId = client.data.user.sub;

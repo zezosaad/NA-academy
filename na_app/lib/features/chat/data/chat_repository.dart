@@ -128,6 +128,10 @@ class ChatRepository {
     String? text,
     String? imageFileId,
   }) {
+    if (currentUserId.isEmpty) {
+      log('sendMessage called with empty currentUserId — message not sent');
+      return;
+    }
     final messageType = imageFileId != null ? 'image' : 'text';
     final localId = 'pending-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -217,7 +221,7 @@ class ChatRepository {
         _pendingQueue.removeAt(pendingIdx);
       }
 
-      listConversations();
+      _safeListConversations();
     } catch (e, st) {
       log('Failed to parse incoming message (clientMessageId=$clientMessageId): $e', error: e, stackTrace: st);
     }
@@ -227,7 +231,7 @@ class ChatRepository {
     final messageId = data['messageId'] as String?;
     final newStatus = data['status'] as String?;
     if (messageId == null || newStatus == null) {
-      listConversations();
+      _safeListConversations();
       return;
     }
 
@@ -242,7 +246,7 @@ class ChatRepository {
       _messagesController.add(_messages[idx]);
     }
 
-    listConversations();
+    _safeListConversations();
   }
 
   void _handleConversationRead(Map<String, dynamic> data) {
@@ -255,7 +259,7 @@ class ChatRepository {
         }
       }
     }
-    listConversations();
+    _safeListConversations();
   }
 
   void _handleTypingIndicator(Map<String, dynamic> data) {
@@ -282,7 +286,14 @@ class ChatRepository {
         log('Failed to parse pending message: $e', error: e, stackTrace: st);
       }
     }
-    listConversations();
+    _safeListConversations();
+  }
+
+  void _safeListConversations() {
+    listConversations().catchError((e) {
+      log('Failed to refresh conversations: $e');
+      return <Conversation>[];
+    });
   }
 
   void dispose() {
