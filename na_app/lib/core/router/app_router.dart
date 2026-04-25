@@ -6,6 +6,9 @@ import 'package:na_app/features/auth/presentation/controllers/auth_controller.da
 import 'package:na_app/features/auth/presentation/pages/splash_page.dart';
 import 'package:na_app/features/auth/presentation/pages/login_page.dart';
 import 'package:na_app/features/auth/presentation/pages/register_page.dart';
+import 'package:na_app/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:na_app/features/auth/presentation/pages/reset_password_page.dart';
+import 'package:na_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:na_app/features/home/presentation/pages/today_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subjects_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
@@ -53,7 +56,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const _PlaceholderPage(title: 'Onboarding'),
+        builder: (context, state) => const OnboardingPage(),
       ),
       GoRoute(
         path: '/auth/login',
@@ -65,11 +68,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        builder: (context, state) => const _PlaceholderPage(title: 'Forgot Password'),
+        builder: (context, state) => const ForgotPasswordPage(),
       ),
       GoRoute(
         path: '/auth/reset-password',
-        builder: (context, state) => const _PlaceholderPage(title: 'Reset Password'),
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          return ResetPasswordPage(token: token);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
