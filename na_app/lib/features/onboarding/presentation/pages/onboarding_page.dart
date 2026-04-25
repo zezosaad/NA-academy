@@ -47,12 +47,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _goToPage(int page) {
-    final reduce = AppMotion.shouldReduceMotion(context);
-    _pageController.animateToPage(
-      page,
-      duration: reduce ? Duration.zero : AppMotion.medium,
-      curve: AppMotion.standard,
-    );
+    if (AppMotion.shouldReduceMotion(context)) {
+      _pageController.jumpToPage(page);
+    } else {
+      _pageController.animateToPage(
+        page,
+        duration: AppMotion.medium,
+        curve: AppMotion.standard,
+      );
+    }
   }
 
   @override
@@ -84,18 +87,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_totalSlides, (index) {
                       final isActive = index == _currentPage;
-                      return GestureDetector(
-                        onTap: () => _goToPage(index),
-                        child: AnimatedContainer(
-                          duration: AppMotion.shouldReduceMotion(context) ? Duration.zero : AppMotion.short,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: isActive ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? (isDark ? AppColors.darkAccent : AppColors.accent)
-                                : (isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
-                            borderRadius: BorderRadius.circular(4),
+                      return Semantics(
+                        label: 'Page ${index + 1}',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () => _goToPage(index),
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Center(
+                              child: AnimatedContainer(
+                                duration: AppMotion.shouldReduceMotion(context) ? Duration.zero : AppMotion.short,
+                                width: isActive ? 24 : 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? (isDark ? AppColors.darkAccent : AppColors.accent)
+                                      : (isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       );

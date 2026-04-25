@@ -162,7 +162,7 @@ export class AuthService {
   async issueResetToken(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      this.logger.warn(`Password reset requested for unknown email: ${email}`);
+      this.logger.warn(`Password reset requested for unknown email: ${maskEmail(email)}`);
       return;
     }
 
@@ -295,4 +295,13 @@ export class AuthService {
         return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
   }
+}
+
+function maskEmail(email: string): string {
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0) return '***';
+  const local = email.substring(0, atIndex);
+  const domain = email.substring(atIndex);
+  const visible = local.length <= 2 ? local[0] : local.substring(0, 2);
+  return `${visible}***${domain}`;
 }
