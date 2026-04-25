@@ -101,6 +101,16 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    final id = (json['_id'] as String?) ?? json['id'] as String?;
+    if (id == null || id.isEmpty) {
+      throw FormatException('ChatMessage.fromJson: "_id" or "id" is required and must be non-empty');
+    }
+
+    final conversationId = json['conversationId'] as String?;
+    if (conversationId == null || conversationId.isEmpty) {
+      throw FormatException('ChatMessage.fromJson: "conversationId" is required and must be non-empty');
+    }
+
     final senderIdRaw = json['senderId'];
     String senderId;
     if (senderIdRaw is String) {
@@ -110,16 +120,29 @@ class ChatMessage {
     } else {
       senderId = '';
     }
+    if (senderId.isEmpty) {
+      throw FormatException('ChatMessage.fromJson: "senderId" is required and must be non-empty');
+    }
+
+    final recipientId = json['recipientId'] as String?;
+    if (recipientId == null || recipientId.isEmpty) {
+      throw FormatException('ChatMessage.fromJson: "recipientId" is required and must be non-empty');
+    }
+
+    final createdAt = _parseDate(json['createdAt'] as String?);
+    if (createdAt == null) {
+      throw FormatException('ChatMessage.fromJson: "createdAt" is required and must be a valid date');
+    }
 
     return ChatMessage(
-      id: (json['_id'] as String?) ?? json['id'] as String? ?? '',
-      conversationId: (json['conversationId'] as String?) ?? '',
+      id: id,
+      conversationId: conversationId,
       senderId: senderId,
-      recipientId: json['recipientId'] as String? ?? '',
+      recipientId: recipientId,
       type: _parseMessageType(json['messageType'] as String?),
       text: json['text'] as String?,
       imageFileId: json['imageFileId'] as String?,
-      sentAt: _parseDate(json['createdAt'] as String?) ?? DateTime.utc(1970),
+      sentAt: createdAt,
       deliveredAt: _parseDate(json['deliveredAt'] as String?),
       readAt: _parseDate(json['readAt'] as String?),
       status: _parseDeliveryStatus(json['status'] as String?),

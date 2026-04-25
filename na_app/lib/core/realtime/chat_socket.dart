@@ -133,12 +133,14 @@ class ChatSocket {
     String? text,
     String? imageFileId,
     String messageType = 'text',
+    String? clientMessageId,
   }) {
     _socket?.emit('send_message', {
       'recipientId': recipientId,
       if (text != null) 'text': text,
       if (imageFileId != null) 'imageFileId': imageFileId,
       'messageType': messageType,
+      if (clientMessageId != null) 'clientMessageId': clientMessageId,
     });
   }
 

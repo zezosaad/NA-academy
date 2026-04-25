@@ -140,11 +140,26 @@ class ChatRepository {
     );
     _pendingQueue.add(pending);
 
+    final provisional = ChatMessage(
+      id: localId,
+      conversationId: '',
+      senderId: '',
+      recipientId: recipientId,
+      type: messageType == 'image' ? MessageType.image : MessageType.text,
+      text: text,
+      imageFileId: imageFileId,
+      sentAt: DateTime.now(),
+      status: MessageDeliveryStatus.pending,
+    );
+    _messages.add(provisional);
+    _messagesController.add(provisional);
+
     _chatSocket.sendMessage(
       recipientId: recipientId,
       text: text,
       imageFileId: imageFileId,
       messageType: messageType,
+      clientMessageId: localId,
     );
   }
 
@@ -171,16 +186,32 @@ class ChatRepository {
   void _handleNewMessage(Map<String, dynamic> data) {
     try {
       final message = ChatMessage.fromJson(data);
-      _messages.add(message);
-      _messagesController.add(message);
+      final clientMessageId = data['clientMessageId'] as String?;
+
+      final existingIdx = clientMessageId != null
+          ? _messages.indexWhere((m) => m.id == clientMessageId)
+          : _messages.indexWhere((m) => m.id == message.id);
+
+      if (existingIdx >= 0) {
+        final merged = message.copyWith(
+          id: message.id.isNotEmpty ? message.id : _messages[existingIdx].id,
+          conversationId: message.conversationId.isNotEmpty
+              ? message.conversationId
+              : _messages[existingIdx].conversationId,
+        );
+        _messages[existingIdx] = merged;
+        _messagesController.add(merged);
+      } else {
+        _messages.add(message);
+        _messagesController.add(message);
+      }
+
       deliveryAck(messageId: message.id, senderId: message.senderId);
 
-      final idx = _pendingQueue.indexWhere((m) =>
-          m.recipientId == message.recipientId &&
-          m.text == message.text &&
-          m.status == MessageDeliveryStatus.pending);
-      if (idx >= 0) {
-        _pendingQueue.removeAt(idx);
+      final pendingIdx = _pendingQueue.indexWhere((m) =>
+          m.localId == clientMessageId && m.status == MessageDeliveryStatus.pending);
+      if (pendingIdx >= 0) {
+        _pendingQueue.removeAt(pendingIdx);
       }
 
       listConversations();
@@ -234,6 +265,12 @@ class ChatRepository {
     for (final msgData in data) {
       try {
         final message = ChatMessage.fromJson(msgData);
+        final existingIdx = _messages.indexWhere((m) => m.id == message.id);
+        if (existingIdx >= 0) {
+          _messages[existingIdx] = message;
+        } else {
+          _messages.add(message);
+        }
         _messagesController.add(message);
         deliveryAck(messageId: message.id, senderId: message.senderId);
       } catch (_) {}

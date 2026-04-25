@@ -273,6 +273,17 @@ async uploadChatMedia(
           reject(err);
         });
 
+        stream.on('limit', () => {
+          sizeExceeded = true;
+          sizeCheck.destroy();
+          writeStream.destroy();
+          reject(
+            new PayloadTooLargeException(
+              `File must be smaller than ${options.maxBytes / 1024 / 1024} MB`,
+            ),
+          );
+        });
+
         writeStream.on('error', (error: Error) => {
           reject(error);
         });
@@ -304,6 +315,7 @@ async uploadChatMedia(
               contentType,
               fileSize: uploadedFile.length,
               mediaType: MediaType.IMAGE,
+              chatUpload: true,
               uploadedBy: new Types.ObjectId(userId),
             });
 

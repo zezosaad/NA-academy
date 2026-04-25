@@ -72,12 +72,16 @@ export class MediaController {
     const asset = await this.mediaService.findAssetById(id);
 
     if (user.role === 'student' && asset) {
-      const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
-        user.userId,
-        asset.subjectId!.toString(),
-      );
-      if (!hasAccess) {
-        throw new ForbiddenException('You do not have active code access to this media content');
+      if (asset.chatUpload) {
+        // Chat uploads don't require subject-based access checks
+      } else if (asset.subjectId) {
+        const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
+          user.userId,
+          asset.subjectId.toString(),
+        );
+        if (!hasAccess) {
+          throw new ForbiddenException('You do not have active code access to this media content');
+        }
       }
     }
 

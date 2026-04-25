@@ -37,6 +37,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   final _messages = <ChatMessage>[];
   late String _conversationId;
   bool _counterpartyTyping = false;
+  bool _isTyping = false;
   Timer? _typingTimer;
   StreamSubscription<ChatMessage>? _messageSub;
   StreamSubscription<TypingEvent>? _typingSub;
@@ -62,18 +63,27 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   }
 
   void _onNewMessage(ChatMessage message) {
-    final belongsToConversation = message.conversationId == _conversationId ||
-        message.senderId == widget.counterpartyId ||
-        message.recipientId == widget.counterpartyId;
+    bool belongsToConversation;
+    if (_conversationId.isNotEmpty) {
+      belongsToConversation = message.conversationId == _conversationId;
+    } else {
+      belongsToConversation = message.senderId == widget.counterpartyId ||
+          message.recipientId == widget.counterpartyId;
+    }
 
-    if (!belongsToConversation && _conversationId.isNotEmpty) return;
+    if (!belongsToConversation) return;
 
     if (_conversationId.isEmpty && message.conversationId.isNotEmpty) {
       setState(() => _conversationId = message.conversationId);
     }
 
     setState(() {
-      _messages.add(message);
+      final existingIdx = _messages.indexWhere((m) => m.id == message.id);
+      if (existingIdx >= 0) {
+        _messages[existingIdx] = message;
+      } else {
+        _messages.add(message);
+      }
     });
 
     _scrollToBottom();
@@ -122,13 +132,17 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void _handleTypingChanged(String text) {
     final chatController = ref.read(chatControllerProvider);
 
-    if (text.isNotEmpty && !_counterpartyTyping) {
+    if (text.isNotEmpty && !_isTyping) {
+      _isTyping = true;
       chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: true);
     }
 
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(seconds: 3), () {
-      chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: false);
+      if (_isTyping) {
+        _isTyping = false;
+        chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: false);
+      }
     });
   }
 

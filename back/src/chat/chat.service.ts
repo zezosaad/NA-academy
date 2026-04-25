@@ -54,6 +54,10 @@ export class ChatService {
   }
 
   async canChat(userId1: string, userId2: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(userId1) || !Types.ObjectId.isValid(userId2)) {
+      return false;
+    }
+
     const user1 = await this.userModel.findById(userId1).exec();
     const user2 = await this.userModel.findById(userId2).exec();
 
@@ -161,9 +165,6 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
           if (matched) {
             subjectId = matched._id.toString();
             subjectTitle = matched.title;
-          } else if (mySubjects.length > 0) {
-            subjectId = mySubjects[0]._id.toString();
-            subjectTitle = mySubjects[0].title;
           }
         }
       }

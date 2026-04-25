@@ -39,6 +39,9 @@ export class MediaAsset {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   uploadedBy?: Types.ObjectId;
 
+  @Prop({ default: false, type: Boolean })
+  chatUpload!: boolean;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

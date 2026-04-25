@@ -20,9 +20,12 @@ export class AnalyticsService {
     const asset = await this.mediaService.findAssetById(dto.mediaAssetId);
     if (!asset) throw new NotFoundException('Media asset not found');
 
+    if (!asset.subjectId) {
+      throw new ForbiddenException('No subject associated with this content');
+    }
     const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
       studentId,
-      asset.subjectId!.toString(),
+      asset.subjectId.toString(),
     );
     if (!hasAccess) throw new ForbiddenException('No active access to this subject content');
 
