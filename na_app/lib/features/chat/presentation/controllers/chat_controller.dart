@@ -17,6 +17,7 @@ class ChatController {
 
   void setCurrentUserId(String userId) {
     _currentUserId = userId;
+    _repository.currentUserId = userId;
   }
 
   void sendTextMessage({required String recipientId, required String text}) {

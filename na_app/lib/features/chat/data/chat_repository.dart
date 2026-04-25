@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -23,6 +24,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 class ChatRepository {
   final Dio _dio;
   final ChatSocket _chatSocket;
+  String currentUserId = '';
 
   final _conversationsController = StreamController<List<Conversation>>.broadcast();
   final _messagesController = StreamController<ChatMessage>.broadcast();
@@ -143,7 +145,7 @@ class ChatRepository {
     final provisional = ChatMessage(
       id: localId,
       conversationId: '',
-      senderId: '',
+      senderId: currentUserId,
       recipientId: recipientId,
       type: messageType == 'image' ? MessageType.image : MessageType.text,
       text: text,
@@ -184,9 +186,10 @@ class ChatRepository {
   }
 
   void _handleNewMessage(Map<String, dynamic> data) {
+    String? clientMessageId;
     try {
       final message = ChatMessage.fromJson(data);
-      final clientMessageId = data['clientMessageId'] as String?;
+      clientMessageId = data['clientMessageId'] as String?;
 
       final existingIdx = clientMessageId != null
           ? _messages.indexWhere((m) => m.id == clientMessageId)
@@ -215,7 +218,9 @@ class ChatRepository {
       }
 
       listConversations();
-    } catch (_) {}
+    } catch (e, st) {
+      log('Failed to parse incoming message (clientMessageId=$clientMessageId): $e', error: e, stackTrace: st);
+    }
   }
 
   void _handleStatusUpdate(Map<String, dynamic> data) {
@@ -273,7 +278,9 @@ class ChatRepository {
         }
         _messagesController.add(message);
         deliveryAck(messageId: message.id, senderId: message.senderId);
-      } catch (_) {}
+      } catch (e, st) {
+        log('Failed to parse pending message: $e', error: e, stackTrace: st);
+      }
     }
     listConversations();
   }

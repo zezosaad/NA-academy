@@ -75,7 +75,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleMessage(
     @MessageBody()
-    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any },
+    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any; clientMessageId?: string },
     @ConnectedSocket() client: Socket,
   ) {
     const senderId = client.data.user.sub;
@@ -103,14 +103,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       messageType: payload.messageType,
     });
 
+    const messagePayload: Record<string, any> = {
+      ...savedMessage.toObject(),
+      clientMessageId: payload.clientMessageId ?? null,
+    };
+
     const recipientSocketId = this.userSockets.get(payload.recipientId);
     if (recipientSocketId) {
-      this.server.to(recipientSocketId).emit('new_message', savedMessage);
+      this.server.to(recipientSocketId).emit('new_message', messagePayload);
     }
+
+    client.emit('new_message', messagePayload);
 
     return {
       event: 'message_ack',
-      data: { messageId: savedMessage._id, status: MessageStatus.SENT },
+      data: { messageId: savedMessage._id, status: MessageStatus.SENT, clientMessageId: payload.clientMessageId ?? null },
     };
   }
 

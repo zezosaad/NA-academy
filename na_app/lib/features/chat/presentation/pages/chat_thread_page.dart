@@ -88,7 +88,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
 
     _scrollToBottom();
 
-    if (message.senderId == widget.counterpartyId) {
+    if (message.senderId == widget.counterpartyId && _conversationId.isNotEmpty) {
       final chatController = ref.read(chatControllerProvider);
       chatController.markConversationRead(
         conversationId: _conversationId,
@@ -112,20 +112,6 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void _handleSendText(String text) {
     final chatController = ref.read(chatControllerProvider);
     chatController.sendTextMessage(recipientId: widget.counterpartyId, text: text);
-
-    final now = DateTime.now();
-    setState(() {
-      _messages.add(ChatMessage(
-        id: 'local-${now.millisecondsSinceEpoch}',
-        conversationId: widget.conversationId,
-        senderId: chatController.currentUserId,
-        recipientId: widget.counterpartyId,
-        type: MessageType.text,
-        text: text,
-        sentAt: now,
-        status: MessageDeliveryStatus.pending,
-      ));
-    });
     _scrollToBottom();
   }
 
