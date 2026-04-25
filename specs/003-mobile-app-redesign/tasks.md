@@ -109,25 +109,25 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Backend gaps B3 + B4 — MUST land before T049**:
 
-- [ ] T044 [US2] Modify `back/src/exams/exams.service.ts` `findAllExams` to project `attemptsRemaining: number` per exam when invoked by a student — count unused `ExamCode` rows where `assignedStudentId === userId || null` and `status === 'active'` (contracts §5 Δ / B3).
-- [ ] T045 [US2] Update `back/src/exams/exams.controller.ts` `GET /exams` Swagger schema with `attemptsRemaining`; add Jest test asserting the count matches seeded codes.
-- [ ] T046 [US2] Create `back/src/exams/dto/save-answer.dto.ts` with `SaveAnswerDto { @IsMongoId questionId: string; @IsDefined value: string | string[] }` (contracts §5 / B4).
-- [ ] T047 [US2] Add `POST /exams/sessions/:sessionId/answer` to `back/src/exams/exams.controller.ts` returning 204, guarded by `Roles('student')`.
-- [ ] T048 [US2] Implement `saveAnswer(sessionId, userId, dto)` in `back/src/exams/exams.service.ts` — service-level check that `session.userId === userId && session.status === 'inProgress'`; `$set` the answer keyed by `questionId` into the session's answers map; idempotent upsert (contracts §5). Add Jest test for the happy path and the "session not owned by user" rejection.
+- [x] T044 [US2] Modify `back/src/exams/exams.service.ts` `findAllExams` to project `attemptsRemaining: number` per exam when invoked by a student — count unused `ExamCode` rows where `assignedStudentId === userId || null` and `status === 'active'` (contracts §5 Δ / B3).
+- [x] T045 [US2] Update `back/src/exams/exams.controller.ts` `GET /exams` Swagger schema with `attemptsRemaining`; add Jest test asserting the count matches seeded codes.
+- [x] T046 [US2] Create `back/src/exams/dto/save-answer.dto.ts` with `SaveAnswerDto { @IsMongoId questionId: string; @IsDefined value: string | string[] }` (contracts §5 / B4).
+- [x] T047 [US2] Add `POST /exams/sessions/:sessionId/answer` to `back/src/exams/exams.controller.ts` returning 204, guarded by `Roles('student')`.
+- [x] T048 [US2] Implement `saveAnswer(sessionId, userId, dto)` in `back/src/exams/exams.service.ts` — service-level check that `session.userId === userId && session.status === 'inProgress'`; `$set` the answer keyed by `questionId` into the session's answers map; idempotent upsert (contracts §5). Add Jest test for the happy path and the "session not owned by user" rejection.
 
 **Mobile implementation**:
 
-- [ ] T049 [P] [US2] Create `Exam`, `ExamSession`, `ExamScore`, and `AnswerValue` freezed models in `na_app/lib/features/exams/domain/exam_models.dart` (data-model §1.6–§1.8).
-- [ ] T050 [US2] Create `na_app/lib/features/exams/data/exams_repository.dart` with `listExams()`, `getExam(id)`, `startSession(examId)`, `saveAnswer(sessionId, questionId, value)`, and `submitSession(sessionId, answers)`; the autosave call is issued on every Next tap before the next question renders (research §7).
-- [ ] T051 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/exam_timer.dart` — sticky countdown reading `session.endsAt`, triggers an `onExpire` callback used for auto-submit (FR-015).
-- [ ] T052 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/question_card.dart` rendering one question per screen with answer input widgets appropriate to the question type.
-- [ ] T053 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/score_ring.dart` (may re-export the core widget) and exam-specific detail sections.
-- [ ] T054 [US2] Create `na_app/lib/features/exams/presentation/pages/exams_page.dart` — list grouped by Available / Completed with title, subject, duration, question count, and `attemptsRemaining` per exam (FR-012).
-- [ ] T055 [P] [US2] Create `na_app/lib/features/exams/presentation/pages/enter_exam_code_page.dart` — exam summary card + wide mono-font `CodeInputField`, "Unlock and start exam" CTA disabled until code length is met (FR-013, acceptance US2 #1).
-- [ ] T056 [US2] Create `na_app/lib/features/exams/presentation/pages/take_exam_page.dart` — sticky timer + progress bar, one question per screen, Next tap issues `saveAnswer` via repo before advancing, warns on back-navigation with "Leave exam?" dialog, auto-submits on timer expiry (FR-014, FR-015, acceptance US2 #2–5).
-- [ ] T057 [US2] Create `na_app/lib/features/exams/presentation/pages/exam_result_page.dart` — score ring, pass/fail badge where applicable, collapsible per-question review (student answer vs. correct answer), CTA back to subjects; shows "Timed out" badge when the score came from a timer-expiry submit (FR-016, acceptance US2 #4–5).
-- [ ] T058 [US2] Handle the background-mid-exam edge case in `take_exam_page.dart`: on resume within the timer window, refetch session and hydrate local answer map; past the window, route straight to `exam_result_page.dart` (Edge Cases, SC-005).
-- [ ] T059 [US2] Add `integration_test` in `na_app/integration_test/p1_exam_flow_test.dart` walking Exams list → enter exam code → answer all questions (asserting autosave calls) → submit → Result screen.
+- [x] T049 [P] [US2] Create `Exam`, `ExamSession`, `ExamScore`, and `AnswerValue` freezed models in `na_app/lib/features/exams/domain/exam_models.dart` (data-model §1.6–§1.8).
+- [x] T050 [US2] Create `na_app/lib/features/exams/data/exams_repository.dart` with `listExams()`, `getExam(id)`, `startSession(examId)`, `saveAnswer(sessionId, questionId, value)`, and `submitSession(sessionId, answers)`; the autosave call is issued on every Next tap before the next question renders (research §7).
+- [x] T051 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/exam_timer.dart` — sticky countdown reading `session.endsAt`, triggers an `onExpire` callback used for auto-submit (FR-015).
+- [x] T052 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/question_card.dart` rendering one question per screen with answer input widgets appropriate to the question type.
+- [x] T053 [P] [US2] Create `na_app/lib/features/exams/presentation/widgets/score_ring.dart` (may re-export the core widget) and exam-specific detail sections.
+- [x] T054 [US2] Create `na_app/lib/features/exams/presentation/pages/exams_page.dart` — list grouped by Available / Completed with title, subject, duration, question count, and `attemptsRemaining` per exam (FR-012).
+- [x] T055 [P] [US2] Create `na_app/lib/features/exams/presentation/pages/enter_exam_code_page.dart` — exam summary card + wide mono-font `CodeInputField`, "Unlock and start exam" CTA disabled until code length is met (FR-013, acceptance US2 #1).
+- [x] T056 [US2] Create `na_app/lib/features/exams/presentation/pages/take_exam_page.dart` — sticky timer + progress bar, one question per screen, Next tap issues `saveAnswer` via repo before advancing, warns on back-navigation with "Leave exam?" dialog, auto-submits on timer expiry (FR-014, FR-015, acceptance US2 #2–5).
+- [x] T057 [US2] Create `na_app/lib/features/exams/presentation/pages/exam_result_page.dart` — score ring, pass/fail badge where applicable, collapsible per-question review (student answer vs. correct answer), CTA back to subjects; shows "Timed out" badge when the score came from a timer-expiry submit (FR-016, acceptance US2 #4–5).
+- [x] T058 [US2] Handle the background-mid-exam edge case in `take_exam_page.dart`: on resume within the timer window, refetch session and hydrate local answer map; past the window, route straight to `exam_result_page.dart` (Edge Cases, SC-005).
+- [x] T059 [US2] Add `integration_test` in `na_app/integration_test/p1_exam_flow_test.dart` walking Exams list → enter exam code → answer all questions (asserting autosave calls) → submit → Result screen.
 
 **Checkpoint**: Both P1 slices work independently. This is the point at which the MVP can ship.
 

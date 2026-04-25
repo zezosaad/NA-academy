@@ -12,6 +12,11 @@ import 'package:na_app/features/subjects/presentation/pages/enter_subject_code_p
 import 'package:na_app/features/subjects/presentation/pages/code_unlocking_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_expired_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_used_page.dart';
+import 'package:na_app/features/exams/presentation/pages/exams_page.dart';
+import 'package:na_app/features/exams/presentation/pages/enter_exam_code_page.dart';
+import 'package:na_app/features/exams/presentation/pages/take_exam_page.dart';
+import 'package:na_app/features/exams/presentation/pages/exam_result_page.dart';
+import 'package:na_app/features/exams/domain/exam_models.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -107,28 +112,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/exams',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Exams'),
+                builder: (context, state) => const ExamsPage(),
                 routes: [
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
                       final examId = state.pathParameters['id']!;
-                      return _PlaceholderPage(title: 'Exam $examId');
-                    },
-                  ),
-                  GoRoute(
-                    path: ':id/take',
-                    builder: (context, state) {
-                      final examId = state.pathParameters['id']!;
-                      return _PlaceholderPage(title: 'Take Exam $examId');
-                    },
-                  ),
-                  GoRoute(
-                    path: ':id/result',
-                    builder: (context, state) {
-                      final examId = state.pathParameters['id']!;
-                      return _PlaceholderPage(title: 'Exam Result $examId');
+                      return _PlaceholderPage(title: 'Exam Detail $examId');
                     },
                   ),
                 ],
@@ -207,7 +197,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/exams/:id/enter-code',
         builder: (context, state) {
           final examId = state.pathParameters['id']!;
-          return _PlaceholderPage(title: 'Enter Exam Code for $examId');
+          return EnterExamCodePage(examId: examId);
+        },
+      ),
+      GoRoute(
+        path: '/exams/:id/take',
+        builder: (context, state) {
+          final examId = state.pathParameters['id']!;
+          return TakeExamPage(examId: examId);
+        },
+      ),
+      GoRoute(
+        path: '/exams/:id/result',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final score = extra['score'] as ExamScore? ?? ExamScore(sessionId: '', score: 0);
+          final timedOut = extra['timedOut'] as bool? ?? false;
+          return ExamResultPage(score: score, timedOut: timedOut);
         },
       ),
     ],

@@ -1,0 +1,1 @@
+export 'package:na_app/core/widgets/score_ring.dart';

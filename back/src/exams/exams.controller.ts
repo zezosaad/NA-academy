@@ -11,7 +11,7 @@ import {
   HttpStatus,
   ForbiddenException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { ExamsService } from './exams.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -19,6 +19,7 @@ import { CreateExamDto } from './dto/create-exam.dto.js';
 import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
+import { SaveAnswerDto } from './dto/save-answer.dto.js';
 import { ActivationCodesService } from '../activation-codes/activation-codes.service.js';
 
 @ApiTags('Exams')
@@ -39,9 +40,13 @@ export class ExamsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List exams' })
-  async findAllExams(@Query() query: ListExamsQueryDto) {
-    const { data, total } = await this.examsService.findAllExams(query);
+  @ApiOperation({ summary: 'List exams with per-student attempts remaining' })
+  async findAllExams(
+    @Query() query: ListExamsQueryDto,
+    @CurrentUser('role') role: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const { data, total } = await this.examsService.findAllExams(query, role, userId);
     return { data, total, page: query.page, limit: query.limit };
   }
 
@@ -111,6 +116,18 @@ export class ExamsController {
   @ApiOperation({ summary: 'Submit exam answers and auto-grade' })
   async submitExam(@Body() dto: SubmitExamDto, @CurrentUser('userId') userId: string) {
     return this.examsService.submitExam(dto, userId);
+  }
+
+  @Post('sessions/:sessionId/answer')
+  @Roles('student')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Save a single answer for an in-progress exam session (auto-save)' })
+  async saveAnswer(
+    @Param('sessionId') sessionId: string,
+    @Body() dto: SaveAnswerDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    await this.examsService.saveAnswer(sessionId, userId, dto);
   }
 
   @Put(':id')

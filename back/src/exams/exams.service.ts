@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Exam, ExamDocument, Question } from './schemas/exam.schema.js';
 import { ExamSession, ExamSessionDocument, SessionStatus } from './schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreDocument } from './schemas/exam-score.schema.js';
+import {
+  ExamCode,
+  ExamCodeDocument,
+  CodeStatus as ExamCodeStatus,
+} from '../activation-codes/schemas/exam-code.schema.js';
 import { CreateExamDto } from './dto/create-exam.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
+import { SaveAnswerDto } from './dto/save-answer.dto.js';
 
 @Injectable()
 export class ExamsService {
@@ -15,6 +26,7 @@ export class ExamsService {
     @InjectModel(Exam.name) private readonly examModel: Model<ExamDocument>,
     @InjectModel(ExamSession.name) private readonly sessionModel: Model<ExamSessionDocument>,
     @InjectModel(ExamScore.name) private readonly scoreModel: Model<ExamScoreDocument>,
+    @InjectModel(ExamCode.name) private readonly examCodeModel: Model<ExamCodeDocument>,
   ) {}
 
   private validateQuestions(questions: any[]) {
@@ -202,7 +214,11 @@ export class ExamsService {
     return score.save();
   }
 
-  async findAllExams(query: ListExamsQueryDto): Promise<{ data: ExamDocument[]; total: number }> {
+  async findAllExams(
+    query: ListExamsQueryDto,
+    role?: string,
+    userId?: string,
+  ): Promise<{ data: any[]; total: number }> {
     const filter: Record<string, any> = {};
     if (query.subjectId) {
       filter.subjectId = new Types.ObjectId(query.subjectId);
@@ -210,14 +226,126 @@ export class ExamsService {
     if (query.search) {
       filter.title = { $regex: query.search, $options: 'i' };
     }
+    if (role === 'student') {
+      filter.isActive = true;
+    }
 
     const skip = (query.page - 1) * query.limit;
 
-    const [data, total] = await Promise.all([
-      this.examModel.find(filter).skip(skip).limit(query.limit).sort({ createdAt: -1 }).exec(),
+    const [exams, total] = await Promise.all([
+      this.examModel
+        .find(filter)
+        .skip(skip)
+        .limit(query.limit)
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
       this.examModel.countDocuments(filter).exec(),
     ]);
 
+    if (role === 'student' && userId) {
+      const uId = new Types.ObjectId(userId);
+      const examIds = exams.map((e) => e._id);
+
+      const attemptCounts = await this.examCodeModel
+        .aggregate<{
+          _id: Types.ObjectId;
+          count: number;
+        }>([
+          {
+            $match: {
+              examId: { $in: examIds },
+              status: ExamCodeStatus.AVAILABLE,
+              activatedBy: uId,
+            },
+          },
+          { $group: { _id: '$examId', count: { $sum: '$remainingUses' } } },
+        ])
+        .exec();
+
+      const attemptMap = new Map<string, number>();
+      for (const ac of attemptCounts) {
+        attemptMap.set(ac._id.toString(), ac.count);
+      }
+
+      const latestScores = await this.scoreModel
+        .aggregate<{ _id: Types.ObjectId; scorePercentage: number }>([
+          { $match: { examId: { $in: examIds }, studentId: uId } },
+          { $sort: { createdAt: -1 } },
+          { $group: { _id: '$examId', scorePercentage: { $first: '$scorePercentage' } } },
+        ])
+        .exec();
+
+      const lastScoreMap = new Map<string, number>();
+      for (const ls of latestScores) {
+        lastScoreMap.set(ls._id.toString(), ls.scorePercentage);
+      }
+
+      const completedSessionCounts = await this.sessionModel
+        .aggregate<{
+          _id: Types.ObjectId;
+          completedCount: number;
+          startedCount: number;
+        }>([
+          {
+            $match: {
+              examId: { $in: examIds },
+              studentId: uId,
+              status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED, SessionStatus.TIMED_OUT] },
+            },
+          },
+          {
+            $group: {
+              _id: '$examId',
+              completedCount: {
+                $sum: {
+                  $cond: [
+                    { $in: ['$status', [SessionStatus.COMPLETED, SessionStatus.TIMED_OUT]] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              startedCount: {
+                $sum: { $cond: [{ $eq: ['$status', SessionStatus.STARTED] }, 1, 0] },
+              },
+            },
+          },
+        ])
+        .exec();
+
+      const completedMap = new Map<string, number>();
+      const startedMap = new Map<string, number>();
+      for (const sc of completedSessionCounts) {
+        completedMap.set(sc._id.toString(), sc.completedCount);
+        startedMap.set(sc._id.toString(), sc.startedCount);
+      }
+
+      const data = exams.map((exam) => {
+        const availableCodes = attemptMap.get(exam._id.toString()) ?? 0;
+        const completedAttempts = completedMap.get(exam._id.toString()) ?? 0;
+        const hasStartedSession = (startedMap.get(exam._id.toString()) ?? 0) > 0;
+        return {
+          ...exam,
+          attemptsRemaining: Math.max(0, availableCodes),
+          lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
+          status: completedAttempts > 0
+            ? 'completed'
+            : hasStartedSession
+              ? 'available'
+              : availableCodes > 0
+                ? 'available'
+                : 'locked',
+        };
+      });
+      return { data, total };
+    }
+
+    const data = exams.map((exam) => ({
+      ...exam,
+      attemptsRemaining: 0,
+      status: 'available' as string,
+    }));
     return { data, total };
   }
 
@@ -239,5 +367,50 @@ export class ExamsService {
   async deleteExam(id: string): Promise<void> {
     const exam = await this.examModel.findByIdAndUpdate(id, { isActive: false }).exec();
     if (!exam) throw new NotFoundException('Exam not found');
+  }
+
+  async saveAnswer(sessionId: string, userId: string, dto: SaveAnswerDto): Promise<void> {
+    const session = await this.sessionModel.findById(sessionId).exec();
+    if (!session) {
+      throw new NotFoundException('Exam session not found');
+    }
+    if (session.studentId.toString() !== userId) {
+      throw new ForbiddenException('You can only answer your own exam session');
+    }
+    if (session.status !== SessionStatus.STARTED) {
+      throw new BadRequestException('Exam session is not in progress');
+    }
+
+    const answerValue = Array.isArray(dto.value) ? dto.value.join(',') : dto.value;
+    const questionObjectId = new Types.ObjectId(dto.questionId);
+
+    const existingResponse = session.responses?.find(
+      (r) => r.questionId.toString() === dto.questionId,
+    );
+
+    if (existingResponse) {
+      await this.sessionModel.updateOne(
+        {
+          _id: sessionId,
+          studentId: new Types.ObjectId(userId),
+          status: SessionStatus.STARTED,
+          'responses.questionId': questionObjectId,
+        },
+        { $set: { 'responses.$.selectedOption': answerValue, updatedAt: new Date() } },
+      ).exec();
+    } else {
+      await this.sessionModel.updateOne(
+        {
+          _id: sessionId,
+          studentId: new Types.ObjectId(userId),
+          status: SessionStatus.STARTED,
+          'responses.questionId': { $ne: questionObjectId },
+        },
+        {
+          $push: { responses: { questionId: questionObjectId, selectedOption: answerValue } },
+          $set: { updatedAt: new Date() },
+        },
+      ).exec();
+    }
   }
 }
