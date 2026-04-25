@@ -181,7 +181,7 @@ export class AuthService {
       await this.mailService.sendPasswordResetEmail(email, rawToken);
       this.logger.log(`Password reset token issued for user ${user._id}`);
     } catch (err) {
-      this.logger.error(`Failed to send password reset email to ${email} (user ${user._id}): ${err}`);
+      this.logger.error(`Failed to send password reset email to ${maskEmail(email)} (user ${user._id}): ${err}`);
     }
   }
 
