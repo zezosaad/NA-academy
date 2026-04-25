@@ -17,6 +17,8 @@ import 'package:na_app/features/exams/presentation/pages/enter_exam_code_page.da
 import 'package:na_app/features/exams/presentation/pages/take_exam_page.dart';
 import 'package:na_app/features/exams/presentation/pages/exam_result_page.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
+import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
+import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -129,15 +131,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/chat',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Chat'),
+                builder: (context, state) => const ChatListPage(),
                 routes: [
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
                       final conversationId = state.pathParameters['id']!;
-                      return _PlaceholderPage(
-                          title: 'Chat $conversationId');
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      return ChatThreadPage(
+                        conversationId: conversationId,
+                        counterpartyId: extra['counterpartyId'] as String? ?? '',
+                        counterpartyName: extra['counterpartyName'] as String? ?? 'Tutor',
+                        subjectTitle: extra['subjectTitle'] as String?,
+                        isVirtual: extra['isVirtual'] as bool? ?? false,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'virtual/:counterpartyId',
+                    builder: (context, state) {
+                      final counterpartyId = state.pathParameters['counterpartyId']!;
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      return ChatThreadPage(
+                        conversationId: '',
+                        counterpartyId: counterpartyId,
+                        counterpartyName: extra['counterpartyName'] as String? ?? 'Tutor',
+                        subjectTitle: extra['subjectTitle'] as String?,
+                        isVirtual: true,
+                      );
                     },
                   ),
                 ],

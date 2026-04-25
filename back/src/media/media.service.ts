@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  PayloadTooLargeException,
+  UnsupportedMediaTypeException,
+  Logger,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types, mongo } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -186,5 +193,119 @@ export class MediaService {
       .find({ subjectId: new Types.ObjectId(subjectId) })
       .sort({ order: 1, createdAt: 1 })
       .exec();
+  }
+
+  async uploadChatMedia(
+    req: Request,
+    userId: string,
+    options: { maxBytes: number; allowedMimeTypes: Set<string> },
+  ): Promise<MediaResponseDto> {
+    return new Promise((resolve, reject) => {
+      const bb = busboy({ headers: req.headers, limits: { fileSize: options.maxBytes } });
+
+      const fileStream: NodeJS.ReadableStream | null = null;
+      let filename = '';
+      let contentType = '';
+      let totalBytes = 0;
+      let fileSizeExceeded = false;
+      let mimeTypeRejected = false;
+
+      bb.on('file', (name, stream, info) => {
+        if (name !== 'file') {
+          stream.resume();
+          return;
+        }
+        filename = info.filename;
+        contentType = info.mimeType;
+
+        if (!options.allowedMimeTypes.has(contentType)) {
+          mimeTypeRejected = true;
+          stream.resume();
+          return;
+        }
+
+        const writeStream = this.chatBucket.openUploadStream(filename, {
+          metadata: { contentType, chatUpload: true },
+        });
+
+        stream.on('data', (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > options.maxBytes) {
+            fileSizeExceeded = true;
+            stream.destroy();
+            writeStream.destroy();
+          }
+        });
+
+        stream.pipe(writeStream);
+
+        writeStream.on('finish', async () => {
+          if (mimeTypeRejected) {
+            reject(
+              new UnsupportedMediaTypeException(
+                `Unsupported file type. Allowed: ${Array.from(options.allowedMimeTypes).join(', ')}`,
+              ),
+            );
+            return;
+          }
+          if (fileSizeExceeded) {
+            try {
+              await this.chatBucket.delete(writeStream.id as Types.ObjectId);
+            } catch {}
+            reject(
+              new PayloadTooLargeException(
+                `File must be smaller than ${options.maxBytes / 1024 / 1024} MB`,
+              ),
+            );
+            return;
+          }
+
+          try {
+            const fileId = writeStream.id as Types.ObjectId;
+            const files = await this.chatBucket.find({ _id: fileId }).toArray();
+            const uploadedFile = files[0];
+            if (!uploadedFile) {
+              return reject(new Error('Uploaded file not found in GridFS'));
+            }
+
+            const asset = new this.mediaAssetModel({
+              gridFsFileId: fileId,
+              subjectId: new Types.ObjectId(),
+              filename,
+              contentType,
+              fileSize: uploadedFile.length,
+              mediaType: MediaType.IMAGE,
+              uploadedBy: new Types.ObjectId(userId),
+            });
+
+            await asset.save();
+            this.logger.log(`Uploaded chat media: ${asset._id} (${filename})`);
+
+            resolve({
+              id: asset._id.toString(),
+              gridFsFileId: fileId.toString(),
+              filename,
+              contentType: asset.contentType,
+              fileSize: asset.fileSize,
+              mediaType: asset.mediaType,
+              title: asset.title,
+            });
+          } catch (error) {
+            if (writeStream.id) {
+              try {
+                await this.chatBucket.delete(writeStream.id as Types.ObjectId);
+              } catch {}
+            }
+            reject(error);
+          }
+        });
+
+        writeStream.on('error', (error) => {
+          reject(error);
+        });
+      });
+
+      req.pipe(bb);
+    });
   }
 }

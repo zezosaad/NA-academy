@@ -80,9 +80,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const senderId = client.data.user.sub;
 
-    // Authorization check
     const canChat = await this.chatService.canChat(senderId, payload.recipientId);
     if (!canChat) {
+      client.emit('unauthorized_conversation', {
+        message: 'You are not authorized to chat with this user',
+        recipientId: payload.recipientId,
+      });
       return { event: 'error', data: 'Unauthorized to chat with this user' };
     }
 

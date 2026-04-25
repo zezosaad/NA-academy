@@ -10,6 +10,8 @@ import {
   HttpStatus,
   Headers,
   ForbiddenException,
+  PayloadTooLargeException,
+  UnsupportedMediaTypeException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
@@ -17,6 +19,9 @@ import { MediaService } from './media.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { AccessCheckHelper } from '../activation-codes/helpers/access-check.helper.js';
+
+const MAX_CHAT_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ALLOWED_CHAT_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
 
 @ApiTags('Media')
 @ApiBearerAuth()
@@ -36,10 +41,21 @@ export class MediaController {
 
   @Post('media/chat/upload')
   @Roles('student', 'teacher')
-  @ApiOperation({ summary: 'Upload chat image/file asset' })
+  @ApiOperation({ summary: 'Upload chat image — 10 MB cap, JPEG/PNG/WebP/HEIC only' })
   async uploadChatMedia(@Req() req: Request, @CurrentUser('userId') userId: string) {
-    // Simplified bypass. Uses underlying mediaService uploader
-    return this.mediaService.uploadMedia(req, userId);
+    const contentType = req.headers['content-type'] ?? '';
+    const contentLength = parseInt(req.headers['content-length'] as string, 10);
+
+    if (!isNaN(contentLength) && contentLength > MAX_CHAT_UPLOAD_BYTES) {
+      throw new PayloadTooLargeException(
+        `Chat image must be smaller than ${MAX_CHAT_UPLOAD_BYTES / 1024 / 1024} MB`,
+      );
+    }
+
+    return this.mediaService.uploadChatMedia(req, userId, {
+      maxBytes: MAX_CHAT_UPLOAD_BYTES,
+      allowedMimeTypes: ALLOWED_CHAT_MIME_TYPES,
+    });
   }
 
   @Get('media/:id/stream')
@@ -53,10 +69,8 @@ export class MediaController {
     @Res({ passthrough: false }) res: Response,
     @CurrentUser() user: any,
   ) {
-    // 1. Fetch asset subject info
     const asset = await this.mediaService.findAssetById(id);
 
-    // 2. Check authorization
     if (user.role === 'student' && asset) {
       const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
         user.userId,
@@ -67,7 +81,6 @@ export class MediaController {
       }
     }
 
-    // 3. Stream content
     const {
       stream,
       headers: resHeaders,
