@@ -176,9 +176,7 @@ class ExamScore with _$ExamScore {
       score: (json['scorePercentage'] as num?)?.toDouble() ?? (json['score'] as num?)?.toDouble() ?? 0.0,
       passFail: json['passFail'] != null
           ? _parsePassFail(json['passFail'] as String)
-          : ((json['scorePercentage'] as num?)?.toDouble() ?? 0) >= 70
-              ? PassFail.pass
-              : PassFail.fail,
+          : PassFail.none,
       perQuestion: (json['perQuestion'] as List<dynamic>?)
               ?.map((e) => QuestionReview.fromJson(e as Map<String, dynamic>))
               .toList() ??

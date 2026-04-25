@@ -140,11 +140,17 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
           try {
             final examsRepo = ref.read(examsRepositoryProvider);
             await examsRepo.getExamAndStart(result.targetId);
-          } catch (_) {
-            // Session start failed, but code was activated — still navigate
-          }
-          if (mounted) {
-            context.go('/exams/${result.targetId}/take');
+            if (mounted) {
+              context.go('/exams/${result.targetId}/take');
+            }
+          } on ApiException catch (e) {
+            if (!mounted) return;
+            setState(() { _error = e; });
+          } catch (e) {
+            if (!mounted) return;
+            setState(() {
+              _error = ApiException(statusCode: 0, code: 'SESSION_START_FAILED', message: e.toString());
+            });
           }
         } else {
           if (mounted) {
@@ -157,23 +163,34 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
             if (mounted) {
               context.push('/subjects/code-expired', extra: {'code': _code.toUpperCase(), 'expiredAt': result.expiredAt});
             }
-            break;
           case ActivationErrorReason.alreadyUsed:
             if (mounted) {
               context.push('/subjects/code-used', extra: {'code': _code.toUpperCase(), 'consumedAt': result.consumedAt});
             }
-            break;
-          default:
+          case ActivationErrorReason.deviceMismatch:
+            if (!mounted) return;
+            setState(() {
+              _error = ApiException(statusCode: 403, code: 'DEVICE_MISMATCH', message: 'This code is linked to a different device.');
+            });
+          case ActivationErrorReason.rateLimited:
+            if (!mounted) return;
+            setState(() {
+              _error = ApiException(statusCode: 429, code: 'RATE_LIMITED', message: 'Too many attempts. Please wait and try again.');
+            });
+          case ActivationErrorReason.invalid:
+            if (!mounted) return;
             setState(() {
               _error = ApiException(statusCode: 400, code: 'BAD_CODE', message: 'Invalid code. Please try again.');
             });
         }
       }
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ApiException(statusCode: 0, code: 'UNKNOWN', message: e.toString());
       });

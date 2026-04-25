@@ -256,16 +256,29 @@ export class ExamsService {
             $match: {
               examId: { $in: examIds },
               status: ExamCodeStatus.AVAILABLE,
-              $or: [{ activatedBy: uId }, { activatedBy: { $exists: false } }],
+              activatedBy: uId,
             },
           },
-          { $group: { _id: '$examId', count: { $sum: 1 } } },
+          { $group: { _id: '$examId', count: { $sum: '$remainingUses' } } },
         ])
         .exec();
 
       const attemptMap = new Map<string, number>();
       for (const ac of attemptCounts) {
         attemptMap.set(ac._id.toString(), ac.count);
+      }
+
+      const latestScores = await this.scoreModel
+        .aggregate<{ _id: Types.ObjectId; scorePercentage: number }>([
+          { $match: { examId: { $in: examIds }, studentId: uId } },
+          { $sort: { createdAt: -1 } },
+          { $group: { _id: '$examId', scorePercentage: { $first: '$scorePercentage' } } },
+        ])
+        .exec();
+
+      const lastScoreMap = new Map<string, number>();
+      for (const ls of latestScores) {
+        lastScoreMap.set(ls._id.toString(), ls.scorePercentage);
       }
 
       const completedSessionCounts = await this.sessionModel
@@ -278,14 +291,20 @@ export class ExamsService {
             $match: {
               examId: { $in: examIds },
               studentId: uId,
-              status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED] },
+              status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED, SessionStatus.TIMED_OUT] },
             },
           },
           {
             $group: {
               _id: '$examId',
               completedCount: {
-                $sum: { $cond: [{ $eq: ['$status', SessionStatus.COMPLETED] }, 1, 0] },
+                $sum: {
+                  $cond: [
+                    { $in: ['$status', [SessionStatus.COMPLETED, SessionStatus.TIMED_OUT]] },
+                    1,
+                    0,
+                  ],
+                },
               },
               startedCount: {
                 $sum: { $cond: [{ $eq: ['$status', SessionStatus.STARTED] }, 1, 0] },
@@ -309,6 +328,7 @@ export class ExamsService {
         return {
           ...exam,
           attemptsRemaining: Math.max(0, availableCodes),
+          lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
           status: completedAttempts > 0
             ? 'completed'
             : hasStartedSession
@@ -370,12 +390,22 @@ export class ExamsService {
 
     if (existingResponse) {
       await this.sessionModel.updateOne(
-        { _id: sessionId, 'responses.questionId': questionObjectId },
+        {
+          _id: sessionId,
+          studentId: new Types.ObjectId(userId),
+          status: SessionStatus.STARTED,
+          'responses.questionId': questionObjectId,
+        },
         { $set: { 'responses.$.selectedOption': answerValue, updatedAt: new Date() } },
       ).exec();
     } else {
       await this.sessionModel.updateOne(
-        { _id: sessionId },
+        {
+          _id: sessionId,
+          studentId: new Types.ObjectId(userId),
+          status: SessionStatus.STARTED,
+          'responses.questionId': { $ne: questionObjectId },
+        },
         {
           $push: { responses: { questionId: questionObjectId, selectedOption: answerValue } },
           $set: { updatedAt: new Date() },
