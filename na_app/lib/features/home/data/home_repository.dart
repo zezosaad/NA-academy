@@ -79,9 +79,12 @@ class HomeRepository {
     }).toList();
 
     ResumableLesson? resumableLesson;
-    for (final subject in unlockedSubjects) {
-      final result =
-          await _subjectsRepository.getSubject(subject.id);
+    final subjectDetails = await Future.wait(
+      unlockedSubjects.map((s) => _subjectsRepository.getSubject(s.id)),
+    );
+    for (var i = 0; i < unlockedSubjects.length; i++) {
+      final subject = unlockedSubjects[i];
+      final result = subjectDetails[i];
       final activeLesson = result.lessons
           .where((l) => l.status == LessonStatus.active)
           .firstOrNull;
@@ -135,5 +138,6 @@ class TodayViewNotifier extends AsyncNotifier<TodayViewState> {
 
   Future<void> refresh() async {
     ref.invalidateSelf();
+    await future;
   }
 }

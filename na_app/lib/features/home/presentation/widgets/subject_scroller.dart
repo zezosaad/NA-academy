@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
@@ -49,9 +50,9 @@ class _SubjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final progressPercent = subject.progressPercent;
+    final clampedProgress = subject.progressPercent.clamp(0.0, 100.0);
     final accentColor =
-        progressPercent > 0 ? AppColors.accent : AppColors.secondary;
+        clampedProgress > 0 ? AppColors.accent : AppColors.secondary;
 
     return GestureDetector(
       onTap: onTap,
@@ -97,12 +98,12 @@ class _SubjectCard extends StatelessWidget {
             Row(
               children: [
                 ProgressRing(
-                  value: progressPercent,
+                  value: clampedProgress,
                   size: 36,
                   stroke: 3.5,
                   color: accentColor,
                   child: Text(
-                    '${progressPercent.toInt()}%',
+                    '${clampedProgress.toInt()}%',
                     style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
@@ -111,7 +112,7 @@ class _SubjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  progressPercent > 0 ? 'Continue' : 'Start',
+                  clampedProgress > 0 ? 'Continue' : 'Start',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -123,8 +124,9 @@ class _SubjectCard extends StatelessWidget {
   }
 
   String _progressLabel(Subject s) {
+    final clamped = s.progressPercent.clamp(0.0, 100.0);
     if (s.lessonCount > 0) {
-      final done = (s.progressPercent / 100 * s.lessonCount).round();
+      final done = min(s.lessonCount, max(0, (s.lessonCount * clamped / 100).round()));
       return 'Lesson $done of ${s.lessonCount}';
     }
     return s.isUnlocked ? 'Unlocked' : 'Locked';

@@ -116,7 +116,7 @@ class ResumeCard extends StatelessWidget {
                           ?.copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 12),
-                    _buildLinearProgress(lesson.progressPercent / 100),
+                    _buildLinearProgress(context, lesson.progressPercent / 100),
                   ],
                 ),
               ),
@@ -127,12 +127,13 @@ class ResumeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLinearProgress(double value) {
+  Widget _buildLinearProgress(BuildContext context, double value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 6,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.bgSunken,
+        color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
         borderRadius: BorderRadius.circular(999),
       ),
       alignment: Alignment.centerLeft,
@@ -140,7 +141,7 @@ class ResumeCard extends StatelessWidget {
         widthFactor: value.clamp(0.0, 1.0),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.accent,
+            color: isDark ? AppColors.darkAccent : AppColors.accent,
             borderRadius: BorderRadius.circular(999),
           ),
         ),

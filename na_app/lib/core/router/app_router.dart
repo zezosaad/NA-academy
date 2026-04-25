@@ -191,8 +191,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final extra = state.extra;
           final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+          final rawTitle = extraMap['subjectTitle'];
+          final subjectTitle = rawTitle is String ? rawTitle : rawTitle?.toString();
           return EnterSubjectCodePage(
-            subjectTitle: extraMap['subjectTitle'] as String?,
+            subjectTitle: subjectTitle,
           );
         },
       ),

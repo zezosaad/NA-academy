@@ -58,7 +58,7 @@ class _TodayContent extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _GreetingHeader(userName: state.userName, analytics: state.analytics),
+          _GreetingHeader(userName: state.userName),
           const SizedBox(height: 16),
           if (state.analytics.streakDays > 0) ...[
             _StreakCard(streakDays: state.analytics.streakDays),
@@ -126,21 +126,15 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onSubjectTap(BuildContext context, Subject subject) {
-    if (subject.isUnlocked) {
-      context.push('/subjects/${subject.id}');
-    } else {
-      context.push('/subjects/enter-code', extra: {'subjectTitle': subject.title});
-    }
+    context.push('/subjects/${subject.id}');
   }
 }
 
 class _GreetingHeader extends StatelessWidget {
   final String userName;
-  final AnalyticsSnapshot analytics;
 
   const _GreetingHeader({
     required this.userName,
-    required this.analytics,
   });
 
   @override
@@ -180,19 +174,22 @@ class _GreetingHeader extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () => context.push('/profile/settings'),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorderSubtle
-                        : AppColors.borderSubtle,
+              child: Tooltip(
+                message: 'Settings',
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorderSubtle
+                          : AppColors.borderSubtle,
+                    ),
                   ),
+                  child: const Icon(LucideIcons.settings, size: 18),
                 ),
-                child: const Icon(LucideIcons.bell, size: 18),
               ),
             ),
           ],
@@ -224,14 +221,15 @@ class _StreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
+          border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
         ),
         child: Row(
           children: [

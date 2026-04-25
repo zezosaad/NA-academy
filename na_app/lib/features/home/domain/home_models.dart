@@ -38,22 +38,15 @@ class TodayViewState with _$TodayViewState {
   }) = _TodayViewState;
 }
 
-class ResumableLesson {
-  final String lessonId;
-  final String subjectId;
-  final String lessonTitle;
-  final String subjectTitle;
-  final double progressPercent;
-  final String? coverImageUrl;
-  final int? estimatedMinutes;
-
-  const ResumableLesson({
-    required this.lessonId,
-    required this.subjectId,
-    required this.lessonTitle,
-    required this.subjectTitle,
-    required this.progressPercent,
-    this.coverImageUrl,
-    this.estimatedMinutes,
-  });
+@freezed
+class ResumableLesson with _$ResumableLesson {
+  const factory ResumableLesson({
+    required String lessonId,
+    required String subjectId,
+    required String lessonTitle,
+    required String subjectTitle,
+    @Default(0.0) double progressPercent,
+    String? coverImageUrl,
+    int? estimatedMinutes,
+  }) = _ResumableLesson;
 }
