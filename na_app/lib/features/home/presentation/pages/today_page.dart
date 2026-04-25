@@ -91,14 +91,14 @@ class _TodayContent extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
           ],
-          if (state.unlockedSubjects.isNotEmpty) ...[
+          if (state.allSubjects.isNotEmpty) ...[
             _SectionHeader(
               title: 'Your subjects',
               onSeeAll: () => context.go('/subjects'),
             ),
             const SizedBox(height: 12),
             SubjectScroller(
-              unlockedSubjects: state.unlockedSubjects,
+              unlockedSubjects: state.allSubjects,
               onSubjectTap: (subject) => _onSubjectTap(context, subject),
             ),
           ] else ...[
@@ -130,7 +130,11 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onSubjectTap(BuildContext context, Subject subject) {
-    context.push('/subjects/${subject.id}');
+    if (subject.isUnlocked) {
+      context.push('/subjects/${subject.id}');
+    } else {
+      context.push('/subjects/enter-code');
+    }
   }
 }
 

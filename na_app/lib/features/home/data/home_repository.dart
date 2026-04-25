@@ -80,9 +80,15 @@ class HomeRepository {
     }).toList();
 
     ResumableLesson? resumableLesson;
-    final subjectDetailFutures = unlockedSubjects.map(
-      (s) => _subjectsRepository.getSubject(s.id).then((r) => (subject: s, result: r)).catchError((e) { debugPrint('[HomeRepository] Failed to load subject ${s.id}: $e'); return null; }),
-    );
+    final subjectDetailFutures = unlockedSubjects.map((s) async {
+      try {
+        final r = await _subjectsRepository.getSubject(s.id);
+        return (subject: s, result: r);
+      } catch (e) {
+        debugPrint('[HomeRepository] Failed to load subject ${s.id}: $e');
+        return null;
+      }
+    });
     final subjectDetails = await Future.wait(subjectDetailFutures);
     for (final entry in subjectDetails) {
       if (entry == null) continue;
