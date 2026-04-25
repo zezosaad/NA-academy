@@ -18,6 +18,9 @@ export class PasswordReset {
 
   @Prop({ required: true, default: false, type: Boolean })
   consumed!: boolean;
+
+  @Prop({ type: Date })
+  consumedAt?: Date;
 }
 
 export const PasswordResetSchema = SchemaFactory.createForClass(PasswordReset);

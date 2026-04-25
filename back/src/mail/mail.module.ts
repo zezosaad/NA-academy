@@ -13,13 +13,14 @@ import { join } from 'path';
         transport: {
           host: configService.get<string>('mail.host', 'localhost'),
           port: configService.get<number>('mail.port', 1025),
-          secure: false,
+          secure: configService.get<boolean>('mail.secure', false),
           auth: configService.get<string>('mail.user')
             ? {
                 user: configService.get<string>('mail.user'),
                 pass: configService.get<string>('mail.pass'),
               }
             : undefined,
+          tls: configService.get<any>('mail.tls'),
         },
         defaults: {
           from: configService.get<string>('mail.from', 'no-reply@naacademy.local'),

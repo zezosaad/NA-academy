@@ -87,7 +87,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       return GestureDetector(
                         onTap: () => _goToPage(index),
                         child: AnimatedContainer(
-                          duration: AppMotion.short,
+                          duration: AppMotion.shouldReduceMotion(context) ? Duration.zero : AppMotion.short,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: isActive ? 24 : 8,
                           height: 8,

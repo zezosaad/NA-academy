@@ -177,8 +177,12 @@ export class AuthService {
       consumed: false,
     });
 
-    await this.mailService.sendPasswordResetEmail(email, rawToken);
-    this.logger.log(`Password reset token issued for user ${user._id}`);
+    try {
+      await this.mailService.sendPasswordResetEmail(email, rawToken);
+      this.logger.log(`Password reset token issued for user ${user._id}`);
+    } catch (err) {
+      this.logger.error(`Failed to send password reset email to ${email} (user ${user._id}): ${err}`);
+    }
   }
 
   async consumeResetToken(
@@ -188,18 +192,17 @@ export class AuthService {
   ): Promise<{ user: any; tokens: { accessToken: string; refreshToken: string } }> {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const resetDoc = await this.passwordResetModel.findOne({ tokenHash, consumed: false }).exec();
+    const resetDoc = await this.passwordResetModel
+      .findOneAndUpdate(
+        { tokenHash, consumed: false, expiresAt: { $gt: new Date() } },
+        { $set: { consumed: true, consumedAt: new Date() } },
+        { new: true },
+      )
+      .exec();
 
     if (!resetDoc) {
-      throw new GoneException('This reset link is invalid or has already been used');
+      throw new GoneException('This reset link is invalid, expired, or has already been used');
     }
-
-    if (resetDoc.expiresAt < new Date()) {
-      throw new GoneException('This reset link has expired');
-    }
-
-    resetDoc.consumed = true;
-    await resetDoc.save();
 
     const user = await this.usersService.findById(resetDoc.userId.toString());
     if (!user) {

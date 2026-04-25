@@ -181,7 +181,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
               const SizedBox(height: 32),
               AppButton(
                 label: 'Reset password',
-                onPressed: _passwordStrong && _passwordsMatch ? _submit : null,
+                onPressed: _passwordStrong && _passwordsMatch && _token.isNotEmpty ? _submit : null,
                 isLoading: _isLoading,
               ),
               const SizedBox(height: 32),

@@ -152,6 +152,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                     setState(() {
                       _emailSent = false;
                     });
+                    _submit();
                   },
                 ),
               ],

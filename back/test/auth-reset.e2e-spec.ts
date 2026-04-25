@@ -93,7 +93,7 @@ describe('Auth - Password Reset (e2e)', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  it('should reject reset with invalid/expired token with 410', async () => {
+  it('should reject reset with invalid token with 410', async () => {
     await request(app.getHttpServer())
       .post(`${PREFIX}/auth/reset-password`)
       .send({
@@ -104,17 +104,45 @@ describe('Auth - Password Reset (e2e)', () => {
       .expect(410);
   });
 
-  it('should reject reset with consumed token with 410', async () => {
-    const resetDoc = await passwordResetModel.findOne({ consumed: false });
-    expect(resetDoc).toBeDefined();
-
-    resetDoc!.consumed = true;
-    await resetDoc!.save();
+  it('should reject reset with expired token with 410', async () => {
+    const crypto = require('crypto');
+    const expiredRawToken = 'expired-test-token';
+    const expiredTokenHash = crypto.createHash('sha256').update(expiredRawToken).digest('hex');
+    const studentUser = await passwordResetModel.db.model('User').findOne({ email: studentEmail });
+    await passwordResetModel.create({
+      userId: studentUser!._id,
+      tokenHash: expiredTokenHash,
+      expiresAt: new Date(Date.now() - 60 * 1000),
+      consumed: false,
+    });
 
     await request(app.getHttpServer())
       .post(`${PREFIX}/auth/reset-password`)
       .send({
-        token: 'any-token',
+        token: expiredRawToken,
+        newPassword: 'NewPassw0rd!',
+        hardwareId: hardwareId,
+      })
+      .expect(410);
+  });
+
+  it('should reject reset with consumed token with 410', async () => {
+    const crypto = require('crypto');
+    const consumedRawToken = 'consumed-test-token';
+    const consumedTokenHash = crypto.createHash('sha256').update(consumedRawToken).digest('hex');
+    const studentUser = await passwordResetModel.db.model('User').findOne({ email: studentEmail });
+    await passwordResetModel.create({
+      userId: studentUser!._id,
+      tokenHash: consumedTokenHash,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      consumed: true,
+      consumedAt: new Date(),
+    });
+
+    await request(app.getHttpServer())
+      .post(`${PREFIX}/auth/reset-password`)
+      .send({
+        token: consumedRawToken,
         newPassword: 'NewPassw0rd!',
         hardwareId: hardwareId,
       })
