@@ -2,6 +2,22 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 
+int _coerceInt(dynamic v) {
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  if (v is String) return int.tryParse(v) ?? double.tryParse(v)?.toInt() ?? 0;
+  return 0;
+}
+
+List<int> _coerceIntList(dynamic v) {
+  if (v is! List) return List.filled(7, 0);
+  final result = <int>[];
+  for (final e in v) {
+    result.add(_coerceInt(e));
+  }
+  return result.isEmpty ? List.filled(7, 0) : result;
+}
+
 part 'home_models.freezed.dart';
 
 @freezed
@@ -15,13 +31,10 @@ class AnalyticsSnapshot with _$AnalyticsSnapshot {
 
   factory AnalyticsSnapshot.fromJson(Map<String, dynamic> json) {
     return _AnalyticsSnapshot(
-      streakDays: json['streak'] as int? ?? json['streakDays'] as int? ?? 0,
-      lessonsCompleted: json['lessonsCompleted'] as int? ?? 0,
-      examsTaken: json['examsTaken'] as int? ?? 0,
-      weeklyActivity: (json['weeklyActivity'] as List<dynamic>?)
-              ?.map((e) => (e as num).toInt())
-              .toList() ??
-          List.filled(7, 0),
+      streakDays: _coerceInt(json['streak'] ?? json['streakDays']),
+      lessonsCompleted: _coerceInt(json['lessonsCompleted']),
+      examsTaken: _coerceInt(json['examsTaken']),
+      weeklyActivity: _coerceIntList(json['weeklyActivity']),
     );
   }
 }

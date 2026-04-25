@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,13 +31,16 @@ class TodayPage extends ConsumerWidget {
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.accent),
             ),
-            error: (e, _) => EmptyState(
-              icon: LucideIcons.circleAlert,
-              title: 'Could not load today',
-              message: e.toString(),
-              actionLabel: 'Retry',
-              onAction: () => ref.invalidate(todayViewStateProvider),
-            ),
+            error: (e, stack) {
+              debugPrint('[TodayPage] $e\n$stack');
+              return EmptyState(
+                icon: LucideIcons.circleAlert,
+                title: 'Could not load today',
+                message: 'Something went wrong while loading today\'s data. Please try again.',
+                actionLabel: 'Retry',
+                onAction: () => ref.invalidate(todayViewStateProvider),
+              );
+            },
             data: (state) => _TodayContent(state: state),
           ),
         ),
@@ -172,11 +176,11 @@ class _GreetingHeader extends StatelessWidget {
                 ],
               ),
             ),
-            GestureDetector(
-              onTap: () => context.push('/profile/settings'),
-              child: Tooltip(
-                message: 'Settings',
-                child: Container(
+            Tooltip(
+              message: 'Settings',
+              child: IconButton(
+                onPressed: () => context.push('/profile/settings'),
+                icon: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(

@@ -70,7 +70,7 @@ class HomeRepository {
     final now = DateTime.now();
     final dueTodayExams = exams.where((e) {
       if (e.dueDate == null) return false;
-      final dueDate = e.dueDate!;
+      final dueDate = e.dueDate!.toLocal();
       return dueDate.year == now.year &&
           dueDate.month == now.month &&
           dueDate.day == now.day &&
@@ -79,12 +79,14 @@ class HomeRepository {
     }).toList();
 
     ResumableLesson? resumableLesson;
-    final subjectDetails = await Future.wait(
-      unlockedSubjects.map((s) => _subjectsRepository.getSubject(s.id)),
+    final subjectDetailFutures = unlockedSubjects.map(
+      (s) => _subjectsRepository.getSubject(s.id).then((r) => (subject: s, result: r)).catchError((_) => null),
     );
-    for (var i = 0; i < unlockedSubjects.length; i++) {
-      final subject = unlockedSubjects[i];
-      final result = subjectDetails[i];
+    final subjectDetails = await Future.wait(subjectDetailFutures);
+    for (final entry in subjectDetails) {
+      if (entry == null) continue;
+      final subject = entry.subject;
+      final result = entry.result;
       final activeLesson = result.lessons
           .where((l) => l.status == LessonStatus.active)
           .firstOrNull;
