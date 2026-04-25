@@ -111,9 +111,7 @@ class ExamSession with _$ExamSession {
       final rMap = r as Map<String, dynamic>;
       final qId = (rMap['questionId'] as String?) ?? rMap['questionId']?.toString() ?? '';
       if (qId.isNotEmpty) {
-        answersMap[qId] = AnswerValue(
-          selectedOption: rMap['selectedOption'] as String? ?? '',
-        );
+        answersMap[qId] = AnswerValue.fromJson(rMap);
       }
     }
     return _ExamSession(
@@ -137,11 +135,28 @@ class ExamSession with _$ExamSession {
 class AnswerValue with _$AnswerValue {
   const factory AnswerValue({
     required String selectedOption,
+    @Default([]) List<String> selectedOptions,
   }) = _AnswerValue;
 
   factory AnswerValue.fromJson(Map<String, dynamic> json) {
+    final raw = json['selectedOption'];
+    String selectedOption;
+    List<String> selectedOptions;
+
+    if (raw is String) {
+      selectedOption = raw;
+      selectedOptions = [raw];
+    } else if (raw is List) {
+      selectedOptions = raw.map((e) => e.toString()).toList();
+      selectedOption = selectedOptions.isNotEmpty ? selectedOptions.join(',') : '';
+    } else {
+      selectedOption = '';
+      selectedOptions = [];
+    }
+
     return _AnswerValue(
-      selectedOption: json['selectedOption'] as String? ?? '',
+      selectedOption: selectedOption,
+      selectedOptions: selectedOptions,
     );
   }
 }

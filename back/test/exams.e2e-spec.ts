@@ -9,22 +9,18 @@ import { ResponseTransformInterceptor } from './../src/common/interceptors/respo
 import { Model } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 import { Exam, ExamDocument } from '../src/exams/schemas/exam.schema.js';
-import {
-  ExamSession,
-  ExamSessionDocument,
-  SessionStatus,
-} from '../src/exams/schemas/exam-session.schema.js';
-import {
-  ExamCode,
-  ExamCodeDocument,
-  CodeStatus,
-} from '../src/activation-codes/schemas/exam-code.schema.js';
+import { ExamSession, ExamSessionDocument, SessionStatus } from '../src/exams/schemas/exam-session.schema.js';
+import { ExamCode, ExamCodeDocument, CodeStatus } from '../src/activation-codes/schemas/exam-code.schema.js';
+import { Subject, SubjectDocument } from '../src/subjects/schemas/subject.schema.js';
+import { User, UserDocument } from '../src/users/schemas/user.schema.js';
 
 describe('Exams - attemptsRemaining & saveAnswer (e2e)', () => {
   let app: INestApplication<App>;
   let examModel: Model<ExamDocument>;
   let sessionModel: Model<ExamSessionDocument>;
   let examCodeModel: Model<ExamCodeDocument>;
+  let subjectModel: Model<SubjectDocument>;
+  let userModel: Model<UserDocument>;
 
   let adminToken: string;
   let studentToken: string;
@@ -34,6 +30,8 @@ describe('Exams - attemptsRemaining & saveAnswer (e2e)', () => {
   const createdExamIds: string[] = [];
   const createdSessionIds: string[] = [];
   const createdCodeIds: string[] = [];
+  const createdSubjectIds: string[] = [];
+  const createdUserIds: string[] = [];
 
   const PREFIX = '/api/v1';
 
@@ -52,6 +50,8 @@ describe('Exams - attemptsRemaining & saveAnswer (e2e)', () => {
     examModel = moduleFixture.get<Model<ExamDocument>>(getModelToken(Exam.name));
     sessionModel = moduleFixture.get<Model<ExamSessionDocument>>(getModelToken(ExamSession.name));
     examCodeModel = moduleFixture.get<Model<ExamCodeDocument>>(getModelToken(ExamCode.name));
+    subjectModel = moduleFixture.get<Model<SubjectDocument>>(getModelToken(Subject.name));
+    userModel = moduleFixture.get<Model<UserDocument>>(getModelToken(User.name));
   });
 
   afterAll(async () => {
@@ -63,6 +63,12 @@ describe('Exams - attemptsRemaining & saveAnswer (e2e)', () => {
     }
     if (createdCodeIds.length > 0) {
       await examCodeModel.deleteMany({ _id: { $in: createdCodeIds } });
+    }
+    if (createdSubjectIds.length > 0) {
+      await subjectModel.deleteMany({ _id: { $in: createdSubjectIds } });
+    }
+    if (createdUserIds.length > 0) {
+      await userModel.deleteMany({ _id: { $in: createdUserIds } });
     }
     if (app) {
       await app.close();
@@ -110,6 +116,7 @@ describe('Exams - attemptsRemaining & saveAnswer (e2e)', () => {
       .expect(201);
     const subjectId =
       (subjectRes.body.data ?? subjectRes.body)._id ?? (subjectRes.body.data ?? subjectRes.body).id;
+    createdSubjectIds.push(subjectId);
 
     // 4. Create an exam as admin
     const createExamRes = await request(app.getHttpServer())

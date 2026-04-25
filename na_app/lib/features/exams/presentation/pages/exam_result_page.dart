@@ -16,7 +16,7 @@ class ExamResultPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final percentageScore = (score.score * 100).round();
+    final percentageScore = score.score.round();
     final isPass = score.passFail == PassFail.pass ||
         (score.passFail == PassFail.none && percentageScore >= 70);
 
@@ -61,7 +61,7 @@ class ExamResultPage extends StatelessWidget {
                   ),
                 ),
               if (timedOut) const SizedBox(height: 24),
-              ScoreRing(score: score.score, size: 120, stroke: 8),
+              ScoreRing(score: score.score / 100, size: 120, stroke: 8),
               const SizedBox(height: 16),
               Text(
                 _getResultTitle(percentageScore, isPass),

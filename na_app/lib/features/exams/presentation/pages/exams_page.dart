@@ -66,8 +66,9 @@ class ExamsPage extends ConsumerWidget {
   }
 
   Widget _buildExamList(BuildContext context, List<Exam> exams) {
-    final available = exams.where((e) => e.status == ExamStatus.available || e.attemptsRemaining > 0).toList();
     final completed = exams.where((e) => e.status == ExamStatus.completed).toList();
+    final completedIds = completed.map((e) => e.id).toSet();
+    final available = exams.where((e) => !completedIds.contains(e.id)).toList();
 
     return SliverList(
       delegate: SliverChildListDelegate([
@@ -86,15 +87,6 @@ class ExamsPage extends ConsumerWidget {
           ),
           ...completed.map((exam) => _CompletedExamCard(exam: exam)),
         ],
-        if (available.isEmpty && completed.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(40),
-            child: Text(
-              'No exams yet. Enter an exam code to get started.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ),
       ]),
     );
   }
@@ -176,7 +168,7 @@ class _CompletedExamCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final score = (exam.lastScore ?? 0) * 100;
+    final score = (exam.lastScore ?? 0).round();
     final isPass = score >= 70;
 
     return Padding(
@@ -185,7 +177,10 @@ class _CompletedExamCard extends StatelessWidget {
         color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          onTap: () => context.push('/exams/${exam.id}/result'),
+          onTap: () => context.push('/exams/${exam.id}/result', extra: {
+            'score': ExamScore(sessionId: '', score: exam.lastScore ?? 0),
+            'timedOut': false,
+          }),
           borderRadius: BorderRadius.circular(18),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

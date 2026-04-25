@@ -271,7 +271,8 @@ export class ExamsService {
       const completedSessionCounts = await this.sessionModel
         .aggregate<{
           _id: Types.ObjectId;
-          count: number;
+          completedCount: number;
+          startedCount: number;
         }>([
           {
             $match: {
@@ -280,22 +281,41 @@ export class ExamsService {
               status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED] },
             },
           },
-          { $group: { _id: '$examId', count: { $sum: 1 } } },
+          {
+            $group: {
+              _id: '$examId',
+              completedCount: {
+                $sum: { $cond: [{ $eq: ['$status', SessionStatus.COMPLETED] }, 1, 0] },
+              },
+              startedCount: {
+                $sum: { $cond: [{ $eq: ['$status', SessionStatus.STARTED] }, 1, 0] },
+              },
+            },
+          },
         ])
         .exec();
 
-      const sessionMap = new Map<string, number>();
+      const completedMap = new Map<string, number>();
+      const startedMap = new Map<string, number>();
       for (const sc of completedSessionCounts) {
-        sessionMap.set(sc._id.toString(), sc.count);
+        completedMap.set(sc._id.toString(), sc.completedCount);
+        startedMap.set(sc._id.toString(), sc.startedCount);
       }
 
       const data = exams.map((exam) => {
         const availableCodes = attemptMap.get(exam._id.toString()) ?? 0;
-        const usedAttempts = sessionMap.get(exam._id.toString()) ?? 0;
+        const completedAttempts = completedMap.get(exam._id.toString()) ?? 0;
+        const hasStartedSession = (startedMap.get(exam._id.toString()) ?? 0) > 0;
         return {
           ...exam,
           attemptsRemaining: Math.max(0, availableCodes),
-          status: usedAttempts > 0 ? 'completed' : availableCodes > 0 ? 'available' : 'locked',
+          status: completedAttempts > 0
+            ? 'completed'
+            : hasStartedSession
+              ? 'available'
+              : availableCodes > 0
+                ? 'available'
+                : 'locked',
         };
       });
       return { data, total };
@@ -341,24 +361,26 @@ export class ExamsService {
       throw new BadRequestException('Exam session is not in progress');
     }
 
-    const existingResponses = session.responses ?? [];
-    const existingIndex = existingResponses.findIndex(
+    const answerValue = Array.isArray(dto.value) ? dto.value.join(',') : dto.value;
+    const questionObjectId = new Types.ObjectId(dto.questionId);
+
+    const existingResponse = session.responses?.find(
       (r) => r.questionId.toString() === dto.questionId,
     );
 
-    if (existingIndex >= 0) {
-      existingResponses[existingIndex].selectedOption = Array.isArray(dto.value)
-        ? dto.value.join(',')
-        : dto.value;
+    if (existingResponse) {
+      await this.sessionModel.updateOne(
+        { _id: sessionId, 'responses.questionId': questionObjectId },
+        { $set: { 'responses.$.selectedOption': answerValue, updatedAt: new Date() } },
+      ).exec();
     } else {
-      existingResponses.push({
-        questionId: new Types.ObjectId(dto.questionId),
-        selectedOption: Array.isArray(dto.value) ? dto.value.join(',') : dto.value,
-      });
+      await this.sessionModel.updateOne(
+        { _id: sessionId },
+        {
+          $push: { responses: { questionId: questionObjectId, selectedOption: answerValue } },
+          $set: { updatedAt: new Date() },
+        },
+      ).exec();
     }
-
-    session.responses = existingResponses;
-    session.updatedAt = new Date();
-    await session.save();
   }
 }

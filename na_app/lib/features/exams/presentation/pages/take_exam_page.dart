@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/button.dart';
 import 'package:na_app/features/exams/data/exams_repository.dart';
@@ -27,6 +28,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
 
   List<ExamQuestion> _questions = [];
   ExamSession? _session;
+  String? _saveError;
 
   @override
   void initState() {
@@ -55,20 +57,16 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       final session = result.session;
       if (session.status == SessionStatus.submitted || session.status == SessionStatus.timedOut) {
         if (mounted) {
-          final repo2 = ref.read(examsRepositoryProvider);
-          late ExamScore score;
-          try {
-            final answers = _localAnswers.entries.map((e) => {'questionId': e.key, 'selectedOption': e.value}).toList();
-            score = await repo2.submitSession(session.id, answers);
-          } catch (_) {
-            score = ExamScore(sessionId: session.id, score: 0);
-          }
-          context.go('/exams/${widget.examId}/result', extra: {'score': score, 'timedOut': session.status == SessionStatus.timedOut});
+          context.go('/exams/${widget.examId}/result', extra: {
+            'score': ExamScore(sessionId: session.id, score: 0),
+            'timedOut': session.status == SessionStatus.timedOut,
+          });
         }
         return;
       }
       setState(() {
         _session = session;
+        _questions = result.questions;
         for (final entry in session.answers.entries) {
           _localAnswers[entry.key] = entry.value.selectedOption;
         }
@@ -88,7 +86,6 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
           _localAnswers[entry.key] = entry.value.selectedOption;
         }
       });
-      ref.read(examSessionProvider.notifier).startSession(widget.examId);
     } catch (e) {
       setState(() {
         _isStarting = false;
@@ -173,6 +170,11 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
         body: Column(
           children: [
             _buildProgressBar(context, progress, isDark),
+            if (_saveError != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Text(_saveError!, style: TextStyle(color: isDark ? AppColors.darkDanger : AppColors.danger, fontSize: 12)),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(vertical: 24),
@@ -243,7 +245,18 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
     final question = _questions[_currentIndex];
     setState(() {
       _localAnswers[question.id] = optionLabel;
+      _saveError = null;
     });
+    final session = _session;
+    if (session != null) {
+      ref.read(examsRepositoryProvider).saveAnswer(session.id, question.id, optionLabel).catchError((e) {
+        if (mounted) {
+          setState(() {
+            _saveError = 'Save failed — answer will retry on next';
+          });
+        }
+      });
+    }
   }
 
   Future<void> _nextQuestion() async {
@@ -255,7 +268,18 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
               question.id,
               _localAnswers[question.id]!,
             );
-      } catch (_) {}
+        setState(() { _saveError = null; });
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() { _saveError = 'Could not save answer: ${e.message}'; });
+        }
+        return;
+      } catch (e) {
+        if (mounted) {
+          setState(() { _saveError = 'Network error — try again'; });
+        }
+        return;
+      }
     }
     setState(() {
       _currentIndex++;
@@ -297,7 +321,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       }
     } catch (_) {
       if (mounted) {
-        context.go('/exams/${widget.examId}/result', extra: {'timedOut': true});
+        context.go('/exams/${widget.examId}/result', extra: {
+          'score': ExamScore(sessionId: _session!.id, score: 0),
+          'timedOut': true,
+        });
       }
     }
   }

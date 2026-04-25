@@ -39,6 +39,8 @@ class _ExamTimerState extends State<ExamTimer> {
     if (oldWidget.endsAt != widget.endsAt) {
       _remaining = widget.endsAt.difference(DateTime.now());
       if (_remaining.isNegative) _remaining = Duration.zero;
+      _expired = false;
+      _startTimer();
     }
   }
 

@@ -1010,6 +1010,7 @@ abstract class _ExamSession implements ExamSession {
 /// @nodoc
 mixin _$AnswerValue {
   String get selectedOption => throw _privateConstructorUsedError;
+  List<String> get selectedOptions => throw _privateConstructorUsedError;
 
   /// Create a copy of AnswerValue
   /// with the given fields replaced by the non-null parameter values.
@@ -1025,7 +1026,7 @@ abstract class $AnswerValueCopyWith<$Res> {
     $Res Function(AnswerValue) then,
   ) = _$AnswerValueCopyWithImpl<$Res, AnswerValue>;
   @useResult
-  $Res call({String selectedOption});
+  $Res call({String selectedOption, List<String> selectedOptions});
 }
 
 /// @nodoc
@@ -1042,13 +1043,17 @@ class _$AnswerValueCopyWithImpl<$Res, $Val extends AnswerValue>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? selectedOption = null}) {
+  $Res call({Object? selectedOption = null, Object? selectedOptions = null}) {
     return _then(
       _value.copyWith(
             selectedOption: null == selectedOption
                 ? _value.selectedOption
                 : selectedOption // ignore: cast_nullable_to_non_nullable
                       as String,
+            selectedOptions: null == selectedOptions
+                ? _value.selectedOptions
+                : selectedOptions // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
@@ -1064,7 +1069,7 @@ abstract class _$$AnswerValueImplCopyWith<$Res>
   ) = __$$AnswerValueImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String selectedOption});
+  $Res call({String selectedOption, List<String> selectedOptions});
 }
 
 /// @nodoc
@@ -1080,13 +1085,17 @@ class __$$AnswerValueImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? selectedOption = null}) {
+  $Res call({Object? selectedOption = null, Object? selectedOptions = null}) {
     return _then(
       _$AnswerValueImpl(
         selectedOption: null == selectedOption
             ? _value.selectedOption
             : selectedOption // ignore: cast_nullable_to_non_nullable
                   as String,
+        selectedOptions: null == selectedOptions
+            ? _value._selectedOptions
+            : selectedOptions // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -1095,14 +1104,25 @@ class __$$AnswerValueImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AnswerValueImpl implements _AnswerValue {
-  const _$AnswerValueImpl({required this.selectedOption});
+  const _$AnswerValueImpl({
+    required this.selectedOption,
+    final List<String> selectedOptions = const [],
+  }) : _selectedOptions = selectedOptions;
 
   @override
   final String selectedOption;
+  final List<String> _selectedOptions;
+  @override
+  @JsonKey()
+  List<String> get selectedOptions {
+    if (_selectedOptions is EqualUnmodifiableListView) return _selectedOptions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_selectedOptions);
+  }
 
   @override
   String toString() {
-    return 'AnswerValue(selectedOption: $selectedOption)';
+    return 'AnswerValue(selectedOption: $selectedOption, selectedOptions: $selectedOptions)';
   }
 
   @override
@@ -1111,11 +1131,19 @@ class _$AnswerValueImpl implements _AnswerValue {
         (other.runtimeType == runtimeType &&
             other is _$AnswerValueImpl &&
             (identical(other.selectedOption, selectedOption) ||
-                other.selectedOption == selectedOption));
+                other.selectedOption == selectedOption) &&
+            const DeepCollectionEquality().equals(
+              other._selectedOptions,
+              _selectedOptions,
+            ));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, selectedOption);
+  int get hashCode => Object.hash(
+    runtimeType,
+    selectedOption,
+    const DeepCollectionEquality().hash(_selectedOptions),
+  );
 
   /// Create a copy of AnswerValue
   /// with the given fields replaced by the non-null parameter values.
@@ -1127,11 +1155,15 @@ class _$AnswerValueImpl implements _AnswerValue {
 }
 
 abstract class _AnswerValue implements AnswerValue {
-  const factory _AnswerValue({required final String selectedOption}) =
-      _$AnswerValueImpl;
+  const factory _AnswerValue({
+    required final String selectedOption,
+    final List<String> selectedOptions,
+  }) = _$AnswerValueImpl;
 
   @override
   String get selectedOption;
+  @override
+  List<String> get selectedOptions;
 
   /// Create a copy of AnswerValue
   /// with the given fields replaced by the non-null parameter values.

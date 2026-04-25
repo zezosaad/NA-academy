@@ -2,6 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/features/exams/data/exams_repository.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 
+class ExamSaveError {
+  final String questionId;
+  final Object error;
+  ExamSaveError(this.questionId, this.error);
+}
+
 final examSessionProvider =
     NotifierProvider<ExamSessionNotifier, AsyncValue<ExamSession?>>(
   ExamSessionNotifier.new,
@@ -22,20 +28,23 @@ class ExamSessionNotifier extends Notifier<AsyncValue<ExamSession?>> {
     }
   }
 
-  Future<void> saveAnswer(String questionId, String value) async {
+  Future<bool> saveAnswer(String questionId, String value) async {
     final session = state.value;
-    if (session == null) return;
+    if (session == null) return false;
     try {
       final repo = ref.read(examsRepositoryProvider);
       await repo.saveAnswer(session.id, questionId, value);
       final updated = session.copyWith(
         answers: {
           ...session.answers,
-          questionId: AnswerValue(selectedOption: value),
+          questionId: AnswerValue(selectedOption: value, selectedOptions: [value]),
         },
       );
       state = AsyncData(updated);
-    } catch (_) {}
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<ExamScore> submitExam() async {

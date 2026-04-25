@@ -137,8 +137,12 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
 
       if (result is ActivationSuccess) {
         if (result.codeType == 'exam') {
-          final examsRepo = ref.read(examsRepositoryProvider);
-          await examsRepo.getExamAndStart(result.targetId);
+          try {
+            final examsRepo = ref.read(examsRepositoryProvider);
+            await examsRepo.getExamAndStart(result.targetId);
+          } catch (_) {
+            // Session start failed, but code was activated — still navigate
+          }
           if (mounted) {
             context.go('/exams/${result.targetId}/take');
           }
@@ -148,30 +152,37 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
           }
         }
       } else if (result is ActivationFailure) {
-        setState(() {
-          _isLoading = false;
-          switch (result.reason) {
-            case ActivationErrorReason.expired:
+        switch (result.reason) {
+          case ActivationErrorReason.expired:
+            if (mounted) {
               context.push('/subjects/code-expired', extra: {'code': _code.toUpperCase(), 'expiredAt': result.expiredAt});
-              break;
-            case ActivationErrorReason.alreadyUsed:
+            }
+            break;
+          case ActivationErrorReason.alreadyUsed:
+            if (mounted) {
               context.push('/subjects/code-used', extra: {'code': _code.toUpperCase(), 'consumedAt': result.consumedAt});
-              break;
-            default:
+            }
+            break;
+          default:
+            setState(() {
               _error = ApiException(statusCode: 400, code: 'BAD_CODE', message: 'Invalid code. Please try again.');
-          }
-        });
+            });
+        }
       }
     } on ApiException catch (e) {
       setState(() {
-        _isLoading = false;
         _error = e;
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _error = ApiException(statusCode: 0, code: 'UNKNOWN', message: e.toString());
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 }
