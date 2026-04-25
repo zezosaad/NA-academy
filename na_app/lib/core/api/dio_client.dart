@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_exception.dart';
 import '../storage/secure_token_store.dart';
+import '../utils/connectivity.dart';
 
 const _skipAuthExtraKey = 'skipAuth';
 const _retriedExtraKey = 'retriedAfterRefresh';
@@ -14,6 +15,7 @@ Stream<void> get sessionExpiredStream => _sessionExpiredController.stream;
 
 final dioProvider = Provider<Dio>((ref) {
   final tokenStore = ref.watch(secureTokenStoreProvider);
+  final connectivityNotifier = ref.watch(connectivityProvider.notifier);
   final dio = Dio(BaseOptions(
     baseUrl: const String.fromEnvironment(
       'API_BASE_URL',
@@ -29,7 +31,7 @@ final dioProvider = Provider<Dio>((ref) {
   ));
 
   dio.interceptors.add(_AuthInterceptor(tokenStore, dio));
-  dio.interceptors.add(_ErrorNormalizerInterceptor());
+  dio.interceptors.add(_ErrorNormalizerInterceptor(connectivityNotifier));
 
   return dio;
 });
@@ -123,8 +125,19 @@ class _AuthInterceptor extends Interceptor {
 }
 
 class _ErrorNormalizerInterceptor extends Interceptor {
+  final ConnectivityNotifier _connectivity;
+
+  _ErrorNormalizerInterceptor(this._connectivity);
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout) {
+      _connectivity.markOffline();
+    } else if (err.response?.statusCode != null &&
+        err.response!.statusCode! < 500) {
+      _connectivity.markOnline();
+    }
     if (err.error is ApiException) {
       handler.next(err);
       return;

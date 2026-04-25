@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/button.dart';
+import 'package:na_app/core/widgets/max_text_scale.dart';
 import 'package:na_app/features/exams/data/exams_repository.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/exams/presentation/controllers/exam_controller.dart';
@@ -19,7 +20,8 @@ class TakeExamPage extends ConsumerStatefulWidget {
   ConsumerState<TakeExamPage> createState() => _TakeExamPageState();
 }
 
-class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBindingObserver {
+class _TakeExamPageState extends ConsumerState<TakeExamPage>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
   final Map<String, String> _localAnswers = {};
   bool _isSubmitting = false;
@@ -55,12 +57,16 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       final repo = ref.read(examsRepositoryProvider);
       final result = await repo.getExamAndStart(widget.examId);
       final session = result.session;
-      if (session.status == SessionStatus.submitted || session.status == SessionStatus.timedOut) {
+      if (session.status == SessionStatus.submitted ||
+          session.status == SessionStatus.timedOut) {
         if (mounted) {
-          context.go('/exams/${widget.examId}/result', extra: {
-            'score': ExamScore(sessionId: session.id, score: 0),
-            'timedOut': session.status == SessionStatus.timedOut,
-          });
+          context.go(
+            '/exams/${widget.examId}/result',
+            extra: {
+              'score': ExamScore(sessionId: session.id, score: 0),
+              'timedOut': session.status == SessionStatus.timedOut,
+            },
+          );
         }
         return;
       }
@@ -96,32 +102,58 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
 
   @override
   Widget build(BuildContext context) {
+    return MaxTextScale(child: _buildBody(context));
+  }
+
+  Widget _buildBody(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isStarting) {
       return Scaffold(
         appBar: AppBar(title: const Text('Starting exam...')),
-        body: const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
       );
     }
 
     if (_startError != null) {
       return Scaffold(
-        appBar: AppBar(leading: IconButton(icon: const Icon(LucideIcons.arrowLeft), onPressed: () => context.pop())),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(LucideIcons.arrowLeft),
+            onPressed: () => context.pop(),
+            tooltip: 'Go back',
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.circleAlert, size: 48, color: isDark ? AppColors.darkDanger : AppColors.danger),
+              Icon(
+                LucideIcons.circleAlert,
+                size: 48,
+                color: isDark ? AppColors.darkDanger : AppColors.danger,
+              ),
               const SizedBox(height: 16),
-              Text('Could not start exam', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Could not start exam',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Text(_startError!, style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
+                child: Text(
+                  _startError!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 24),
-              AppButton(label: 'Go back', onPressed: () => context.go('/exams')),
+              AppButton(
+                label: 'Go back',
+                onPressed: () => context.go('/exams'),
+              ),
             ],
           ),
         ),
@@ -152,6 +184,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(LucideIcons.x),
+            tooltip: 'Close exam',
             onPressed: () async {
               final shouldLeave = await _showLeaveDialog(context);
               if (shouldLeave == true && context.mounted) {
@@ -160,10 +193,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
             },
           ),
           title: _session!.endsAt.isAfter(DateTime.now())
-              ? ExamTimer(
-                  endsAt: _session!.endsAt,
-                  onExpire: _autoSubmit,
-                )
+              ? ExamTimer(endsAt: _session!.endsAt, onExpire: _autoSubmit)
               : null,
           centerTitle: true,
         ),
@@ -172,8 +202,17 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
             _buildProgressBar(context, progress, isDark),
             if (_saveError != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                child: Text(_saveError!, style: TextStyle(color: isDark ? AppColors.darkDanger : AppColors.danger, fontSize: 12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+                child: Text(
+                  _saveError!,
+                  style: TextStyle(
+                    color: isDark ? AppColors.darkDanger : AppColors.danger,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             Expanded(
               child: SingleChildScrollView(
@@ -209,7 +248,11 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, bool isLastQuestion, bool isDark) {
+  Widget _buildBottomBar(
+    BuildContext context,
+    bool isLastQuestion,
+    bool isDark,
+  ) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -249,13 +292,16 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
     });
     final session = _session;
     if (session != null) {
-      ref.read(examsRepositoryProvider).saveAnswer(session.id, question.id, optionLabel).catchError((e) {
-        if (mounted) {
-          setState(() {
-            _saveError = 'Save failed — answer will retry on next';
+      ref
+          .read(examsRepositoryProvider)
+          .saveAnswer(session.id, question.id, optionLabel)
+          .catchError((e) {
+            if (mounted) {
+              setState(() {
+                _saveError = 'Save failed — answer will retry on next';
+              });
+            }
           });
-        }
-      });
     }
   }
 
@@ -263,20 +309,24 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
     final question = _questions[_currentIndex];
     if (_localAnswers[question.id] != null) {
       try {
-        await ref.read(examsRepositoryProvider).saveAnswer(
-              _session!.id,
-              question.id,
-              _localAnswers[question.id]!,
-            );
-        setState(() { _saveError = null; });
+        await ref
+            .read(examsRepositoryProvider)
+            .saveAnswer(_session!.id, question.id, _localAnswers[question.id]!);
+        setState(() {
+          _saveError = null;
+        });
       } on ApiException catch (e) {
         if (mounted) {
-          setState(() { _saveError = 'Could not save answer: ${e.message}'; });
+          setState(() {
+            _saveError = 'Could not save answer: ${e.message}';
+          });
         }
         return;
       } catch (e) {
         if (mounted) {
-          setState(() { _saveError = 'Network error — try again'; });
+          setState(() {
+            _saveError = 'Network error — try again';
+          });
         }
         return;
       }
@@ -295,13 +345,16 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       final repo = ref.read(examsRepositoryProvider);
       final score = await repo.submitSession(_session!.id, answers);
       if (mounted) {
-        context.go('/exams/${widget.examId}/result', extra: {'score': score, 'timedOut': false});
+        context.go(
+          '/exams/${widget.examId}/result',
+          extra: {'score': score, 'timedOut': false},
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to submit: $e')));
         setState(() => _isSubmitting = false);
       }
     }
@@ -317,14 +370,20 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       final score = await repo.submitSession(_session!.id, answers);
       ref.read(examSessionProvider.notifier).markTimedOut();
       if (mounted) {
-        context.go('/exams/${widget.examId}/result', extra: {'score': score, 'timedOut': true});
+        context.go(
+          '/exams/${widget.examId}/result',
+          extra: {'score': score, 'timedOut': true},
+        );
       }
     } catch (_) {
       if (mounted) {
-        context.go('/exams/${widget.examId}/result', extra: {
-          'score': ExamScore(sessionId: _session!.id, score: 0),
-          'timedOut': true,
-        });
+        context.go(
+          '/exams/${widget.examId}/result',
+          extra: {
+            'score': ExamScore(sessionId: _session!.id, score: 0),
+            'timedOut': true,
+          },
+        );
       }
     }
   }
@@ -334,12 +393,20 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage> with WidgetsBinding
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Leave exam?'),
-        content: const Text('Your progress will be saved, but the timer will keep running. Are you sure?'),
+        content: const Text(
+          'Your progress will be saved, but the timer will keep running. Are you sure?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Stay')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Stay'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Leave', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            child: Text(
+              'Leave',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),

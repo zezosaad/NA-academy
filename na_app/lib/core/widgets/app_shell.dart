@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_motion.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
+import 'package:na_app/core/widgets/offline_banner.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppShell extends StatelessWidget {
@@ -14,17 +15,19 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: _TabBar(
-        currentIndex: navigationShell.currentIndex,
-        onTabSelected: (index) {
-          HapticFeedback.mediumImpact();
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
+    return OfflineBanner(
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: _TabBar(
+          currentIndex: navigationShell.currentIndex,
+          onTabSelected: (index) {
+            HapticFeedback.mediumImpact();
+            navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            );
+          },
+        ),
       ),
     );
   }

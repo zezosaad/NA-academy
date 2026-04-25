@@ -2,6 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 
+part 'home_models.freezed.dart';
+
 int _coerceInt(dynamic v) {
   if (v is int) return v;
   if (v is double) return v.toInt();
@@ -17,8 +19,6 @@ List<int> _coerceIntList(dynamic v) {
   }
   return result.isEmpty ? List.filled(7, 0) : result;
 }
-
-part 'home_models.freezed.dart';
 
 @freezed
 class AnalyticsSnapshot with _$AnalyticsSnapshot {

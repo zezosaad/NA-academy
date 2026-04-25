@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, ForbiddenException, GoneException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+  GoneException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -19,7 +25,8 @@ export class AuthService {
 
   constructor(
     @InjectModel(Session.name) private readonly sessionModel: Model<SessionDocument>,
-    @InjectModel(PasswordReset.name) private readonly passwordResetModel: Model<PasswordResetDocument>,
+    @InjectModel(PasswordReset.name)
+    private readonly passwordResetModel: Model<PasswordResetDocument>,
     private readonly usersService: UsersService,
     private readonly devicesService: DevicesService,
     private readonly mailService: MailService,
@@ -181,7 +188,9 @@ export class AuthService {
       await this.mailService.sendPasswordResetEmail(email, rawToken);
       this.logger.log(`Password reset token issued for user ${user._id}`);
     } catch (err) {
-      this.logger.error(`Failed to send password reset email to ${maskEmail(email)} (user ${user._id}): ${err}`);
+      this.logger.error(
+        `Failed to send password reset email to ${maskEmail(email)} (user ${user._id}): ${err}`,
+      );
     }
   }
 

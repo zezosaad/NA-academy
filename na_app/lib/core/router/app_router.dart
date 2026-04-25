@@ -23,6 +23,8 @@ import 'package:na_app/features/exams/presentation/pages/exam_result_page.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
+import 'package:na_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:na_app/features/profile/presentation/pages/settings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -178,13 +180,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Profile'),
+                builder: (context, state) => const ProfilePage(),
                 routes: [
                   GoRoute(
                     path: 'settings',
-                    builder: (context, state) =>
-                        const _PlaceholderPage(title: 'Settings'),
+                    builder: (context, state) => const SettingsPage(),
                   ),
                 ],
               ),

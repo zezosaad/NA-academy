@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/core/widgets/empty_state.dart';
+import 'package:na_app/core/widgets/max_text_scale.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/features/subjects/presentation/controllers/subjects_controller.dart';
@@ -23,7 +24,9 @@ class SubjectDetailPage extends ConsumerWidget {
     return detailAsync.when(
       loading: () => Scaffold(
         appBar: AppBar(leading: const _BackButton()),
-        body: const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
       ),
       error: (e, _) {
         debugPrint('[SubjectDetail] load error: $e');
@@ -51,6 +54,7 @@ class _BackButton extends StatelessWidget {
     return IconButton(
       icon: const Icon(LucideIcons.chevronLeft),
       onPressed: () => context.pop(),
+      tooltip: 'Go back',
     );
   }
 }
@@ -65,30 +69,34 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const _BackButton(),
-        title: Text(
-          subject.title,
-          style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w600),
+    return MaxTextScale(
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const _BackButton(),
+          title: Text(
+            subject.title,
+            style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w600),
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHero(context, isDark),
-            const SizedBox(height: 16),
-            _buildStats(context, isDark, lessons),
-            const SizedBox(height: 24),
-            Text(
-              'Lessons',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 20),
-            ),
-            const SizedBox(height: 12),
-            _buildLessonList(context, isDark, lessons),
-          ],
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHero(context, isDark),
+              const SizedBox(height: 16),
+              _buildStats(context, isDark, lessons),
+              const SizedBox(height: 24),
+              Text(
+                'Lessons',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 20),
+              ),
+              const SizedBox(height: 12),
+              _buildLessonList(context, isDark, lessons),
+            ],
+          ),
         ),
       ),
     );
@@ -136,8 +144,8 @@ class _Content extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -178,18 +186,25 @@ class _Content extends StatelessWidget {
               color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+                color: isDark
+                    ? AppColors.darkBorderSubtle
+                    : AppColors.borderSubtle,
               ),
             ),
             child: Column(
               children: [
                 Text(
                   s['n']!,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 20),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.headlineMedium?.copyWith(fontSize: 20),
                 ),
                 Text(
                   s['l']!,
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -199,7 +214,11 @@ class _Content extends StatelessWidget {
     );
   }
 
-  Widget _buildLessonList(BuildContext context, bool isDark, List<Lesson> lessons) {
+  Widget _buildLessonList(
+    BuildContext context,
+    bool isDark,
+    List<Lesson> lessons,
+  ) {
     if (lessons.isEmpty) {
       return EmptyState(
         icon: LucideIcons.bookOpen,
@@ -268,7 +287,9 @@ class _LessonRow extends StatelessWidget {
       onTap: lesson.status == LessonStatus.locked
           ? null
           : () {
-              context.push('/subjects/${lesson.subjectId}/lessons/${lesson.id}');
+              context.push(
+                '/subjects/${lesson.subjectId}/lessons/${lesson.id}',
+              );
             },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -305,14 +326,20 @@ class _LessonRow extends StatelessWidget {
                   if (lesson.estimatedMinutes != null)
                     Text(
                       '${lesson.estimatedMinutes} min',
-                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMuted),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                 ],
               ),
             ),
             if (lesson.status == LessonStatus.active)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(999),
@@ -329,11 +356,19 @@ class _LessonRow extends StatelessWidget {
             if (lesson.status == LessonStatus.locked)
               Tooltip(
                 message: 'Complete previous lessons first',
-                child: const Icon(LucideIcons.lock, size: 14, color: AppColors.textMuted),
+                child: const Icon(
+                  LucideIcons.lock,
+                  size: 14,
+                  color: AppColors.textMuted,
+                ),
               ),
             const SizedBox(width: 8),
             if (lesson.status != LessonStatus.locked)
-              const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textMuted),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 16,
+                color: AppColors.textMuted,
+              ),
           ],
         ),
       ),

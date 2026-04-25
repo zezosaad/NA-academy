@@ -40,14 +40,16 @@ class ScoreRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: Size(size, size),
-            painter: _ScoreRingPainter(
-              progress: clampedScore,
-              strokeWidth: stroke,
-              color: ringColor,
-              backgroundColor:
-                  isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: _ScoreRingPainter(
+                progress: clampedScore,
+                strokeWidth: stroke,
+                color: ringColor,
+                backgroundColor:
+                    isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+              ),
             ),
           ),
           centerWidget ??

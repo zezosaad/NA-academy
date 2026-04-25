@@ -14,6 +14,8 @@ import 'package:na_app/features/home/presentation/widgets/resume_card.dart';
 import 'package:na_app/features/home/presentation/widgets/subject_scroller.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:na_app/core/theme/app_motion.dart';
+import 'package:na_app/core/widgets/max_text_scale.dart';
 
 class TodayPage extends ConsumerWidget {
   const TodayPage({super.key});
@@ -22,26 +24,30 @@ class TodayPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(todayViewStateProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.accent,
-          onRefresh: () => ref.read(todayViewStateProvider.notifier).refresh(),
-          child: stateAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+    return MaxTextScale(
+      child: Scaffold(
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: () =>
+                ref.read(todayViewStateProvider.notifier).refresh(),
+            child: stateAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              ),
+              error: (e, stack) {
+                debugPrint('[TodayPage] $e\n$stack');
+                return EmptyState(
+                  icon: LucideIcons.circleAlert,
+                  title: 'Could not load today',
+                  message:
+                      'Something went wrong while loading today\'s data. Please try again.',
+                  actionLabel: 'Retry',
+                  onAction: () => ref.invalidate(todayViewStateProvider),
+                );
+              },
+              data: (state) => _TodayContent(state: state),
             ),
-            error: (e, stack) {
-              debugPrint('[TodayPage] $e\n$stack');
-              return EmptyState(
-                icon: LucideIcons.circleAlert,
-                title: 'Could not load today',
-                message: 'Something went wrong while loading today\'s data. Please try again.',
-                actionLabel: 'Retry',
-                onAction: () => ref.invalidate(todayViewStateProvider),
-              );
-            },
-            data: (state) => _TodayContent(state: state),
           ),
         ),
       ),
@@ -141,9 +147,7 @@ class _TodayContent extends ConsumerWidget {
 class _GreetingHeader extends StatelessWidget {
   final String userName;
 
-  const _GreetingHeader({
-    required this.userName,
-  });
+  const _GreetingHeader({required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -152,71 +156,92 @@ class _GreetingHeader extends StatelessWidget {
     final now = DateTime.now();
     final dayName = _formatDayName(now);
 
-    return FadeInDown(
-      duration: const Duration(milliseconds: 600),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$dayName, ${_formatDate(now)}',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$greeting,\n$userName.',
-                    style: isDark
-                        ? Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: AppColors.darkTextPrimary,
-                          )
-                        : Theme.of(context).textTheme.displayLarge,
-                  ),
-                ],
-              ),
-            ),
-            Tooltip(
-              message: 'Settings',
-              child: IconButton(
-                onPressed: () => context.push('/profile/settings'),
-                icon: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorderSubtle
-                          : AppColors.borderSubtle,
-                    ),
-                  ),
-                  child: const Icon(LucideIcons.settings, size: 18),
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$dayName, ${_formatDate(now)}',
+                  style: Theme.of(context).textTheme.labelSmall,
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  '$greeting,\n$userName.',
+                  style: isDark
+                      ? Theme.of(context).textTheme.displayLarge?.copyWith(
+                          color: AppColors.darkTextPrimary,
+                        )
+                      : Theme.of(context).textTheme.displayLarge,
+                ),
+              ],
+            ),
+          ),
+          Tooltip(
+            message: 'Settings',
+            child: IconButton(
+              onPressed: () => context.push('/profile/settings'),
+              icon: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkBorderSubtle
+                        : AppColors.borderSubtle,
+                  ),
+                ),
+                child: const Icon(LucideIcons.settings, size: 18),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+
+    return AppMotion.shouldReduceMotion(context)
+        ? content
+        : FadeInDown(
+            duration: const Duration(milliseconds: 600),
+            child: content,
+          );
   }
 
   String _formatDayName(DateTime date) {
     const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     return days[date.weekday - 1];
   }
 
   String _formatDate(DateTime date) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month]} ${date.day}';
   }
@@ -230,56 +255,59 @@ class _StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return FadeInUp(
-      delay: const Duration(milliseconds: 200),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                LucideIcons.flame,
-                color: isDark ? AppColors.darkSecondary : AppColors.secondary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$streakDays-day streak',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontSize: 15),
-                  ),
-                  Text(
-                    'Keep going — you\'re on a roll!',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    final child = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
         ),
       ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSecondarySoft
+                  : AppColors.secondarySoft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              LucideIcons.flame,
+              color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$streakDays-day streak',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontSize: 15),
+                ),
+                Text(
+                  'Keep going — you\'re on a roll!',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
+
+    return AppMotion.shouldReduceMotion(context)
+        ? child
+        : FadeInUp(delay: const Duration(milliseconds: 200), child: child);
   }
 }
 
@@ -299,25 +327,24 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(fontSize: 20),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontSize: 20),
           ),
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: const Size(44, 44),
+                tapTargetSize: MaterialTapTargetSize.padded,
               ),
               child: Text(
                 'See all',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
         ],
