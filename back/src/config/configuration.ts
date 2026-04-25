@@ -30,4 +30,16 @@ export default () => ({
     videoChunkSize: parseInt(process.env.GRIDFS_VIDEO_CHUNK_SIZE || '1048576', 10),
     chatChunkSize: parseInt(process.env.GRIDFS_CHAT_CHUNK_SIZE || '261120', 10),
   },
+
+  mail: {
+    host: process.env.MAIL_HOST || 'localhost',
+    port: parseInt(process.env.MAIL_PORT || '1025', 10),
+    secure: process.env.MAIL_SECURE === 'true',
+    user: process.env.MAIL_USER || '',
+    pass: process.env.MAIL_PASS || '',
+    from: process.env.MAIL_FROM || 'no-reply@naacademy.local',
+    tls: {
+      rejectUnauthorized: process.env.MAIL_TLS_REJECT_UNAUTHORIZED !== 'false',
+    },
+  },
 });

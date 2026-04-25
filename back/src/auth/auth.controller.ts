@@ -4,6 +4,8 @@ import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 
@@ -67,5 +69,21 @@ export class AuthController {
   async logout(@CurrentUser('sessionId') sessionId: string) {
     await this.authService.logout(sessionId);
     return { message: 'Logged out' };
+  }
+
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Request a password reset email (always returns 204)' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.issueResetToken(dto.email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using token from email' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.consumeResetToken(dto.token, dto.newPassword, dto.hardwareId);
   }
 }

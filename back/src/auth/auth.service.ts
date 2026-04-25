@@ -1,12 +1,15 @@
-import { Injectable, UnauthorizedException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException, GoneException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Session, SessionDocument } from './schemas/session.schema.js';
+import { PasswordReset, PasswordResetDocument } from './schemas/password-reset.schema.js';
 import { UsersService } from '../users/users.service.js';
 import { DevicesService } from '../devices/devices.service.js';
+import { MailService } from '../mail/mail.service.js';
 import { UserDocument, UserStatus, UserRole } from '../users/schemas/user.schema.js';
 import { JwtPayload } from './strategies/jwt.strategy.js';
 
@@ -16,8 +19,10 @@ export class AuthService {
 
   constructor(
     @InjectModel(Session.name) private readonly sessionModel: Model<SessionDocument>,
+    @InjectModel(PasswordReset.name) private readonly passwordResetModel: Model<PasswordResetDocument>,
     private readonly usersService: UsersService,
     private readonly devicesService: DevicesService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -154,6 +159,75 @@ export class AuthService {
     this.logger.log(`Session ${sessionId} deleted`);
   }
 
+  async issueResetToken(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      this.logger.warn(`Password reset requested for unknown email: ${maskEmail(email)}`);
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('base64url');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await this.passwordResetModel.create({
+      userId: user._id,
+      tokenHash,
+      expiresAt,
+      consumed: false,
+    });
+
+    try {
+      await this.mailService.sendPasswordResetEmail(email, rawToken);
+      this.logger.log(`Password reset token issued for user ${user._id}`);
+    } catch (err) {
+      this.logger.error(`Failed to send password reset email to ${maskEmail(email)} (user ${user._id}): ${err}`);
+    }
+  }
+
+  async consumeResetToken(
+    token: string,
+    newPassword: string,
+    hardwareId: string,
+  ): Promise<{ user: any; tokens: { accessToken: string; refreshToken: string } }> {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const resetDoc = await this.passwordResetModel
+      .findOneAndUpdate(
+        { tokenHash, consumed: false, expiresAt: { $gt: new Date() } },
+        { $set: { consumed: true, consumedAt: new Date() } },
+        { new: true },
+      )
+      .exec();
+
+    if (!resetDoc) {
+      throw new GoneException('This reset link is invalid, expired, or has already been used');
+    }
+
+    const user = await this.usersService.findById(resetDoc.userId.toString());
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const SALT_ROUNDS = 12;
+    user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await user.save();
+
+    await this.devicesService.registerDevice(user._id.toString(), hardwareId);
+    await this.sessionModel.deleteMany({ userId: user._id }).exec();
+    const tokens = await this.createSession(user, hardwareId);
+
+    return {
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      tokens,
+    };
+  }
+
   async deleteAllSessions(userId: string): Promise<void> {
     await this.sessionModel.deleteMany({ userId: new Types.ObjectId(userId) }).exec();
     this.logger.log(`All sessions deleted for user ${userId}`);
@@ -221,4 +295,13 @@ export class AuthService {
         return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
   }
+}
+
+function maskEmail(email: string): string {
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0) return '***';
+  const local = email.substring(0, atIndex);
+  const domain = email.substring(atIndex);
+  const visible = local.length <= 2 ? local[0] : local.substring(0, 2);
+  return `${visible}***${domain}`;
 }

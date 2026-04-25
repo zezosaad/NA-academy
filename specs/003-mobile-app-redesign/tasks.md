@@ -187,20 +187,20 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Backend gap B1 — MUST land before T086**:
 
-- [ ] T079 [US5] Create `back/src/mail/mail.module.ts`, `back/src/mail/mail.service.ts`, and `back/src/mail/templates/password-reset.hbs` using `@nestjs-modules/mailer` + `nodemailer` SMTP transport reading `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` from env (research §10, plan.md §Project Structure).
-- [ ] T080 [US5] Create `back/src/auth/schemas/password-reset.schema.ts` with `{ userIdHash, tokenHash, expiresAt, consumed }` and a TTL index on `expiresAt`.
-- [ ] T081 [P] [US5] Create `back/src/auth/dto/forgot-password.dto.ts` with `ForgotPasswordDto { @IsEmail email: string }` and `back/src/auth/dto/reset-password.dto.ts` with `ResetPasswordDto { @IsString token; @MinLength(8) newPassword; @IsString hardwareId }` (contracts §1).
-- [ ] T082 [US5] Add `issueResetToken(email)` and `consumeResetToken(token, newPassword, hardwareId)` to `back/src/auth/auth.service.ts` — SHA-256 hash the token before storage, 30-minute TTL, atomic `consumed = true` mark, reject with `410 Gone` if expired or consumed, issue fresh tokens on success (contracts §1 / B1).
-- [ ] T083 [US5] Add `POST /auth/forgot-password` (returns 204 regardless of email existence per FR-004a) and `POST /auth/reset-password` (returns `{ user, tokens }` per FR-004b) to `back/src/auth/auth.controller.ts` with Swagger entries.
-- [ ] T084 [US5] Add Jest tests in `back/test/auth-reset.e2e-spec.ts` covering: unknown email returns 204 with no mail sent; known email queues a mail and creates a PasswordReset row; reset with expired token returns 410; reset with consumed token returns 410; happy-path reset returns user + tokens and lets the user log in with the new password.
+- [x] T079 [US5] Create `back/src/mail/mail.module.ts`, `back/src/mail/mail.service.ts`, and `back/src/mail/templates/password-reset.hbs` using `@nestjs-modules/mailer` + `nodemailer` SMTP transport reading `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM` from env (research §10, plan.md §Project Structure).
+- [x] T080 [US5] Create `back/src/auth/schemas/password-reset.schema.ts` with `{ userIdHash, tokenHash, expiresAt, consumed }` and a TTL index on `expiresAt`.
+- [x] T081 [P] [US5] Create `back/src/auth/dto/forgot-password.dto.ts` with `ForgotPasswordDto { @IsEmail email: string }` and `back/src/auth/dto/reset-password.dto.ts` with `ResetPasswordDto { @IsString token; @MinLength(8) newPassword; @IsString hardwareId }` (contracts §1).
+- [x] T082 [US5] Add `issueResetToken(email)` and `consumeResetToken(token, newPassword, hardwareId)` to `back/src/auth/auth.service.ts` — SHA-256 hash the token before storage, 30-minute TTL, atomic `consumed = true` mark, reject with `410 Gone` if expired or consumed, issue fresh tokens on success (contracts §1 / B1).
+- [x] T083 [US5] Add `POST /auth/forgot-password` (returns 204 regardless of email existence per FR-004a) and `POST /auth/reset-password` (returns `{ user, tokens }` per FR-004b) to `back/src/auth/auth.controller.ts` with Swagger entries.
+- [x] T084 [US5] Add Jest tests in `back/test/auth-reset.e2e-spec.ts` covering: unknown email returns 204 with no mail sent; known email queues a mail and creates a PasswordReset row; reset with expired token returns 410; reset with consumed token returns 410; happy-path reset returns user + tokens and lets the user log in with the new password.
 
 **Mobile implementation**:
 
-- [ ] T085 [P] [US5] Create `na_app/lib/features/onboarding/presentation/pages/onboarding_page.dart` — 3-slide pager with reduced-motion degrade, final slide primary CTA "Get started" + secondary ghost "I have an account" (FR-028, acceptance US5 #2, Principle V).
-- [ ] T086 [P] [US5] Create `na_app/lib/features/auth/presentation/pages/forgot_password_page.dart` — email input, primary pill CTA, confirmation state "Check your inbox" shown on any server 204 response (FR-004a, acceptance US5 #4).
-- [ ] T087 [P] [US5] Create `na_app/lib/features/auth/presentation/pages/reset_password_page.dart` — deep-linked from `/auth/reset-password?token=<t>`, new-password + confirm inputs with strength meter matching Register, on 200 stores tokens via `AuthController` and routes to `/today` (FR-004b, acceptance US5 #5).
-- [ ] T088 [US5] Extend `auth_repository.dart` / `AuthController` (from T020) with `forgotPassword(email)` and `resetPassword(token, newPassword)` methods; the latter uses the hardware-id from `hardware_id_store.dart` per contracts §1.
-- [ ] T089 [US5] Wire the Login screen's "Forgot password?" link (scaffolded in T031) to `/auth/forgot-password`; wire the onboarding "Get started" CTA to `/auth/register`; wire `deep_link_handler.dart` (T016) end-to-end so the MailHog link opens `reset_password_page.dart` with the token pre-parsed.
+- [x] T085 [P] [US5] Create `na_app/lib/features/onboarding/presentation/pages/onboarding_page.dart` — 3-slide pager with reduced-motion degrade, final slide primary CTA "Get started" + secondary ghost "I have an account" (FR-028, acceptance US5 #2, Principle V).
+- [x] T086 [P] [US5] Create `na_app/lib/features/auth/presentation/pages/forgot_password_page.dart` — email input, primary pill CTA, confirmation state "Check your inbox" shown on any server 204 response (FR-004a, acceptance US5 #4).
+- [x] T087 [P] [US5] Create `na_app/lib/features/auth/presentation/pages/reset_password_page.dart` — deep-linked from `/auth/reset-password?token=<t>`, new-password + confirm inputs with strength meter matching Register, on 200 stores tokens via `AuthController` and routes to `/today` (FR-004b, acceptance US5 #5).
+- [x] T088 [US5] Extend `auth_repository.dart` / `AuthController` (from T020) with `forgotPassword(email)` and `resetPassword(token, newPassword)` methods; the latter uses the hardware-id from `hardware_id_store.dart` per contracts §1.
+- [x] T089 [US5] Wire the Login screen's "Forgot password?" link (scaffolded in T031) to `/auth/forgot-password`; wire the onboarding "Get started" CTA to `/auth/register`; wire `deep_link_handler.dart` (T016) end-to-end so the MailHog link opens `reset_password_page.dart` with the token pre-parsed.
 
 **Checkpoint**: All five user stories are independently functional.
 
