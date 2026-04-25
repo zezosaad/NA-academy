@@ -24,6 +24,8 @@ describe('Chat - canChat scoping (e2e)', () => {
   let conversationModel: Model<ConversationDocument>;
 
   let adminToken: string;
+  let studentToken: string;
+  let teacherToken: string;
   let studentId: string;
   let teacherId: string;
   let subjectId: string;

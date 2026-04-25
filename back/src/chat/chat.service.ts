@@ -16,6 +16,7 @@ import {
   SubjectCodeDocument,
   CodeStatus as SubjectCodeStatus,
 } from '../activation-codes/schemas/subject-code.schema.js';
+import { SubjectBundle, SubjectBundleDocument } from '../subjects/schemas/subject-bundle.schema.js';
 import { ConversationPreviewDto } from './dto/conversation-list.dto.js';
 
 @Injectable()
@@ -28,6 +29,7 @@ export class ChatService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Subject.name) private readonly subjectModel: Model<SubjectDocument>,
     @InjectModel(SubjectCode.name) private readonly subjectCodeModel: Model<SubjectCodeDocument>,
+    @InjectModel(SubjectBundle.name) private readonly subjectBundleModel: Model<SubjectBundleDocument>,
     private readonly accessCheckHelper: AccessCheckHelper,
   ) {}
 
@@ -152,8 +154,17 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
           .find({ _id: { $in: user.assignedSubjects } })
           .exec();
         if (mySubjects.length > 0) {
-          subjectId = mySubjects[0]._id.toString();
-          subjectTitle = mySubjects[0].title;
+          const counterpartyUnlockedIds = await this._getUnlockedSubjectIds(counterpartyId.toString());
+          const matched = mySubjects.find((s) =>
+            counterpartyUnlockedIds.includes(s._id.toString()),
+          );
+          if (matched) {
+            subjectId = matched._id.toString();
+            subjectTitle = matched.title;
+          } else if (mySubjects.length > 0) {
+            subjectId = mySubjects[0]._id.toString();
+            subjectTitle = mySubjects[0].title;
+          }
         }
       }
 
@@ -167,7 +178,7 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
         subjectTitle,
         lastMessage: lastMessage
           ? {
-              text: lastMessage.text ?? null,
+              text: lastMessage.text ?? undefined,
               hasImage: lastMessage.messageType === ChatMessageType.IMAGE,
               sentAt: lastMessage.createdAt.toISOString(),
               senderId: lastMessage.senderId.toString(),
@@ -218,141 +229,25 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
         .find({ _id: { $in: teacherSubjects }, isActive: true })
         .exec();
 
-      for (const subject of subjects) {
-        const activatedCodes = await this.subjectCodeModel
-          .find({ subjectId: subject._id, status: SubjectCodeStatus.USED })
-          .populate('activatedBy')
-          .exec();
-
-        for (const code of activatedCodes) {
-          const student = code.activatedBy as any;
-          const studentId = student?._id?.toString();
-          if (!studentId || seenCounterpartyIds.has(studentId)) continue;
-          if (student?.role !== 'student') continue;
-          seenCounterpartyIds.add(studentId);
-
-          const roomId = this.generateRoomId(userId, studentId);
-          const existingConv = await this.conversationModel.findOne({ roomId }).exec();
-          if (existingConv) continue;
-
-          results.push({
-            id: '',
-            virtual: true,
-            counterpartyId: studentId,
-            counterpartyName: student.name,
-            counterpartyAvatarUrl: null,
-            subjectId: subject._id.toString(),
-            subjectTitle: subject.title,
-            lastMessage: null,
-            unreadCount: 0,
-          });
-        }
-      }
-    }
-
-    results.sort((a, b) => {
-      const aTime = a.lastMessage?.sentAt ?? '0';
-      const bTime = b.lastMessage?.sentAt ?? '0';
-      return bTime.localeCompare(aTime);
-    });
-
-    return results;
-  }
-        }
-      } else {
-        const mySubjects = await this.subjectModel
-          .find({ _id: { $in: user.assignedSubjects } })
-          .exec();
-        if (mySubjects.length > 0) {
-          subjectId = mySubjects[0]._id.toString();
-          subjectTitle = mySubjects[0].title;
-        }
-      }
-
-      results.push({
-        id: conv._id.toString(),
-        virtual: false,
-        counterpartyId: counterpartyId.toString(),
-        counterpartyName: counterparty.name,
-        counterpartyAvatarUrl: null,
-        subjectId,
-        subjectTitle,
-        lastMessage: lastMessage
-          ? {
-              text: lastMessage.text ?? null,
-              hasImage: lastMessage.messageType === ChatMessageType.IMAGE,
-              sentAt: lastMessage.createdAt.toISOString(),
-              senderId: lastMessage.senderId.toString(),
-              status: lastMessage.status,
-            }
-          : null,
-        unreadCount,
-      });
-    }
-
-    const existingCounterpartyIds = new Set(results.map((r) => r.counterpartyId));
-
-    if (user.role === 'student') {
-      const unlockedSubjectIds = await this._getUnlockedSubjectIds(userId);
-
-      const subjects = await this.subjectModel
-        .find({
-          _id: { $in: unlockedSubjectIds.map((id) => new Types.ObjectId(id)) },
-          isActive: true,
-        })
+      const allStudents = await this.userModel
+        .find({ role: 'student' })
         .exec();
 
       for (const subject of subjects) {
-        const teachers = await this.userModel
-          .find({ role: 'teacher', assignedSubjects: subject._id })
-          .exec();
+        for (const student of allStudents) {
+          const studentUnlockedIds = await this._getUnlockedSubjectIds(student._id.toString());
+          if (!studentUnlockedIds.includes(subject._id.toString())) continue;
+          if (seenCounterpartyIds.has(student._id.toString())) continue;
+          seenCounterpartyIds.add(student._id.toString());
 
-        for (const teacher of teachers) {
-          if (existingCounterpartyIds.has(teacher._id.toString())) continue;
-
-          const roomId = this.generateRoomId(userId, teacher._id.toString());
+          const roomId = this.generateRoomId(userId, student._id.toString());
           const existingConv = await this.conversationModel.findOne({ roomId }).exec();
           if (existingConv) continue;
 
           results.push({
             id: '',
             virtual: true,
-            counterpartyId: teacher._id.toString(),
-            counterpartyName: teacher.name,
-            counterpartyAvatarUrl: null,
-            subjectId: subject._id.toString(),
-            subjectTitle: subject.title,
-            lastMessage: null,
-            unreadCount: 0,
-          });
-        }
-      }
-    } else if (user.role === 'teacher') {
-      const teacherSubjects = user.assignedSubjects;
-      const subjects = await this.subjectModel
-        .find({ _id: { $in: teacherSubjects }, isActive: true })
-        .exec();
-
-      for (const subject of subjects) {
-        const activatedCodes = await this.subjectCodeModel
-          .find({ subjectId: subject._id, status: SubjectCodeStatus.USED })
-          .populate('activatedBy')
-          .exec();
-
-        for (const code of activatedCodes) {
-          const student = code.activatedBy as any;
-          const studentId = student?._id?.toString();
-          if (!studentId || existingCounterpartyIds.has(studentId)) continue;
-          if (student?.role !== 'student') continue;
-
-          const roomId = this.generateRoomId(userId, studentId);
-          const existingConv = await this.conversationModel.findOne({ roomId }).exec();
-          if (existingConv) continue;
-
-          results.push({
-            id: '',
-            virtual: true,
-            counterpartyId: studentId,
+            counterpartyId: student._id.toString(),
             counterpartyName: student.name,
             counterpartyAvatarUrl: null,
             subjectId: subject._id.toString(),
@@ -400,9 +295,7 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
         .map((c) => c.bundleId)
         .filter((id): id is Types.ObjectId => id !== undefined);
 
-      const { SubjectBundle } = await import('../subjects/schemas/subject-bundle.schema.js');
-      const bundles = await this.subjectModel.db
-        .model(SubjectBundle.name)
+      const bundles = await this.subjectBundleModel
         .find({ _id: { $in: bundleIds } })
         .exec();
 

@@ -9,6 +9,7 @@ class MessageBubble extends StatelessWidget {
   final String currentUserId;
   final VoidCallback? onTapImage;
   final String? baseUrl;
+  final String? accessToken;
 
   const MessageBubble({
     super.key,
@@ -16,6 +17,7 @@ class MessageBubble extends StatelessWidget {
     required this.currentUserId,
     this.onTapImage,
     this.baseUrl,
+    this.accessToken,
   });
 
   bool get _isMe => message.senderId == currentUserId;
@@ -77,6 +79,7 @@ class MessageBubble extends StatelessWidget {
                       onTap: onTapImage,
                       baseUrl: baseUrl,
                       isMe: _isMe,
+                      accessToken: accessToken,
                     ),
                   if (message.text != null && message.text!.isNotEmpty)
                     Padding(
@@ -152,12 +155,14 @@ class _ImageBubble extends StatelessWidget {
   final VoidCallback? onTap;
   final String? baseUrl;
   final bool isMe;
+  final String? accessToken;
 
   const _ImageBubble({
     required this.imageFileId,
     this.onTap,
     this.baseUrl,
     required this.isMe,
+    this.accessToken,
   });
 
   @override
@@ -166,38 +171,47 @@ class _ImageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.only(
-        topLeft: const Radius.circular(AppShapes.cardRadius),
-        topRight: const Radius.circular(AppShapes.cardRadius),
-        bottomLeft: isMe ? const Radius.circular(AppShapes.cardRadius) : Radius.zero,
-        bottomRight: isMe ? Radius.zero : const Radius.circular(AppShapes.cardRadius),
-      ),
-      child: GestureDetector(
-        onTap: onTap,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: 220,
-          height: 180,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
+    final headers = accessToken != null
+        ? {'Authorization': 'Bearer $accessToken'}
+        : <String, String>{};
+
+    return Semantics(
+      label: 'Chat image',
+      image: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(AppShapes.cardRadius),
+          topRight: const Radius.circular(AppShapes.cardRadius),
+          bottomLeft: isMe ? const Radius.circular(AppShapes.cardRadius) : Radius.zero,
+          bottomRight: isMe ? Radius.zero : const Radius.circular(AppShapes.cardRadius),
+        ),
+        child: GestureDetector(
+          onTap: onTap,
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            httpHeaders: headers,
             width: 220,
             height: 180,
-            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: isDark ? AppColors.darkAccent : AppColors.accent,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 220,
+              height: 180,
+              color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: isDark ? AppColors.darkAccent : AppColors.accent,
+                ),
               ),
             ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            width: 220,
-            height: 180,
-            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
-            child: Icon(
-              Icons.broken_image,
-              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            errorWidget: (context, url, error) => Container(
+              width: 220,
+              height: 180,
+              color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+              child: Icon(
+                Icons.broken_image,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
             ),
           ),
         ),

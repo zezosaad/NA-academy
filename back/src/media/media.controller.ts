@@ -74,7 +74,7 @@ export class MediaController {
     if (user.role === 'student' && asset) {
       const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
         user.userId,
-        asset.subjectId.toString(),
+        asset.subjectId!.toString(),
       );
       if (!hasAccess) {
         throw new ForbiddenException('You do not have active code access to this media content');

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/storage/secure_token_store.dart';
 import 'package:na_app/features/chat/data/chat_repository.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
 import 'package:na_app/features/chat/presentation/controllers/chat_controller.dart';
@@ -39,6 +40,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   Timer? _typingTimer;
   StreamSubscription<ChatMessage>? _messageSub;
   StreamSubscription<TypingEvent>? _typingSub;
+  String? _accessToken;
 
   @override
   void initState() {
@@ -51,6 +53,12 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
       }
     });
     ref.read(chatRepositoryProvider).listConversations();
+    _loadToken();
+  }
+
+  Future<void> _loadToken() async {
+    final token = await ref.read(secureTokenStoreProvider).accessToken;
+    if (mounted) setState(() => _accessToken = token);
   }
 
   void _onNewMessage(ChatMessage message) {
@@ -193,6 +201,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
                           'API_BASE_URL',
                           defaultValue: 'http://10.0.2.2:3000',
                         ),
+                        accessToken: _accessToken,
                       );
                     },
                   ),

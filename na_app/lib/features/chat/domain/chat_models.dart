@@ -144,6 +144,34 @@ class ChatMessage {
     if (value == null) return null;
     return DateTime.tryParse(value);
   }
+
+  ChatMessage copyWith({
+    String? id,
+    String? conversationId,
+    String? senderId,
+    String? recipientId,
+    MessageType? type,
+    String? text,
+    String? imageFileId,
+    DateTime? sentAt,
+    DateTime? deliveredAt,
+    DateTime? readAt,
+    MessageDeliveryStatus? status,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      conversationId: conversationId ?? this.conversationId,
+      senderId: senderId ?? this.senderId,
+      recipientId: recipientId ?? this.recipientId,
+      type: type ?? this.type,
+      text: text ?? this.text,
+      imageFileId: imageFileId ?? this.imageFileId,
+      sentAt: sentAt ?? this.sentAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      readAt: readAt ?? this.readAt,
+      status: status ?? this.status,
+    );
+  }
 }
 
 class PendingMessage {

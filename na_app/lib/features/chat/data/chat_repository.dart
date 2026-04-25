@@ -11,11 +11,13 @@ import 'package:na_app/core/storage/secure_token_store.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  return ChatRepository(
+  final instance = ChatRepository(
     dio: ref.watch(dioProvider),
     chatSocket: ref.watch(chatSocketProvider),
     tokenStore: ref.watch(secureTokenStoreProvider),
   );
+  ref.onDispose(() => instance.dispose());
+  return instance;
 });
 
 class ChatRepository {
@@ -27,6 +29,7 @@ class ChatRepository {
   final _typingController = StreamController<TypingEvent>.broadcast();
 
   List<Conversation> _conversations = [];
+  final List<ChatMessage> _messages = [];
   final List<PendingMessage> _pendingQueue = [];
   final int _maxImageBytes = 10 * 1024 * 1024;
   final Set<String> _allowedMimeTypes = {
@@ -168,12 +171,17 @@ class ChatRepository {
   void _handleNewMessage(Map<String, dynamic> data) {
     try {
       final message = ChatMessage.fromJson(data);
+      _messages.add(message);
       _messagesController.add(message);
       deliveryAck(messageId: message.id, senderId: message.senderId);
 
       final idx = _pendingQueue.indexWhere((m) =>
-          m.recipientId == message.senderId && m.status == MessageDeliveryStatus.pending);
-      if (idx >= 0) _pendingQueue.removeAt(idx);
+          m.recipientId == message.recipientId &&
+          m.text == message.text &&
+          m.status == MessageDeliveryStatus.pending);
+      if (idx >= 0) {
+        _pendingQueue.removeAt(idx);
+      }
 
       listConversations();
     } catch (_) {}
@@ -181,12 +189,36 @@ class ChatRepository {
 
   void _handleStatusUpdate(Map<String, dynamic> data) {
     final messageId = data['messageId'] as String?;
-    if (messageId == null) return;
+    final newStatus = data['status'] as String?;
+    if (messageId == null || newStatus == null) {
+      listConversations();
+      return;
+    }
+
+    final parsedStatus = MessageDeliveryStatus.values.firstWhere(
+      (e) => e.name == newStatus,
+      orElse: () => MessageDeliveryStatus.sent,
+    );
+
+    final idx = _messages.indexWhere((m) => m.id == messageId);
+    if (idx >= 0) {
+      _messages[idx] = _messages[idx].copyWith(status: parsedStatus);
+      _messagesController.add(_messages[idx]);
+    }
 
     listConversations();
   }
 
   void _handleConversationRead(Map<String, dynamic> data) {
+    final conversationId = data['conversationId'] as String?;
+    if (conversationId != null) {
+      for (int i = 0; i < _messages.length; i++) {
+        if (_messages[i].conversationId == conversationId) {
+          _messages[i] = _messages[i].copyWith(status: MessageDeliveryStatus.read);
+          _messagesController.add(_messages[i]);
+        }
+      }
+    }
     listConversations();
   }
 

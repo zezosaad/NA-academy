@@ -22,7 +22,7 @@ export class AnalyticsService {
 
     const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
       studentId,
-      asset.subjectId.toString(),
+      asset.subjectId!.toString(),
     );
     if (!hasAccess) throw new ForbiddenException('No active access to this subject content');
 

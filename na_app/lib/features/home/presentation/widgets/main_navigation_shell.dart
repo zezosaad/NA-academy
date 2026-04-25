@@ -17,20 +17,20 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SubjectsCatalogScreen(),
-    const ExamsScreen(),
-    const ChatListPage(),
-    const ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final screens = <Widget>[
+      const HomeScreen(),
+      const SubjectsCatalogScreen(),
+      const ExamsScreen(),
+      if (_selectedIndex == 3) const ChatListPage() else const SizedBox.shrink(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(index: _selectedIndex, children: _screens),
+          IndexedStack(index: _selectedIndex, children: screens),
           _buildFloatingTabBar(),
         ],
       ),
