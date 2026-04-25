@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/features/chat/data/chat_repository.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
 
-final chatTypingProvider = StateProvider.family<bool, String>((ref, userId) => false);
-
 final chatControllerProvider = Provider<ChatController>((ref) {
   final repository = ref.watch(chatRepositoryProvider);
   return ChatController(repository: repository);

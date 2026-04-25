@@ -34,23 +34,35 @@ class ChatThreadPage extends ConsumerStatefulWidget {
 class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   final _scrollController = ScrollController();
   final _messages = <ChatMessage>[];
-  bool _isTyping = false;
+  late String _conversationId;
+  bool _counterpartyTyping = false;
   Timer? _typingTimer;
   StreamSubscription<ChatMessage>? _messageSub;
+  StreamSubscription<TypingEvent>? _typingSub;
 
   @override
   void initState() {
     super.initState();
+    _conversationId = widget.conversationId;
     _messageSub = ref.read(chatRepositoryProvider).messages.listen(_onNewMessage);
+    _typingSub = ref.read(chatRepositoryProvider).typingStream.listen((event) {
+      if (event.userId == widget.counterpartyId) {
+        setState(() => _counterpartyTyping = event.isTyping);
+      }
+    });
     ref.read(chatRepositoryProvider).listConversations();
   }
 
   void _onNewMessage(ChatMessage message) {
-    final belongsToConversation = message.conversationId == widget.conversationId ||
+    final belongsToConversation = message.conversationId == _conversationId ||
         message.senderId == widget.counterpartyId ||
         message.recipientId == widget.counterpartyId;
 
-    if (!belongsToConversation && !widget.isVirtual) return;
+    if (!belongsToConversation && _conversationId.isNotEmpty) return;
+
+    if (_conversationId.isEmpty && message.conversationId.isNotEmpty) {
+      setState(() => _conversationId = message.conversationId);
+    }
 
     setState(() {
       _messages.add(message);
@@ -61,7 +73,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
     if (message.senderId == widget.counterpartyId) {
       final chatController = ref.read(chatControllerProvider);
       chatController.markConversationRead(
-        conversationId: widget.conversationId,
+        conversationId: _conversationId,
         senderId: widget.counterpartyId,
       );
     }
@@ -102,23 +114,20 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void _handleTypingChanged(String text) {
     final chatController = ref.read(chatControllerProvider);
 
-    if (text.isNotEmpty && !_isTyping) {
-      setState(() => _isTyping = true);
+    if (text.isNotEmpty && !_counterpartyTyping) {
       chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: true);
     }
 
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(seconds: 3), () {
-      if (_isTyping) {
-        setState(() => _isTyping = false);
-        chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: false);
-      }
+      chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: false);
     });
   }
 
   @override
   void dispose() {
     _messageSub?.cancel();
+    _typingSub?.cancel();
     _typingTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -190,7 +199,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
           ),
           ChatTypingIndicator(
             userName: widget.counterpartyName.split(' ').first,
-            isTyping: false,
+            isTyping: _counterpartyTyping,
           ),
           Composer(
             onSendText: _handleSendText,

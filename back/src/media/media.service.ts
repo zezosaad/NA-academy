@@ -10,6 +10,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types, mongo } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { Transform } from 'stream';
 import busboy from 'busboy';
 import { MediaAsset, MediaAssetDocument, MediaType } from './schemas/media-asset.schema.js';
 import { UploadMediaDto } from './dto/upload-media.dto.js';
@@ -47,7 +48,6 @@ export class MediaService {
       const bb = busboy({ headers: req.headers });
 
       const uploadDto: Partial<UploadMediaDto> = {};
-      let fileStream: NodeJS.ReadableStream | null = null;
       let filename = '';
       let contentType = '';
 
@@ -57,15 +57,12 @@ export class MediaService {
 
       bb.on('file', (name, stream, info) => {
         if (name !== 'file') {
-          stream.resume(); // discard
+          stream.resume();
           return;
         }
         filename = info.filename;
         contentType = info.mimeType;
-        fileStream = stream;
 
-        // Ensure we have the dto data before streaming if possible, but busboy might send file first.
-        // For simplicity, we assume we collect fields fast or stream handles it.
         const writeStream = this.mediaBucket.openUploadStream(filename, {
           metadata: { contentType },
         });
@@ -195,7 +192,7 @@ export class MediaService {
       .exec();
   }
 
-  async uploadChatMedia(
+async uploadChatMedia(
     req: Request,
     userId: string,
     options: { maxBytes: number; allowedMimeTypes: Set<string> },
@@ -203,18 +200,106 @@ export class MediaService {
     return new Promise((resolve, reject) => {
       const bb = busboy({ headers: req.headers, limits: { fileSize: options.maxBytes } });
 
-      const fileStream: NodeJS.ReadableStream | null = null;
       let filename = '';
       let contentType = '';
-      let totalBytes = 0;
-      let fileSizeExceeded = false;
-      let mimeTypeRejected = false;
 
       bb.on('file', (name, stream, info) => {
         if (name !== 'file') {
           stream.resume();
           return;
         }
+        filename = info.filename;
+        contentType = info.mimeType;
+
+        if (!options.allowedMimeTypes.has(contentType)) {
+          stream.resume();
+          reject(
+            new UnsupportedMediaTypeException(
+              `Unsupported file type. Allowed: ${Array.from(options.allowedMimeTypes).join(', ')}`,
+            ),
+          );
+          return;
+        }
+
+        const sizeCheck = new Transform({
+          transform(chunk: Buffer, _encoding: string, callback: TransformCallback) {
+            this.push(chunk);
+            callback();
+          },
+        });
+
+        const writeStream = this.chatBucket.openUploadStream(filename, {
+          metadata: { contentType, chatUpload: true },
+        });
+
+        let totalBytes = 0;
+        stream.on('data', (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > options.maxBytes) {
+            stream.destroy();
+            writeStream.destroy();
+            reject(
+              new PayloadTooLargeException(
+                `File must be smaller than ${options.maxBytes / 1024 / 1024} MB`,
+              ),
+            );
+          }
+        });
+
+        sizeCheck.on('error', (err: Error) => {
+          writeStream.destroy();
+          reject(err);
+        });
+
+        stream.pipe(sizeCheck).pipe(writeStream);
+
+        writeStream.on('finish', async () => {
+          try {
+            const fileId = writeStream.id as Types.ObjectId;
+            const files = await this.chatBucket.find({ _id: fileId }).toArray();
+            const uploadedFile = files[0];
+            if (!uploadedFile) {
+              return reject(new Error('Uploaded file not found in GridFS'));
+            }
+
+            const asset = new this.mediaAssetModel({
+              gridFsFileId: fileId,
+              subjectId: new Types.ObjectId(),
+              filename,
+              contentType,
+              fileSize: uploadedFile.length,
+              mediaType: MediaType.IMAGE,
+              uploadedBy: new Types.ObjectId(userId),
+            });
+
+            await asset.save();
+            this.logger.log(`Uploaded chat media: ${asset._id} (${filename})`);
+
+            resolve({
+              id: asset._id.toString(),
+              gridFsFileId: fileId.toString(),
+              filename,
+              contentType: asset.contentType,
+              fileSize: asset.fileSize,
+              mediaType: asset.mediaType,
+              title: asset.title,
+            });
+          } catch (error) {
+            if (writeStream.id) {
+              try { await this.chatBucket.delete(writeStream.id as Types.ObjectId); } catch {}
+            }
+            reject(error);
+          }
+        });
+
+        writeStream.on('error', (error: Error) => {
+          reject(error);
+        });
+      });
+
+      req.pipe(bb);
+    });
+  }
         filename = info.filename;
         contentType = info.mimeType;
 

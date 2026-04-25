@@ -13,7 +13,6 @@ import { Subject, SubjectDocument } from '../src/subjects/schemas/subject.schema
 import {
   SubjectCode,
   SubjectCodeDocument,
-  CodeStatus,
 } from '../src/activation-codes/schemas/subject-code.schema.js';
 import { Conversation, ConversationDocument } from '../src/chat/schemas/conversation.schema.js';
 
@@ -25,8 +24,6 @@ describe('Chat - canChat scoping (e2e)', () => {
   let conversationModel: Model<ConversationDocument>;
 
   let adminToken: string;
-  let studentToken: string;
-  let teacherToken: string;
   let studentId: string;
   let teacherId: string;
   let subjectId: string;
@@ -34,6 +31,7 @@ describe('Chat - canChat scoping (e2e)', () => {
   const createdUserIds: string[] = [];
   const createdSubjectIds: string[] = [];
   const createdCodeIds: string[] = [];
+  const createdConversationIds: string[] = [];
 
   const PREFIX = '/api/v1';
 
@@ -63,7 +61,7 @@ describe('Chat - canChat scoping (e2e)', () => {
     await userModel.deleteMany({ _id: { $in: createdUserIds } });
     await subjectModel.deleteMany({ _id: { $in: createdSubjectIds } });
     await subjectCodeModel.deleteMany({ _id: { $in: createdCodeIds } });
-    await conversationModel.deleteMany({});
+    await conversationModel.deleteMany({ _id: { $in: createdConversationIds } });
     if (app) {
       await app.close();
     }

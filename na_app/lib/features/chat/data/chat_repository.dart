@@ -24,6 +24,7 @@ class ChatRepository {
 
   final _conversationsController = StreamController<List<Conversation>>.broadcast();
   final _messagesController = StreamController<ChatMessage>.broadcast();
+  final _typingController = StreamController<TypingEvent>.broadcast();
 
   List<Conversation> _conversations = [];
   final List<PendingMessage> _pendingQueue = [];
@@ -35,8 +36,15 @@ class ChatRepository {
     'image/heic',
   };
 
+  StreamSubscription<Map<String, dynamic>>? _newMessageSub;
+  StreamSubscription<Map<String, dynamic>>? _statusUpdateSub;
+  StreamSubscription<Map<String, dynamic>>? _conversationReadSub;
+  StreamSubscription<Map<String, dynamic>>? _typingSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _pendingMessagesSub;
+
   Stream<List<Conversation>> get conversations => _conversationsController.stream;
   Stream<ChatMessage> get messages => _messagesController.stream;
+  Stream<TypingEvent> get typingStream => _typingController.stream;
   List<PendingMessage> get pendingMessages => List.unmodifiable(_pendingQueue);
 
   ChatRepository({
@@ -49,11 +57,11 @@ class ChatRepository {
   }
 
   void _initSocketListeners() {
-    _chatSocket.newMessage.listen(_handleNewMessage);
-    _chatSocket.statusUpdate.listen(_handleStatusUpdate);
-    _chatSocket.conversationRead.listen(_handleConversationRead);
-    _chatSocket.typingIndicator.listen(_handleTypingIndicator);
-    _chatSocket.pendingMessages.listen(_handlePendingMessages);
+    _newMessageSub = _chatSocket.newMessage.listen(_handleNewMessage);
+    _statusUpdateSub = _chatSocket.statusUpdate.listen(_handleStatusUpdate);
+    _conversationReadSub = _chatSocket.conversationRead.listen(_handleConversationRead);
+    _typingSub = _chatSocket.typingIndicator.listen(_handleTypingIndicator);
+    _pendingMessagesSub = _chatSocket.pendingMessages.listen(_handlePendingMessages);
   }
 
   Future<List<Conversation>> listConversations() async {
@@ -135,9 +143,6 @@ class ChatRepository {
       imageFileId: imageFileId,
       messageType: messageType,
     );
-
-    final idx = _pendingQueue.indexWhere((m) => m.localId == localId);
-    if (idx >= 0) _pendingQueue.removeAt(idx);
   }
 
   void markRead({required String conversationId, required String senderId}) {
@@ -165,11 +170,19 @@ class ChatRepository {
       final message = ChatMessage.fromJson(data);
       _messagesController.add(message);
       deliveryAck(messageId: message.id, senderId: message.senderId);
+
+      final idx = _pendingQueue.indexWhere((m) =>
+          m.recipientId == message.senderId && m.status == MessageDeliveryStatus.pending);
+      if (idx >= 0) _pendingQueue.removeAt(idx);
+
       listConversations();
     } catch (_) {}
   }
 
   void _handleStatusUpdate(Map<String, dynamic> data) {
+    final messageId = data['messageId'] as String?;
+    if (messageId == null) return;
+
     listConversations();
   }
 
@@ -177,7 +190,13 @@ class ChatRepository {
     listConversations();
   }
 
-  void _handleTypingIndicator(Map<String, dynamic> data) {}
+  void _handleTypingIndicator(Map<String, dynamic> data) {
+    final userId = data['userId'] as String?;
+    final isTyping = data['isTyping'] as bool? ?? false;
+    if (userId != null) {
+      _typingController.add(TypingEvent(userId: userId, isTyping: isTyping));
+    }
+  }
 
   void _handlePendingMessages(List<Map<String, dynamic>> data) {
     for (final msgData in data) {
@@ -191,8 +210,14 @@ class ChatRepository {
   }
 
   void dispose() {
+    _newMessageSub?.cancel();
+    _statusUpdateSub?.cancel();
+    _conversationReadSub?.cancel();
+    _typingSub?.cancel();
+    _pendingMessagesSub?.cancel();
     _conversationsController.close();
     _messagesController.close();
+    _typingController.close();
   }
 
   ApiException _mapException(DioException e) {
@@ -203,4 +228,10 @@ class ChatRepository {
       message: e.message ?? '',
     );
   }
+}
+
+class TypingEvent {
+  final String userId;
+  final bool isTyping;
+  const TypingEvent({required this.userId, required this.isTyping});
 }

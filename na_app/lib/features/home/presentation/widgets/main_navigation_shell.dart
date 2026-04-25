@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:na_app/features/subjects/presentation/pages/subjects_catalog_screen.dart';
 import 'package:na_app/features/exams/presentation/pages/exams_screen.dart';
-import 'package:na_app/features/chat/presentation/pages/chat_list_screen.dart';
+import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/profile/presentation/pages/profile_screen.dart';
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -21,7 +21,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const HomeScreen(),
     const SubjectsCatalogScreen(),
     const ExamsScreen(),
-    const ChatListScreen(),
+    const ChatListPage(),
     const ProfileScreen(),
   ];
 

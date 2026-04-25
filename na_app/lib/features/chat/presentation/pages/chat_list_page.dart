@@ -146,6 +146,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
         'counterpartyId': conv.counterpartyId,
         'counterpartyName': conv.counterpartyName,
         'subjectId': conv.subjectId,
+        'subjectTitle': conv.subjectTitle,
       });
     }
   }
@@ -265,8 +266,8 @@ class _ConversationRow extends StatelessWidget {
             ),
             if (conversation.unreadCount > 0) ...[
               const SizedBox(width: 8),
-              Container(
-                width: 22,
+Container(
+                constraints: const BoxConstraints(minWidth: 22),
                 height: 22,
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 decoration: BoxDecoration(
@@ -274,6 +275,7 @@ class _ConversationRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppShapes.pillRadius),
                 ),
                 alignment: Alignment.center,
+                margin: const EdgeInsets.only(top: 20),
                 child: Text(
                   '${conversation.unreadCount}',
                   style: const TextStyle(

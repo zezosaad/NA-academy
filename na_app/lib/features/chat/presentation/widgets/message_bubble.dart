@@ -110,7 +110,7 @@ class MessageBubble extends StatelessWidget {
                   Icon(
                     _statusIcon,
                     size: 14,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color: _statusColor(context),
                   ),
                 ],
               ],
@@ -129,6 +129,16 @@ class MessageBubble extends StatelessWidget {
         MessageDeliveryStatus.failed => Icons.error_outline,
         MessageDeliveryStatus.deleted => Icons.block,
       };
+
+  Color _statusColor(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return switch (message.status) {
+      MessageDeliveryStatus.read => isDark ? AppColors.darkAccent : AppColors.accent,
+      MessageDeliveryStatus.failed => isDark ? AppColors.darkDanger : AppColors.danger,
+      _ => isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+    };
+  }
 
   String _formatTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
@@ -153,6 +163,8 @@ class _ImageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = '${baseUrl ?? 'http://10.0.2.2:3000'}/media/$imageFileId/stream';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -171,14 +183,22 @@ class _ImageBubble extends StatelessWidget {
           placeholder: (context, url) => Container(
             width: 220,
             height: 180,
-            color: AppColors.bgSunken,
-            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: isDark ? AppColors.darkAccent : AppColors.accent,
+              ),
+            ),
           ),
           errorWidget: (context, url, error) => Container(
             width: 220,
             height: 180,
-            color: AppColors.bgSunken,
-            child: Icon(Icons.broken_image, color: AppColors.textMuted),
+            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+            child: Icon(
+              Icons.broken_image,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
           ),
         ),
       ),

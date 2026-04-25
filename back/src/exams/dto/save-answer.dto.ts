@@ -1,4 +1,11 @@
-import { IsMongoId, IsDefined, registerDecorator, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  IsMongoId,
+  IsDefined,
+  registerDecorator,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 @ValidatorConstraint({ name: 'isStringOrStringArray', async: false })

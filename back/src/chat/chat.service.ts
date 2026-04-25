@@ -59,6 +59,8 @@ export class ChatService {
 
     if (user1.role === 'admin' || user2.role === 'admin') return true;
 
+    if (user1.role === 'teacher' && user2.role === 'teacher') return true;
+
     const studentId =
       user1.role === 'student' ? userId1 : user2.role === 'student' ? userId2 : null;
     const teacherId =
@@ -66,38 +68,47 @@ export class ChatService {
 
     if (!studentId || !teacherId) return false;
 
-    if (user1.role === 'teacher' && user2.role === 'teacher') return true;
-
     const teacher = user1.role === 'teacher' ? user1 : user2;
 
-    const subjects = await this.subjectModel.find({ isActive: true }).exec();
+    const studentUnlockedIds = await this._getUnlockedSubjectIds(studentId);
+
+    const subjects = await this.subjectModel
+      .find({
+        _id: { $in: studentUnlockedIds.map((id) => new Types.ObjectId(id)) },
+        isActive: true,
+      })
+      .exec();
+
     for (const subject of subjects) {
       const teacherAssigned = teacher.assignedSubjects.some((sId) => sId.equals(subject._id));
-      if (!teacherAssigned) continue;
-      const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
-        studentId,
-        subject._id.toString(),
-      );
-      if (hasAccess) return true;
+      if (teacherAssigned) return true;
     }
 
     return false;
   }
 
-  async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
+async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) return [];
 
     const results: ConversationPreviewDto[] = [];
+    const seenCounterpartyIds = new Set<string>();
 
     const existingConversations = await this.conversationModel
       .find({ participants: new Types.ObjectId(userId) })
       .sort({ lastMessageAt: -1 })
       .exec();
 
+    const studentUnlockedIds = user.role === 'student'
+      ? await this._getUnlockedSubjectIds(userId)
+      : [];
+
     for (const conv of existingConversations) {
       const counterpartyId = conv.participants.find((p) => !p.equals(new Types.ObjectId(userId)));
       if (!counterpartyId) continue;
+
+      const cpIdStr = counterpartyId.toString();
+      seenCounterpartyIds.add(cpIdStr);
 
       const counterparty = await this.userModel
         .findById(counterpartyId)
@@ -126,15 +137,127 @@ export class ChatService {
           .find({ _id: { $in: counterparty.assignedSubjects } })
           .exec();
         for (const sub of teacherSubjects) {
-          const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
-            userId,
-            sub._id.toString(),
-          );
-          if (hasAccess) {
+          if (user.role === 'student' && studentUnlockedIds.includes(sub._id.toString())) {
+            subjectId = sub._id.toString();
+            subjectTitle = sub.title;
+            break;
+          } else if (user.role !== 'student') {
             subjectId = sub._id.toString();
             subjectTitle = sub.title;
             break;
           }
+        }
+      } else {
+        const mySubjects = await this.subjectModel
+          .find({ _id: { $in: user.assignedSubjects } })
+          .exec();
+        if (mySubjects.length > 0) {
+          subjectId = mySubjects[0]._id.toString();
+          subjectTitle = mySubjects[0].title;
+        }
+      }
+
+      results.push({
+        id: conv._id.toString(),
+        virtual: false,
+        counterpartyId: cpIdStr,
+        counterpartyName: counterparty.name,
+        counterpartyAvatarUrl: null,
+        subjectId,
+        subjectTitle,
+        lastMessage: lastMessage
+          ? {
+              text: lastMessage.text ?? null,
+              hasImage: lastMessage.messageType === ChatMessageType.IMAGE,
+              sentAt: lastMessage.createdAt.toISOString(),
+              senderId: lastMessage.senderId.toString(),
+              status: lastMessage.status,
+            }
+          : null,
+        unreadCount,
+      });
+    }
+
+    if (user.role === 'student') {
+      const subjects = await this.subjectModel
+        .find({
+          _id: { $in: studentUnlockedIds.map((id) => new Types.ObjectId(id)) },
+          isActive: true,
+        })
+        .exec();
+
+      for (const subject of subjects) {
+        const teachers = await this.userModel
+          .find({ role: 'teacher', assignedSubjects: subject._id })
+          .exec();
+
+        for (const teacher of teachers) {
+          if (seenCounterpartyIds.has(teacher._id.toString())) continue;
+          seenCounterpartyIds.add(teacher._id.toString());
+
+          const roomId = this.generateRoomId(userId, teacher._id.toString());
+          const existingConv = await this.conversationModel.findOne({ roomId }).exec();
+          if (existingConv) continue;
+
+          results.push({
+            id: '',
+            virtual: true,
+            counterpartyId: teacher._id.toString(),
+            counterpartyName: teacher.name,
+            counterpartyAvatarUrl: null,
+            subjectId: subject._id.toString(),
+            subjectTitle: subject.title,
+            lastMessage: null,
+            unreadCount: 0,
+          });
+        }
+      }
+    } else if (user.role === 'teacher') {
+      const teacherSubjects = user.assignedSubjects;
+      const subjects = await this.subjectModel
+        .find({ _id: { $in: teacherSubjects }, isActive: true })
+        .exec();
+
+      for (const subject of subjects) {
+        const activatedCodes = await this.subjectCodeModel
+          .find({ subjectId: subject._id, status: SubjectCodeStatus.USED })
+          .populate('activatedBy')
+          .exec();
+
+        for (const code of activatedCodes) {
+          const student = code.activatedBy as any;
+          const studentId = student?._id?.toString();
+          if (!studentId || seenCounterpartyIds.has(studentId)) continue;
+          if (student?.role !== 'student') continue;
+          seenCounterpartyIds.add(studentId);
+
+          const roomId = this.generateRoomId(userId, studentId);
+          const existingConv = await this.conversationModel.findOne({ roomId }).exec();
+          if (existingConv) continue;
+
+          results.push({
+            id: '',
+            virtual: true,
+            counterpartyId: studentId,
+            counterpartyName: student.name,
+            counterpartyAvatarUrl: null,
+            subjectId: subject._id.toString(),
+            subjectTitle: subject.title,
+            lastMessage: null,
+            unreadCount: 0,
+          });
+        }
+      }
+    }
+
+    results.sort((a, b) => {
+      const aTime = a.lastMessage?.sentAt ?? '0';
+      const bTime = b.lastMessage?.sentAt ?? '0';
+      return bTime.localeCompare(aTime);
+    });
+
+    return results;
+  }
         }
       } else {
         const mySubjects = await this.subjectModel

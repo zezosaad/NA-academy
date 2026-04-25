@@ -26,9 +26,14 @@ class Conversation {
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'] as String?;
+    final isVirtual = json['virtual'] as bool? ?? false;
+    if (!isVirtual && (rawId == null || rawId.isEmpty)) {
+      throw FormatException('Conversation.fromJson: non-virtual conversation must have a non-empty "id"');
+    }
     return Conversation(
-      id: (json['id'] as String?) ?? '',
-      virtual: json['virtual'] as bool? ?? false,
+      id: rawId ?? '',
+      virtual: isVirtual,
       counterpartyId: json['counterpartyId'] as String,
       counterpartyName: json['counterpartyName'] as String,
       counterpartyAvatarUrl: json['counterpartyAvatarUrl'] as String?,
@@ -114,7 +119,7 @@ class ChatMessage {
       type: _parseMessageType(json['messageType'] as String?),
       text: json['text'] as String?,
       imageFileId: json['imageFileId'] as String?,
-      sentAt: _parseDate(json['createdAt'] as String?) ?? DateTime.now(),
+      sentAt: _parseDate(json['createdAt'] as String?) ?? DateTime.utc(1970),
       deliveredAt: _parseDate(json['deliveredAt'] as String?),
       readAt: _parseDate(json['readAt'] as String?),
       status: _parseDeliveryStatus(json['status'] as String?),

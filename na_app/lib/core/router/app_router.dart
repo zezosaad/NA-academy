@@ -137,13 +137,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     path: ':id',
                     builder: (context, state) {
                       final conversationId = state.pathParameters['id']!;
-                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      final extra = state.extra;
+                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
                       return ChatThreadPage(
                         conversationId: conversationId,
-                        counterpartyId: extra['counterpartyId'] as String? ?? '',
-                        counterpartyName: extra['counterpartyName'] as String? ?? 'Tutor',
-                        subjectTitle: extra['subjectTitle'] as String?,
-                        isVirtual: extra['isVirtual'] as bool? ?? false,
+                        counterpartyId: extraMap['counterpartyId'] as String? ?? conversationId,
+                        counterpartyName: extraMap['counterpartyName'] as String? ?? 'Tutor',
+                        subjectTitle: extraMap['subjectTitle'] as String?,
+                        isVirtual: extraMap['isVirtual'] as bool? ?? false,
                       );
                     },
                   ),
@@ -151,12 +152,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     path: 'virtual/:counterpartyId',
                     builder: (context, state) {
                       final counterpartyId = state.pathParameters['counterpartyId']!;
-                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      final extra = state.extra;
+                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+                      assert(counterpartyId.isNotEmpty, 'counterpartyId must not be empty for virtual conversation');
                       return ChatThreadPage(
                         conversationId: '',
                         counterpartyId: counterpartyId,
-                        counterpartyName: extra['counterpartyName'] as String? ?? 'Tutor',
-                        subjectTitle: extra['subjectTitle'] as String?,
+                        counterpartyName: extraMap['counterpartyName'] as String? ?? 'Tutor',
+                        subjectTitle: extraMap['subjectTitle'] as String?,
                         isVirtual: true,
                       );
                     },

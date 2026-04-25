@@ -269,7 +269,10 @@ export class ExamsService {
       }
 
       const latestScores = await this.scoreModel
-        .aggregate<{ _id: Types.ObjectId; scorePercentage: number }>([
+        .aggregate<{
+          _id: Types.ObjectId;
+          scorePercentage: number;
+        }>([
           { $match: { examId: { $in: examIds }, studentId: uId } },
           { $sort: { createdAt: -1 } },
           { $group: { _id: '$examId', scorePercentage: { $first: '$scorePercentage' } } },
@@ -291,7 +294,9 @@ export class ExamsService {
             $match: {
               examId: { $in: examIds },
               studentId: uId,
-              status: { $in: [SessionStatus.COMPLETED, SessionStatus.STARTED, SessionStatus.TIMED_OUT] },
+              status: {
+                $in: [SessionStatus.COMPLETED, SessionStatus.STARTED, SessionStatus.TIMED_OUT],
+              },
             },
           },
           {
@@ -329,13 +334,14 @@ export class ExamsService {
           ...exam,
           attemptsRemaining: Math.max(0, availableCodes),
           lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
-          status: completedAttempts > 0
-            ? 'completed'
-            : hasStartedSession
-              ? 'available'
-              : availableCodes > 0
+          status:
+            completedAttempts > 0
+              ? 'completed'
+              : hasStartedSession
                 ? 'available'
-                : 'locked',
+                : availableCodes > 0
+                  ? 'available'
+                  : 'locked',
         };
       });
       return { data, total };
@@ -389,28 +395,32 @@ export class ExamsService {
     );
 
     if (existingResponse) {
-      await this.sessionModel.updateOne(
-        {
-          _id: sessionId,
-          studentId: new Types.ObjectId(userId),
-          status: SessionStatus.STARTED,
-          'responses.questionId': questionObjectId,
-        },
-        { $set: { 'responses.$.selectedOption': answerValue, updatedAt: new Date() } },
-      ).exec();
+      await this.sessionModel
+        .updateOne(
+          {
+            _id: sessionId,
+            studentId: new Types.ObjectId(userId),
+            status: SessionStatus.STARTED,
+            'responses.questionId': questionObjectId,
+          },
+          { $set: { 'responses.$.selectedOption': answerValue, updatedAt: new Date() } },
+        )
+        .exec();
     } else {
-      await this.sessionModel.updateOne(
-        {
-          _id: sessionId,
-          studentId: new Types.ObjectId(userId),
-          status: SessionStatus.STARTED,
-          'responses.questionId': { $ne: questionObjectId },
-        },
-        {
-          $push: { responses: { questionId: questionObjectId, selectedOption: answerValue } },
-          $set: { updatedAt: new Date() },
-        },
-      ).exec();
+      await this.sessionModel
+        .updateOne(
+          {
+            _id: sessionId,
+            studentId: new Types.ObjectId(userId),
+            status: SessionStatus.STARTED,
+            'responses.questionId': { $ne: questionObjectId },
+          },
+          {
+            $push: { responses: { questionId: questionObjectId, selectedOption: answerValue } },
+            $set: { updatedAt: new Date() },
+          },
+        )
+        .exec();
     }
   }
 }
