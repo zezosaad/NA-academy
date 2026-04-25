@@ -10,7 +10,9 @@ import 'package:na_app/features/subjects/domain/activation_result.dart';
 import 'package:na_app/features/subjects/presentation/controllers/subjects_controller.dart';
 
 class EnterSubjectCodePage extends ConsumerStatefulWidget {
-  const EnterSubjectCodePage({super.key});
+  final String? subjectTitle;
+
+  const EnterSubjectCodePage({super.key, this.subjectTitle});
 
   @override
   ConsumerState<EnterSubjectCodePage> createState() => _EnterSubjectCodePageState();
@@ -94,7 +96,9 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
           children: [
             const SizedBox(height: 24),
             Text(
-              'Enter the $_subjectCodeLength-character code from your teacher to unlock a new subject.',
+              widget.subjectTitle != null
+                  ? 'Enter the $_subjectCodeLength-character code to unlock "${widget.subjectTitle}".'
+                  : 'Enter the $_subjectCodeLength-character code from your teacher to unlock a new subject.',
               style: GoogleFonts.inter(
                 fontSize: 15,
                 color: AppColors.textSecondary,

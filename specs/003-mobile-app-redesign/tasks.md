@@ -167,13 +167,13 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Independent Test**: After a student has unlocked one subject and started one lesson, the Today screen shows their name, a non-zero streak if applicable, the in-progress lesson in the resume card, and the unlocked subject in the horizontal scroller.
 
-- [ ] T072 [P] [US4] Create `AnalyticsSnapshot` freezed model in `na_app/lib/features/home/domain/home_models.dart` (data-model §1.11).
-- [ ] T073 [US4] Create `na_app/lib/features/home/data/home_repository.dart` — aggregates `GET /users/me`, `GET /analytics/student/me`, the `/subjects` list (filtered to unlocked), and `GET /exams` (filtered to due-today) into a single `TodayViewState`.
-- [ ] T074 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/resume_card.dart` — deep-links into the last in-progress lesson (FR-022, acceptance US4 #2).
-- [ ] T075 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/due_today_card.dart` — surfaces the earliest exam due today with its remaining time (FR-022, acceptance US4 #3).
-- [ ] T076 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/subject_scroller.dart` — horizontal scroller of unlocked subjects with progress rings (FR-023).
-- [ ] T077 [US4] Create `na_app/lib/features/home/presentation/pages/today_page.dart` — Fraunces greeting driven by `time_of_day_greeting.dart` + student name, streak indicator, Resume card, due-today section, subject scroller (FR-021, acceptance US4 #1).
-- [ ] T078 [US4] Handle the "locked subject tapped from Today" edge case: route to `enter_subject_code_page.dart` pre-filled with the subject context instead of the bare subjects grid (Edge Cases).
+- [x] T072 [P] [US4] Create `AnalyticsSnapshot` freezed model in `na_app/lib/features/home/domain/home_models.dart` (data-model §1.11).
+- [x] T073 [US4] Create `na_app/lib/features/home/data/home_repository.dart` — aggregates `GET /users/me`, `GET /analytics/student/me`, the `/subjects` list (filtered to unlocked), and `GET /exams` (filtered to due-today) into a single `TodayViewState`.
+- [x] T074 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/resume_card.dart` — deep-links into the last in-progress lesson (FR-022, acceptance US4 #2).
+- [x] T075 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/due_today_card.dart` — surfaces the earliest exam due today with its remaining time (FR-022, acceptance US4 #3).
+- [x] T076 [P] [US4] Create `na_app/lib/features/home/presentation/widgets/subject_scroller.dart` — horizontal scroller of unlocked subjects with progress rings (FR-023).
+- [x] T077 [US4] Create `na_app/lib/features/home/presentation/pages/today_page.dart` — Fraunces greeting driven by `time_of_day_greeting.dart` + student name, streak indicator, Resume card, due-today section, subject scroller (FR-021, acceptance US4 #1).
+- [x] T078 [US4] Handle the "locked subject tapped from Today" edge case: route to `enter_subject_code_page.dart` pre-filled with the subject context instead of the bare subjects grid (Edge Cases).
 
 **Checkpoint**: Today screen populated — no cross-story regressions.
 
