@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/api/dio_client.dart';
@@ -74,13 +75,13 @@ class HomeRepository {
       return dueDate.year == now.year &&
           dueDate.month == now.month &&
           dueDate.day == now.day &&
-          (e.status == ExamStatus.available ||
+          (e.status == ExamStatus.available &&
               e.attemptsRemaining > 0);
     }).toList();
 
     ResumableLesson? resumableLesson;
     final subjectDetailFutures = unlockedSubjects.map(
-      (s) => _subjectsRepository.getSubject(s.id).then((r) => (subject: s, result: r)).catchError((_) => null),
+      (s) => _subjectsRepository.getSubject(s.id).then((r) => (subject: s, result: r)).catchError((e) { debugPrint('[HomeRepository] Failed to load subject ${s.id}: $e'); return null; }),
     );
     final subjectDetails = await Future.wait(subjectDetailFutures);
     for (final entry in subjectDetails) {

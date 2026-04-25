@@ -241,12 +241,12 @@ class _StreakCard extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.secondarySoft,
+                color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.flame,
-                color: AppColors.secondary,
+                color: isDark ? AppColors.darkSecondary : AppColors.secondary,
                 size: 20,
               ),
             ),
@@ -301,8 +301,13 @@ class _SectionHeader extends StatelessWidget {
                 ?.copyWith(fontSize: 20),
           ),
           if (onSeeAll != null)
-            GestureDetector(
-              onTap: onSeeAll,
+            TextButton(
+              onPressed: onSeeAll,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
                 'See all',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
