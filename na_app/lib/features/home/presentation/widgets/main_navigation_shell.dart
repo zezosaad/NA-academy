@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:na_app/core/theme/app_colors.dart';
-import 'package:na_app/features/home/presentation/pages/home_screen.dart';
+import 'package:na_app/features/home/presentation/pages/today_page.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:na_app/features/subjects/presentation/pages/subjects_catalog_screen.dart';
@@ -20,7 +20,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      const HomeScreen(),
+      const TodayPage(),
       const SubjectsCatalogScreen(),
       const ExamsScreen(),
       if (_selectedIndex == 3) const ChatListPage() else const SizedBox.shrink(),

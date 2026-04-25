@@ -6,6 +6,7 @@ import 'package:na_app/features/auth/presentation/controllers/auth_controller.da
 import 'package:na_app/features/auth/presentation/pages/splash_page.dart';
 import 'package:na_app/features/auth/presentation/pages/login_page.dart';
 import 'package:na_app/features/auth/presentation/pages/register_page.dart';
+import 'package:na_app/features/home/presentation/pages/today_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subjects_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/enter_subject_code_page.dart';
@@ -79,8 +80,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/today',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Today'),
+                builder: (context, state) => const TodayPage(),
               ),
             ],
           ),
@@ -188,7 +188,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/subjects/enter-code',
-        builder: (context, state) => const EnterSubjectCodePage(),
+        builder: (context, state) {
+          final extra = state.extra;
+          final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+          return EnterSubjectCodePage(
+            subjectTitle: extraMap['subjectTitle'] as String?,
+          );
+        },
       ),
       GoRoute(
         path: '/subjects/:id/unlocking',
