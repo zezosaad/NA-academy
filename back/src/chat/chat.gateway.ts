@@ -12,7 +12,7 @@ import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ChatService } from './chat.service.js';
-import { MessageStatus } from './schemas/message.schema.js';
+import { MessageStatus, ChatMessageType } from './schemas/message.schema.js';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -75,14 +75,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleMessage(
     @MessageBody()
-    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: any },
+    payload: { recipientId: string; text?: string; imageFileId?: string; messageType: ChatMessageType; clientMessageId?: string },
     @ConnectedSocket() client: Socket,
   ) {
     const senderId = client.data.user.sub;
 
-    // Authorization check
     const canChat = await this.chatService.canChat(senderId, payload.recipientId);
     if (!canChat) {
+      client.emit('unauthorized_conversation', {
+        message: 'You are not authorized to chat with this user',
+        recipientId: payload.recipientId,
+      });
       return { event: 'error', data: 'Unauthorized to chat with this user' };
     }
 
@@ -100,14 +103,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       messageType: payload.messageType,
     });
 
+    const messagePayload: Record<string, any> = {
+      ...savedMessage.toObject(),
+      clientMessageId: payload.clientMessageId ?? null,
+    };
+
     const recipientSocketId = this.userSockets.get(payload.recipientId);
     if (recipientSocketId) {
-      this.server.to(recipientSocketId).emit('new_message', savedMessage);
+      this.server.to(recipientSocketId).emit('new_message', messagePayload);
     }
+
+    client.emit('new_message', messagePayload);
 
     return {
       event: 'message_ack',
-      data: { messageId: savedMessage._id, status: MessageStatus.SENT },
+      data: { messageId: savedMessage._id, status: MessageStatus.SENT, clientMessageId: payload.clientMessageId ?? null },
     };
   }
 

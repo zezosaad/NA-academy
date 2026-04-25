@@ -15,8 +15,8 @@ export class MediaAsset {
   @Prop({ required: true, type: Types.ObjectId })
   gridFsFileId!: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Subject' })
-  subjectId!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Subject' })
+  subjectId?: Types.ObjectId;
 
   @Prop({ required: true, type: String })
   filename!: string;
@@ -38,6 +38,9 @@ export class MediaAsset {
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   uploadedBy?: Types.ObjectId;
+
+  @Prop({ default: false, type: Boolean })
+  chatUpload!: boolean;
 
   createdAt!: Date;
   updatedAt!: Date;

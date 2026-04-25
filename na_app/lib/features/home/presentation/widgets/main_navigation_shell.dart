@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:na_app/features/subjects/presentation/pages/subjects_catalog_screen.dart';
 import 'package:na_app/features/exams/presentation/pages/exams_screen.dart';
-import 'package:na_app/features/chat/presentation/pages/chat_list_screen.dart';
+import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/profile/presentation/pages/profile_screen.dart';
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -17,20 +17,20 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SubjectsCatalogScreen(),
-    const ExamsScreen(),
-    const ChatListScreen(),
-    const ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final screens = <Widget>[
+      const HomeScreen(),
+      const SubjectsCatalogScreen(),
+      const ExamsScreen(),
+      if (_selectedIndex == 3) const ChatListPage() else const SizedBox.shrink(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(index: _selectedIndex, children: _screens),
+          IndexedStack(index: _selectedIndex, children: screens),
           _buildFloatingTabBar(),
         ],
       ),

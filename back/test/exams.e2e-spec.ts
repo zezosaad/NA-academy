@@ -9,8 +9,16 @@ import { ResponseTransformInterceptor } from './../src/common/interceptors/respo
 import { Model } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 import { Exam, ExamDocument } from '../src/exams/schemas/exam.schema.js';
-import { ExamSession, ExamSessionDocument, SessionStatus } from '../src/exams/schemas/exam-session.schema.js';
-import { ExamCode, ExamCodeDocument, CodeStatus } from '../src/activation-codes/schemas/exam-code.schema.js';
+import {
+  ExamSession,
+  ExamSessionDocument,
+  SessionStatus,
+} from '../src/exams/schemas/exam-session.schema.js';
+import {
+  ExamCode,
+  ExamCodeDocument,
+  CodeStatus,
+} from '../src/activation-codes/schemas/exam-code.schema.js';
 import { Subject, SubjectDocument } from '../src/subjects/schemas/subject.schema.js';
 import { User, UserDocument } from '../src/users/schemas/user.schema.js';
 

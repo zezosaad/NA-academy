@@ -141,21 +141,21 @@ description: "Task list for feature 003-mobile-app-redesign — NA-Academy Mobil
 
 **Backend gaps B5 + B6 — MUST land before T064**:
 
-- [ ] T060 [US3] Create `back/src/chat/dto/conversation-list.dto.ts` with the `ConversationPreview` shape from contracts §6 (id nullable when `virtual: true`, counterparty metadata, subjectId, lastMessage, unreadCount).
-- [ ] T061 [US3] Add `GET /chat/conversations` to `back/src/chat/chat.controller.ts` guarded by `Roles('student', 'teacher', 'admin')`; returns the union of existing `Conversation` docs and "virtual" conversations derived from unlocked subjects whose `teacherId` has no existing thread with the caller (contracts §6 / B5).
-- [ ] T062 [US3] Tighten `ChatService.canChat(senderId, recipientId)` in `back/src/chat/chat.service.ts`: student ↔ tutor only when the tutor teaches a subject the student has unlocked; tutor ↔ student symmetric; admins unrestricted. Emit socket error `'unauthorized_conversation'` when blocked (contracts §6 Δ / B5). Add Jest tests for both directions.
-- [ ] T063 [US3] Enforce 10 MB cap and MIME whitelist (`image/jpeg`, `image/png`, `image/webp`, `image/heic`) in the `POST /media/chat/upload` handler in `back/src/media/media.controller.ts`; reject oversize with 413 and unsupported MIME with 415 (FR-018, contracts §7 / B6).
+- [x] T060 [US3] Create `back/src/chat/dto/conversation-list.dto.ts` with the `ConversationPreview` shape from contracts §6 (id nullable when `virtual: true`, counterparty metadata, subjectId, lastMessage, unreadCount).
+- [x] T061 [US3] Add `GET /chat/conversations` to `back/src/chat/chat.controller.ts` guarded by `Roles('student', 'teacher', 'admin')`; returns the union of existing `Conversation` docs and "virtual" conversations derived from unlocked subjects whose `teacherId` has no existing thread with the caller (contracts §6 / B5).
+- [x] T062 [US3] Tighten `ChatService.canChat(senderId, recipientId)` in `back/src/chat/chat.service.ts`: student ↔ tutor only when the tutor teaches a subject the student has unlocked; tutor ↔ student symmetric; admins unrestricted. Emit socket error `'unauthorized_conversation'` when blocked (contracts §6 Δ / B5). Add Jest tests for both directions.
+- [x] T063 [US3] Enforce 10 MB cap and MIME whitelist (`image/jpeg`, `image/png`, `image/webp`, `image/heic`) in the `POST /media/chat/upload` handler in `back/src/media/media.controller.ts`; reject oversize with 413 and unsupported MIME with 415 (FR-018, contracts §7 / B6).
 
 **Mobile implementation**:
 
-- [ ] T064 [P] [US3] Create `Conversation`, `Message`, and `MessagePreview` freezed models in `na_app/lib/features/chat/domain/chat_models.dart` including the client-only `pending` message status (data-model §1.9–§1.10).
-- [ ] T065 [US3] Create `na_app/lib/features/chat/data/chat_repository.dart` — `listConversations()` (hits `GET /chat/conversations`), `uploadImage(file)`, and a realtime stream that merges socket events from `chat_socket.dart` into the in-memory conversation cache.
-- [ ] T066 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/message_bubble.dart` — right-aligned pill for student, left-aligned with tutor avatar, inline image via `cached_network_image` (FR-018).
-- [ ] T067 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/composer.dart` — text field + camera/gallery buttons; client-side validation rejects non-image or oversize (>10 MB) attachments with a human-readable toast (FR-018).
-- [ ] T068 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/typing_indicator.dart` — 3-dot breathing animation honouring reduced-motion (FR-018, FR-036).
-- [ ] T069 [US3] Create `na_app/lib/features/chat/presentation/pages/chat_list_page.dart` — row per conversation with avatar, name, preview, relative timestamp via `time_ago.dart`, unread badge; empty state directs to enter a subject code when no unlocked subjects (FR-017, acceptance US3 #1).
-- [ ] T070 [US3] Create `na_app/lib/features/chat/presentation/pages/chat_thread_page.dart` — message list bound to the realtime stream, composer, typing indicator, read-receipts marking, "Message removed" placeholder for deleted messages without losing scroll position (FR-018, FR-020, acceptance US3 #2–3, edge case: tutor deletes).
-- [ ] T071 [US3] Implement offline-send queue in `chat_repository.dart` — messages sent without connectivity enter `pending` state with visible "Sending…" label; retry on reconnect using socket `send_message` with an idempotency token to avoid duplicates on success (FR-019, acceptance US3 #4).
+- [x] T064 [P] [US3] Create `Conversation`, `Message`, and `MessagePreview` freezed models in `na_app/lib/features/chat/domain/chat_models.dart` including the client-only `pending` message status (data-model §1.9–§1.10).
+- [x] T065 [US3] Create `na_app/lib/features/chat/data/chat_repository.dart` — `listConversations()` (hits `GET /chat/conversations`), `uploadImage(file)`, and a realtime stream that merges socket events from `chat_socket.dart` into the in-memory conversation cache.
+- [x] T066 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/message_bubble.dart` — right-aligned pill for student, left-aligned with tutor avatar, inline image via `cached_network_image` (FR-018).
+- [x] T067 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/composer.dart` — text field + camera/gallery buttons; client-side validation rejects non-image or oversize (>10 MB) attachments with a human-readable toast (FR-018).
+- [x] T068 [P] [US3] Create `na_app/lib/features/chat/presentation/widgets/typing_indicator.dart` — 3-dot breathing animation honouring reduced-motion (FR-018, FR-036).
+- [x] T069 [US3] Create `na_app/lib/features/chat/presentation/pages/chat_list_page.dart` — row per conversation with avatar, name, preview, relative timestamp via `time_ago.dart`, unread badge; empty state directs to enter a subject code when no unlocked subjects (FR-017, acceptance US3 #1).
+- [x] T070 [US3] Create `na_app/lib/features/chat/presentation/pages/chat_thread_page.dart` — message list bound to the realtime stream, composer, typing indicator, read-receipts marking, "Message removed" placeholder for deleted messages without losing scroll position (FR-018, FR-020, acceptance US3 #2–3, edge case: tutor deletes).
+- [x] T071 [US3] Implement offline-send queue in `chat_repository.dart` — messages sent without connectivity enter `pending` state with visible "Sending…" label; retry on reconnect using socket `send_message` with an idempotency token to avoid duplicates on success (FR-019, acceptance US3 #4).
 
 **Checkpoint**: US1, US2, and US3 all work independently.
 
