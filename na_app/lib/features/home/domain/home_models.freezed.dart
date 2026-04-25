@@ -276,6 +276,7 @@ abstract class $TodayViewStateCopyWith<$Res> {
   });
 
   $AnalyticsSnapshotCopyWith<$Res> get analytics;
+  $ResumableLessonCopyWith<$Res>? get resumableLesson;
 }
 
 /// @nodoc
@@ -340,6 +341,20 @@ class _$TodayViewStateCopyWithImpl<$Res, $Val extends TodayViewState>
       return _then(_value.copyWith(analytics: value) as $Val);
     });
   }
+
+  /// Create a copy of TodayViewState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ResumableLessonCopyWith<$Res>? get resumableLesson {
+    if (_value.resumableLesson == null) {
+      return null;
+    }
+
+    return $ResumableLessonCopyWith<$Res>(_value.resumableLesson!, (value) {
+      return _then(_value.copyWith(resumableLesson: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -362,6 +377,8 @@ abstract class _$$TodayViewStateImplCopyWith<$Res>
 
   @override
   $AnalyticsSnapshotCopyWith<$Res> get analytics;
+  @override
+  $ResumableLessonCopyWith<$Res>? get resumableLesson;
 }
 
 /// @nodoc
@@ -543,5 +560,289 @@ abstract class _TodayViewState implements TodayViewState {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TodayViewStateImplCopyWith<_$TodayViewStateImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$ResumableLesson {
+  String get lessonId => throw _privateConstructorUsedError;
+  String get subjectId => throw _privateConstructorUsedError;
+  String get lessonTitle => throw _privateConstructorUsedError;
+  String get subjectTitle => throw _privateConstructorUsedError;
+  double get progressPercent => throw _privateConstructorUsedError;
+  String? get coverImageUrl => throw _privateConstructorUsedError;
+  int? get estimatedMinutes => throw _privateConstructorUsedError;
+
+  /// Create a copy of ResumableLesson
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ResumableLessonCopyWith<ResumableLesson> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ResumableLessonCopyWith<$Res> {
+  factory $ResumableLessonCopyWith(
+    ResumableLesson value,
+    $Res Function(ResumableLesson) then,
+  ) = _$ResumableLessonCopyWithImpl<$Res, ResumableLesson>;
+  @useResult
+  $Res call({
+    String lessonId,
+    String subjectId,
+    String lessonTitle,
+    String subjectTitle,
+    double progressPercent,
+    String? coverImageUrl,
+    int? estimatedMinutes,
+  });
+}
+
+/// @nodoc
+class _$ResumableLessonCopyWithImpl<$Res, $Val extends ResumableLesson>
+    implements $ResumableLessonCopyWith<$Res> {
+  _$ResumableLessonCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ResumableLesson
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lessonId = null,
+    Object? subjectId = null,
+    Object? lessonTitle = null,
+    Object? subjectTitle = null,
+    Object? progressPercent = null,
+    Object? coverImageUrl = freezed,
+    Object? estimatedMinutes = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            lessonId: null == lessonId
+                ? _value.lessonId
+                : lessonId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            subjectId: null == subjectId
+                ? _value.subjectId
+                : subjectId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            lessonTitle: null == lessonTitle
+                ? _value.lessonTitle
+                : lessonTitle // ignore: cast_nullable_to_non_nullable
+                      as String,
+            subjectTitle: null == subjectTitle
+                ? _value.subjectTitle
+                : subjectTitle // ignore: cast_nullable_to_non_nullable
+                      as String,
+            progressPercent: null == progressPercent
+                ? _value.progressPercent
+                : progressPercent // ignore: cast_nullable_to_non_nullable
+                      as double,
+            coverImageUrl: freezed == coverImageUrl
+                ? _value.coverImageUrl
+                : coverImageUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            estimatedMinutes: freezed == estimatedMinutes
+                ? _value.estimatedMinutes
+                : estimatedMinutes // ignore: cast_nullable_to_non_nullable
+                      as int?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$ResumableLessonImplCopyWith<$Res>
+    implements $ResumableLessonCopyWith<$Res> {
+  factory _$$ResumableLessonImplCopyWith(
+    _$ResumableLessonImpl value,
+    $Res Function(_$ResumableLessonImpl) then,
+  ) = __$$ResumableLessonImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    String lessonId,
+    String subjectId,
+    String lessonTitle,
+    String subjectTitle,
+    double progressPercent,
+    String? coverImageUrl,
+    int? estimatedMinutes,
+  });
+}
+
+/// @nodoc
+class __$$ResumableLessonImplCopyWithImpl<$Res>
+    extends _$ResumableLessonCopyWithImpl<$Res, _$ResumableLessonImpl>
+    implements _$$ResumableLessonImplCopyWith<$Res> {
+  __$$ResumableLessonImplCopyWithImpl(
+    _$ResumableLessonImpl _value,
+    $Res Function(_$ResumableLessonImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ResumableLesson
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? lessonId = null,
+    Object? subjectId = null,
+    Object? lessonTitle = null,
+    Object? subjectTitle = null,
+    Object? progressPercent = null,
+    Object? coverImageUrl = freezed,
+    Object? estimatedMinutes = freezed,
+  }) {
+    return _then(
+      _$ResumableLessonImpl(
+        lessonId: null == lessonId
+            ? _value.lessonId
+            : lessonId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        subjectId: null == subjectId
+            ? _value.subjectId
+            : subjectId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        lessonTitle: null == lessonTitle
+            ? _value.lessonTitle
+            : lessonTitle // ignore: cast_nullable_to_non_nullable
+                  as String,
+        subjectTitle: null == subjectTitle
+            ? _value.subjectTitle
+            : subjectTitle // ignore: cast_nullable_to_non_nullable
+                  as String,
+        progressPercent: null == progressPercent
+            ? _value.progressPercent
+            : progressPercent // ignore: cast_nullable_to_non_nullable
+                  as double,
+        coverImageUrl: freezed == coverImageUrl
+            ? _value.coverImageUrl
+            : coverImageUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        estimatedMinutes: freezed == estimatedMinutes
+            ? _value.estimatedMinutes
+            : estimatedMinutes // ignore: cast_nullable_to_non_nullable
+                  as int?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$ResumableLessonImpl implements _ResumableLesson {
+  const _$ResumableLessonImpl({
+    required this.lessonId,
+    required this.subjectId,
+    required this.lessonTitle,
+    required this.subjectTitle,
+    this.progressPercent = 0.0,
+    this.coverImageUrl,
+    this.estimatedMinutes,
+  });
+
+  @override
+  final String lessonId;
+  @override
+  final String subjectId;
+  @override
+  final String lessonTitle;
+  @override
+  final String subjectTitle;
+  @override
+  @JsonKey()
+  final double progressPercent;
+  @override
+  final String? coverImageUrl;
+  @override
+  final int? estimatedMinutes;
+
+  @override
+  String toString() {
+    return 'ResumableLesson(lessonId: $lessonId, subjectId: $subjectId, lessonTitle: $lessonTitle, subjectTitle: $subjectTitle, progressPercent: $progressPercent, coverImageUrl: $coverImageUrl, estimatedMinutes: $estimatedMinutes)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ResumableLessonImpl &&
+            (identical(other.lessonId, lessonId) ||
+                other.lessonId == lessonId) &&
+            (identical(other.subjectId, subjectId) ||
+                other.subjectId == subjectId) &&
+            (identical(other.lessonTitle, lessonTitle) ||
+                other.lessonTitle == lessonTitle) &&
+            (identical(other.subjectTitle, subjectTitle) ||
+                other.subjectTitle == subjectTitle) &&
+            (identical(other.progressPercent, progressPercent) ||
+                other.progressPercent == progressPercent) &&
+            (identical(other.coverImageUrl, coverImageUrl) ||
+                other.coverImageUrl == coverImageUrl) &&
+            (identical(other.estimatedMinutes, estimatedMinutes) ||
+                other.estimatedMinutes == estimatedMinutes));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    lessonId,
+    subjectId,
+    lessonTitle,
+    subjectTitle,
+    progressPercent,
+    coverImageUrl,
+    estimatedMinutes,
+  );
+
+  /// Create a copy of ResumableLesson
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ResumableLessonImplCopyWith<_$ResumableLessonImpl> get copyWith =>
+      __$$ResumableLessonImplCopyWithImpl<_$ResumableLessonImpl>(
+        this,
+        _$identity,
+      );
+}
+
+abstract class _ResumableLesson implements ResumableLesson {
+  const factory _ResumableLesson({
+    required final String lessonId,
+    required final String subjectId,
+    required final String lessonTitle,
+    required final String subjectTitle,
+    final double progressPercent,
+    final String? coverImageUrl,
+    final int? estimatedMinutes,
+  }) = _$ResumableLessonImpl;
+
+  @override
+  String get lessonId;
+  @override
+  String get subjectId;
+  @override
+  String get lessonTitle;
+  @override
+  String get subjectTitle;
+  @override
+  double get progressPercent;
+  @override
+  String? get coverImageUrl;
+  @override
+  int? get estimatedMinutes;
+
+  /// Create a copy of ResumableLesson
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ResumableLessonImplCopyWith<_$ResumableLessonImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
