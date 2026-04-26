@@ -20,6 +20,7 @@ class ProgressRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: size,
       height: size,
@@ -31,8 +32,8 @@ class ProgressRing extends StatelessWidget {
             painter: _RingPainter(
               progress: value / 100,
               strokeWidth: stroke,
-              color: color ?? AppColors.accent,
-              backgroundColor: AppColors.bgSunken,
+              color: color ?? (isDark ? AppColors.darkAccent : AppColors.accent),
+              backgroundColor: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
             ),
           ),
           ?child,

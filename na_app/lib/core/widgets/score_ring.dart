@@ -7,6 +7,7 @@ class ScoreRing extends StatelessWidget {
   final double size;
   final double stroke;
   final Widget? centerWidget;
+  final Color? color;
 
   const ScoreRing({
     super.key,
@@ -14,6 +15,7 @@ class ScoreRing extends StatelessWidget {
     this.size = 80,
     this.stroke = 6,
     this.centerWidget,
+    this.color,
   });
 
   @override
@@ -26,7 +28,9 @@ class ScoreRing extends StatelessWidget {
     final dangerColor = isDark ? AppColors.darkDanger : AppColors.danger;
 
     final Color ringColor;
-    if (clampedScore >= 0.8) {
+    if (color != null) {
+      ringColor = color!;
+    } else if (clampedScore >= 0.8) {
       ringColor = successColor;
     } else if (clampedScore >= 0.5) {
       ringColor = warningColor;
@@ -40,14 +44,16 @@ class ScoreRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: Size(size, size),
-            painter: _ScoreRingPainter(
-              progress: clampedScore,
-              strokeWidth: stroke,
-              color: ringColor,
-              backgroundColor:
-                  isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size(size, size),
+              painter: _ScoreRingPainter(
+                progress: clampedScore,
+                strokeWidth: stroke,
+                color: ringColor,
+                backgroundColor:
+                    isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+              ),
             ),
           ),
           centerWidget ??

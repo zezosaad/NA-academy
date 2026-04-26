@@ -12,6 +12,7 @@ import 'package:na_app/features/onboarding/presentation/pages/onboarding_page.da
 import 'package:na_app/features/home/presentation/pages/today_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subjects_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/lesson_detail_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/enter_subject_code_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_unlocking_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_expired_page.dart';
@@ -23,6 +24,8 @@ import 'package:na_app/features/exams/presentation/pages/exam_result_page.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
+import 'package:na_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:na_app/features/profile/presentation/pages/settings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -32,7 +35,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       if (authState.isLoading) return null;
 
-      final isAuthenticated = authState.value != null;
+      final isAuthenticated = authState.valueOrNull != null;
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
       final isSplash = state.matchedLocation == '/splash';
       final isOnboarding = state.matchedLocation == '/onboarding';
@@ -97,6 +100,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const SubjectsPage(),
                 routes: [
                   GoRoute(
+                    path: 'enter-code',
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+                      final rawTitle = extraMap['subjectTitle'];
+                      final subjectTitle = rawTitle is String ? rawTitle : rawTitle?.toString();
+                      return EnterSubjectCodePage(
+                        subjectTitle: subjectTitle,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'code-expired',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      return CodeExpiredPage(
+                        code: extra['code'] as String? ?? '',
+                        expiredAt: extra['expiredAt'] as DateTime?,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'code-used',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      return CodeUsedPage(
+                        code: extra['code'] as String? ?? '',
+                        consumedAt: extra['consumedAt'] as DateTime?,
+                      );
+                    },
+                  ),
+                  GoRoute(
                     path: ':id',
                     builder: (context, state) {
                       final subjectId = state.pathParameters['id']!;
@@ -104,10 +139,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     },
                     routes: [
                       GoRoute(
+                        path: 'unlocking',
+                        builder: (context, state) {
+                          final subjectId = state.pathParameters['id']!;
+                          return CodeUnlockingPage(subjectId: subjectId);
+                        },
+                      ),
+                      GoRoute(
                         path: 'lessons/:lessonId',
                         builder: (context, state) {
                           final lessonId = state.pathParameters['lessonId']!;
-                          return _PlaceholderPage(title: 'Lesson $lessonId');
+                          return LessonDetailPage(lessonId: lessonId);
                         },
                       ),
                     ],
@@ -178,58 +220,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) =>
-                    const _PlaceholderPage(title: 'Profile'),
+                builder: (context, state) => const ProfilePage(),
                 routes: [
                   GoRoute(
                     path: 'settings',
-                    builder: (context, state) =>
-                        const _PlaceholderPage(title: 'Settings'),
+                    builder: (context, state) => const SettingsPage(),
                   ),
                 ],
               ),
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/subjects/enter-code',
-        builder: (context, state) {
-          final extra = state.extra;
-          final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
-          final rawTitle = extraMap['subjectTitle'];
-          final subjectTitle = rawTitle is String ? rawTitle : rawTitle?.toString();
-          return EnterSubjectCodePage(
-            subjectTitle: subjectTitle,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/subjects/:id/unlocking',
-        builder: (context, state) {
-          final subjectId = state.pathParameters['id']!;
-          return CodeUnlockingPage(subjectId: subjectId);
-        },
-      ),
-      GoRoute(
-        path: '/subjects/code-expired',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return CodeExpiredPage(
-            code: extra['code'] as String? ?? '',
-            expiredAt: extra['expiredAt'] as DateTime?,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/subjects/code-used',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return CodeUsedPage(
-            code: extra['code'] as String? ?? '',
-            consumedAt: extra['consumedAt'] as DateTime?,
-          );
-        },
       ),
       GoRoute(
         path: '/exams/:id/enter-code',

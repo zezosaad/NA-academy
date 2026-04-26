@@ -3,207 +3,117 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTypography {
-  static TextStyle displayLarge(BuildContext context) => GoogleFonts.fraunces(
-        fontSize: 32,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
-        letterSpacing: -0.64,
-      );
-
-  static TextStyle displayLargeDark(BuildContext context) => GoogleFonts.fraunces(
-        fontSize: 32,
-        fontWeight: FontWeight.w500,
-        color: AppColors.darkTextPrimary,
-        letterSpacing: -0.64,
-      );
-
-  static TextStyle headlineMedium(BuildContext context) => GoogleFonts.fraunces(
-        fontSize: 24,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
-        letterSpacing: -0.36,
-      );
-
-  static TextStyle headlineMediumDark(BuildContext context) => GoogleFonts.fraunces(
-        fontSize: 24,
-        fontWeight: FontWeight.w500,
-        color: AppColors.darkTextPrimary,
-        letterSpacing: -0.36,
-      );
-
-  static TextStyle titleLarge(BuildContext context) => GoogleFonts.inter(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        letterSpacing: -0.2,
-      );
-
-  static TextStyle titleLargeDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: AppColors.darkTextPrimary,
-        letterSpacing: -0.2,
-      );
-
-  static TextStyle titleMedium(BuildContext context) => GoogleFonts.inter(
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      );
-
-  static TextStyle titleMediumDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: AppColors.darkTextPrimary,
-      );
-
-  static TextStyle bodyLarge(BuildContext context) => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-      );
-
-  static TextStyle bodyLargeDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.darkTextPrimary,
-      );
-
-  static TextStyle bodyMedium(BuildContext context) => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-      );
-
-  static TextStyle bodyMediumDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.darkTextSecondary,
-      );
-
-  static TextStyle labelLarge(BuildContext context) => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
-      );
-
-  static TextStyle labelLargeDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: AppColors.darkTextPrimary,
-      );
-
-  static TextStyle labelSmall(BuildContext context) => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.44,
-        color: AppColors.textSecondary,
-      );
-
-  static TextStyle labelSmallDark(BuildContext context) => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.44,
-        color: AppColors.darkTextSecondary,
-      );
-
-  static TextStyle get labelMono => GoogleFonts.jetBrainsMono(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 8,
-      );
-
   static TextTheme buildLightTextTheme() => TextTheme(
-        displayLarge: GoogleFonts.fraunces(
+        displayLarge: GoogleFonts.tajawal(
+          fontSize: 48,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          letterSpacing: 0,
+          height: 1.2,
+        ),
+        headlineMedium: GoogleFonts.tajawal(
           fontSize: 32,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
-          letterSpacing: -0.64,
+          letterSpacing: 0,
+          height: 1.3,
         ),
-        headlineMedium: GoogleFonts.fraunces(
+        titleLarge: GoogleFonts.tajawal(
           fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          letterSpacing: 0,
+          height: 1.3,
+        ),
+        titleMedium: GoogleFonts.tajawal(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          letterSpacing: 0,
+          height: 1.4,
+        ),
+        bodyLarge: GoogleFonts.tajawal(
+          fontSize: 16,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
-          letterSpacing: -0.36,
+          height: 1.6,
         ),
-        titleLarge: GoogleFonts.inter(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-          letterSpacing: -0.2,
-        ),
-        titleMedium: GoogleFonts.inter(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-        bodyLarge: GoogleFonts.inter(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textPrimary,
-        ),
-        bodyMedium: GoogleFonts.inter(
-          fontSize: 15,
+        bodyMedium: GoogleFonts.tajawal(
+          fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
+          height: 1.6,
         ),
-        labelLarge: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+        labelLarge: GoogleFonts.tajawal(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
+          letterSpacing: 0,
+          height: 1.3,
         ),
-        labelSmall: GoogleFonts.inter(
-          fontSize: 11,
+        labelSmall: GoogleFonts.tajawal(
+          fontSize: 12,
           fontWeight: FontWeight.w500,
-          letterSpacing: 0.44,
+          letterSpacing: 0,
           color: AppColors.textSecondary,
+          height: 1.3,
         ),
       );
 
   static TextTheme buildDarkTextTheme() => TextTheme(
-        displayLarge: GoogleFonts.fraunces(
+        displayLarge: GoogleFonts.tajawal(
+          fontSize: 48,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextPrimary,
+          letterSpacing: 0,
+          height: 1.2,
+        ),
+        headlineMedium: GoogleFonts.tajawal(
           fontSize: 32,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w700,
           color: AppColors.darkTextPrimary,
-          letterSpacing: -0.64,
+          letterSpacing: 0,
+          height: 1.3,
         ),
-        headlineMedium: GoogleFonts.fraunces(
+        titleLarge: GoogleFonts.tajawal(
           fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextPrimary,
+          letterSpacing: 0,
+          height: 1.3,
+        ),
+        titleMedium: GoogleFonts.tajawal(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.darkTextPrimary,
+          letterSpacing: 0,
+          height: 1.4,
+        ),
+        bodyLarge: GoogleFonts.tajawal(
+          fontSize: 16,
           fontWeight: FontWeight.w500,
           color: AppColors.darkTextPrimary,
-          letterSpacing: -0.36,
+          height: 1.6,
         ),
-        titleLarge: GoogleFonts.inter(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.darkTextPrimary,
-          letterSpacing: -0.2,
-        ),
-        titleMedium: GoogleFonts.inter(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          color: AppColors.darkTextPrimary,
-        ),
-        bodyLarge: GoogleFonts.inter(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: AppColors.darkTextPrimary,
-        ),
-        bodyMedium: GoogleFonts.inter(
-          fontSize: 15,
+        bodyMedium: GoogleFonts.tajawal(
+          fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.darkTextSecondary,
+          height: 1.6,
         ),
-        labelLarge: GoogleFonts.inter(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+        labelLarge: GoogleFonts.tajawal(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
           color: AppColors.darkTextPrimary,
+          letterSpacing: 0,
+          height: 1.3,
         ),
-        labelSmall: GoogleFonts.inter(
-          fontSize: 11,
+        labelSmall: GoogleFonts.tajawal(
+          fontSize: 12,
           fontWeight: FontWeight.w500,
-          letterSpacing: 0.44,
+          letterSpacing: 0,
           color: AppColors.darkTextSecondary,
+          height: 1.3,
         ),
       );
 }

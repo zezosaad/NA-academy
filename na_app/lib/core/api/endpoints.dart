@@ -2,6 +2,7 @@ class Endpoints {
   static const auth = _AuthEndpoints();
   static const users = _UserEndpoints();
   static const subjects = _SubjectEndpoints();
+  static const lessons = _LessonEndpoints();
   static const activationCodes = _ActivationCodeEndpoints();
   static const exams = _ExamEndpoints();
   static const chat = _ChatEndpoints();
@@ -39,6 +40,15 @@ class _SubjectEndpoints {
   String get list => _prefix;
   String byId(String id) => '$_prefix/$id';
   String media(String id) => '$_prefix/$id/media';
+  String lessons(String id) => '$_prefix/$id/lessons';
+}
+
+class _LessonEndpoints {
+  const _LessonEndpoints();
+
+  static const String _prefix = '/lessons';
+
+  String byId(String id) => '$_prefix/$id';
 }
 
 class _ActivationCodeEndpoints {

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:na_app/core/storage/app_secure_storage.dart';
+import 'package:na_app/features/auth/domain/auth_models.dart';
 
 final secureTokenStoreProvider = Provider<SecureTokenStore>((ref) {
-  return SecureTokenStore(const FlutterSecureStorage());
+  return SecureTokenStore(appSecureStorage);
 });
 
 class SecureTokenStore {
@@ -31,7 +33,16 @@ class SecureTokenStore {
   }
 
   Future<bool> get hasTokens async {
+    final refresh = await refreshToken;
+    return refresh != null && refresh.isNotEmpty;
+  }
+
+  Future<AuthSession?> get storedSession async {
     final access = await accessToken;
-    return access != null && access.isNotEmpty;
+    final refresh = await refreshToken;
+    if (access == null || access.isEmpty || refresh == null || refresh.isEmpty) {
+      return null;
+    }
+    return AuthSession.fromTokens(accessToken: access, refreshToken: refresh);
   }
 }

@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { DevicesModule } from './devices/devices.module.js';
 import { SubjectsModule } from './subjects/subjects.module.js';
+import { LessonsModule } from './lessons/lessons.module.js';
 import { ExamsModule } from './exams/exams.module.js';
 import { MediaModule } from './media/media.module.js';
 import { ActivationCodesModule } from './activation-codes/activation-codes.module.js';
@@ -48,6 +49,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     UsersModule,
     DevicesModule,
     SubjectsModule,
+    LessonsModule,
     ExamsModule,
     MediaModule,
     ActivationCodesModule,

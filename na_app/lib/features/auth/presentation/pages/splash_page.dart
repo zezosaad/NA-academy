@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 
@@ -35,16 +36,18 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       });
     }
     if (!mounted || _navigated) return;
-    _navigate(ref.read(authControllerProvider).valueOrNull);
+    await _navigate(ref.read(authControllerProvider).valueOrNull);
   }
 
-  void _navigate(Object? user) {
+  Future<void> _navigate(Object? user) async {
     if (_navigated) return;
     _navigated = true;
     if (user != null) {
       context.go('/today');
     } else {
-      context.go('/onboarding');
+      final hasSeenOnboarding = await ref.read(prefsStoreProvider).hasSeenOnboarding;
+      if (!mounted) return;
+      context.go(hasSeenOnboarding ? '/auth/login' : '/onboarding');
     }
   }
 
@@ -54,7 +57,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     ref.listen(authControllerProvider, (prev, next) {
       if (!next.isLoading && !_navigated && mounted) {
-        _navigate(next.valueOrNull);
+        unawaited(_navigate(next.valueOrNull));
       }
     });
 

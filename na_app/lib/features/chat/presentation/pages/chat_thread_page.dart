@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_motion.dart';
+import 'package:na_app/core/widgets/max_text_scale.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
 import 'package:na_app/features/chat/data/chat_repository.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
@@ -47,7 +49,10 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void initState() {
     super.initState();
     _conversationId = widget.conversationId;
-    _messageSub = ref.read(chatRepositoryProvider).messages.listen(_onNewMessage);
+    _messageSub = ref
+        .read(chatRepositoryProvider)
+        .messages
+        .listen(_onNewMessage);
     _typingSub = ref.read(chatRepositoryProvider).typingStream.listen((event) {
       if (event.userId == widget.counterpartyId) {
         setState(() => _counterpartyTyping = event.isTyping);
@@ -67,7 +72,8 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
     if (_conversationId.isNotEmpty) {
       belongsToConversation = message.conversationId == _conversationId;
     } else {
-      belongsToConversation = message.senderId == widget.counterpartyId ||
+      belongsToConversation =
+          message.senderId == widget.counterpartyId ||
           message.recipientId == widget.counterpartyId;
     }
 
@@ -89,7 +95,8 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
 
     _scrollToBottom();
 
-    if (message.senderId == widget.counterpartyId && _conversationId.isNotEmpty) {
+    if (message.senderId == widget.counterpartyId &&
+        _conversationId.isNotEmpty) {
       final chatController = ref.read(chatControllerProvider);
       chatController.markConversationRead(
         conversationId: _conversationId,
@@ -101,18 +108,25 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
+        if (AppMotion.shouldReduceMotion(context)) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        } else {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
+        }
       }
     });
   }
 
   void _handleSendText(String text) {
     final chatController = ref.read(chatControllerProvider);
-    chatController.sendTextMessage(recipientId: widget.counterpartyId, text: text);
+    chatController.sendTextMessage(
+      recipientId: widget.counterpartyId,
+      text: text,
+    );
     _scrollToBottom();
   }
 
@@ -121,14 +135,20 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
 
     if (text.isNotEmpty && !_isTyping) {
       _isTyping = true;
-      chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: true);
+      chatController.sendTyping(
+        recipientId: widget.counterpartyId,
+        isTyping: true,
+      );
     }
 
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(seconds: 3), () {
       if (_isTyping) {
         _isTyping = false;
-        chatController.sendTyping(recipientId: widget.counterpartyId, isTyping: false);
+        chatController.sendTyping(
+          recipientId: widget.counterpartyId,
+          isTyping: false,
+        );
       }
     });
   }
@@ -149,75 +169,85 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
     final chatController = ref.watch(chatControllerProvider);
     final currentUserId = chatController.currentUserId;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.counterpartyName,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+    return MaxTextScale(
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(
+              LucideIcons.chevronLeft,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
-            if (widget.subjectTitle != null)
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Go back',
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                widget.subjectTitle!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: isDark ? AppColors.darkAccentDeep : AppColors.accent,
-                  fontSize: 12,
+                widget.counterpartyName,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              if (widget.subjectTitle != null)
+                Text(
+                  widget.subjectTitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark ? AppColors.darkAccentDeep : AppColors.accent,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ),
+          backgroundColor: isDark
+              ? AppColors.darkBgSurface
+              : AppColors.bgCanvas,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: _messages.isEmpty
+                  ? _EmptyConversation(
+                      counterpartyName: widget.counterpartyName,
+                      subjectTitle: widget.subjectTitle,
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      itemCount: _messages.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == _messages.length) {
+                          return const SizedBox(height: 16);
+                        }
+                        final message = _messages[index];
+                        return MessageBubble(
+                          key: ValueKey(message.id),
+                          message: message,
+                          currentUserId: currentUserId,
+                          baseUrl: const String.fromEnvironment(
+                            'API_BASE_URL',
+                            defaultValue: 'http://10.0.2.2:3000',
+                          ),
+                          accessToken: _accessToken,
+                        );
+                      },
+                    ),
+            ),
+            ChatTypingIndicator(
+              userName: widget.counterpartyName.split(' ').first,
+              isTyping: _counterpartyTyping,
+            ),
+            Composer(
+              onSendText: _handleSendText,
+              onTextChanged: _handleTypingChanged,
+              enabled: true,
+              hintText:
+                  'Message ${widget.counterpartyName.split(' ').first}...',
+            ),
           ],
         ),
-        backgroundColor: isDark ? AppColors.darkBgSurface : AppColors.bgCanvas,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _messages.isEmpty
-                ? _EmptyConversation(
-                    counterpartyName: widget.counterpartyName,
-                    subjectTitle: widget.subjectTitle,
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _messages.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == _messages.length) {
-                        return const SizedBox(height: 16);
-                      }
-                      final message = _messages[index];
-                      return MessageBubble(
-                        message: message,
-                        currentUserId: currentUserId,
-                        baseUrl: const String.fromEnvironment(
-                          'API_BASE_URL',
-                          defaultValue: 'http://10.0.2.2:3000',
-                        ),
-                        accessToken: _accessToken,
-                      );
-                    },
-                  ),
-          ),
-          ChatTypingIndicator(
-            userName: widget.counterpartyName.split(' ').first,
-            isTyping: _counterpartyTyping,
-          ),
-          Composer(
-            onSendText: _handleSendText,
-            onTextChanged: _handleTypingChanged,
-            enabled: true,
-            hintText: 'Message ${widget.counterpartyName.split(' ').first}...',
-          ),
-        ],
       ),
     );
   }
@@ -227,10 +257,7 @@ class _EmptyConversation extends StatelessWidget {
   final String counterpartyName;
   final String? subjectTitle;
 
-  const _EmptyConversation({
-    required this.counterpartyName,
-    this.subjectTitle,
-  });
+  const _EmptyConversation({required this.counterpartyName, this.subjectTitle});
 
   @override
   Widget build(BuildContext context) {
@@ -252,9 +279,16 @@ class _EmptyConversation extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Text(
-                counterpartyName.split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join('').toUpperCase(),
+                counterpartyName
+                    .split(' ')
+                    .map((w) => w.isNotEmpty ? w[0] : '')
+                    .take(2)
+                    .join('')
+                    .toUpperCase(),
                 style: TextStyle(
-                  color: isDark ? AppColors.darkAccentDeep : AppColors.accentDeep,
+                  color: isDark
+                      ? AppColors.darkAccentDeep
+                      : AppColors.accentDeep,
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
                 ),
@@ -263,7 +297,9 @@ class _EmptyConversation extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               counterpartyName,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (subjectTitle != null) ...[
               const SizedBox(height: 4),

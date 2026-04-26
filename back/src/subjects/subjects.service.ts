@@ -128,18 +128,27 @@ export class SubjectsService {
   }
 
   async findSubjectById(id: string): Promise<SubjectDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid subject id');
+    }
     const subject = await this.subjectModel.findById(id).exec();
     if (!subject) throw new NotFoundException('Subject not found');
     return subject;
   }
 
   async updateSubject(id: string, dto: UpdateSubjectDto): Promise<SubjectDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid subject id');
+    }
     const subject = await this.subjectModel.findByIdAndUpdate(id, dto, { new: true }).exec();
     if (!subject) throw new NotFoundException('Subject not found');
     return subject;
   }
 
   async deleteSubject(id: string): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid subject id');
+    }
     const subject = await this.subjectModel.findByIdAndUpdate(id, { isActive: false }).exec();
     if (!subject) throw new NotFoundException('Subject not found');
   }

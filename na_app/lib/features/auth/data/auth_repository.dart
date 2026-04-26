@@ -24,9 +24,9 @@ class AuthRepository {
     required Dio dio,
     required SecureTokenStore tokenStore,
     required HardwareIdStore hardwareIdStore,
-  })  : _dio = dio,
-        _tokenStore = tokenStore,
-        _hardwareIdStore = hardwareIdStore;
+  }) : _dio = dio,
+       _tokenStore = tokenStore,
+       _hardwareIdStore = hardwareIdStore;
 
   Future<({User user, AuthSession session})> login({
     required String email,
@@ -68,7 +68,11 @@ class AuthRepository {
   Future<AuthSession> refresh() async {
     final refreshToken = await _tokenStore.refreshToken;
     if (refreshToken == null || refreshToken.isEmpty) {
-      throw ApiException(statusCode: 401, code: 'NO_TOKEN', message: 'No refresh token');
+      throw ApiException(
+        statusCode: 401,
+        code: 'NO_TOKEN',
+        message: 'No refresh token',
+      );
     }
     final response = await _dio.post<Map<String, dynamic>>(
       Endpoints.auth.refresh,
@@ -103,14 +107,19 @@ class AuthRepository {
 
   Future<User> me() async {
     final response = await _dio.get<Map<String, dynamic>>(Endpoints.users.me);
-    return User.fromJson(response.data!);
+    final data = response.data;
+    if (data == null) {
+      throw ApiException(
+        statusCode: response.statusCode ?? 0,
+        code: 'INVALID_RESPONSE',
+        message: 'User profile response body is null',
+      );
+    }
+    return User.fromJson(data);
   }
 
   Future<void> forgotPassword({required String email}) async {
-    await _dio.post(
-      Endpoints.auth.forgotPassword,
-      data: {'email': email},
-    );
+    await _dio.post(Endpoints.auth.forgotPassword, data: {'email': email});
   }
 
   Future<({User user, AuthSession session})> resetPassword({
@@ -120,13 +129,18 @@ class AuthRepository {
     final hardwareId = await _hardwareIdStore.hardwareId;
     final response = await _dio.post<Map<String, dynamic>>(
       Endpoints.auth.resetPassword,
-      data: {'token': token, 'newPassword': newPassword, 'hardwareId': hardwareId},
+      data: {
+        'token': token,
+        'newPassword': newPassword,
+        'hardwareId': hardwareId,
+      },
     );
     return _parseAuthResponse(response.data!);
   }
 
   Future<({User user, AuthSession session})> _parseAuthResponse(
-      Map<String, dynamic> data) async {
+    Map<String, dynamic> data,
+  ) async {
     if (data['user'] is! Map<String, dynamic>) {
       throw ApiException(
         statusCode: 0,
@@ -134,25 +148,17 @@ class AuthRepository {
         message: 'Auth response missing or invalid "user" object',
       );
     }
-    final tokensRaw = data['tokens'];
-    if (tokensRaw is! Map<String, dynamic>) {
+    if (data['accessToken'] is! String || data['refreshToken'] is! String) {
       throw ApiException(
         statusCode: 0,
         code: 'INVALID_RESPONSE',
-        message: 'Auth response missing or invalid "tokens" object',
-      );
-    }
-    if (tokensRaw['accessToken'] is! String || tokensRaw['refreshToken'] is! String) {
-      throw ApiException(
-        statusCode: 0,
-        code: 'INVALID_RESPONSE',
-        message: 'Auth response tokens missing accessToken or refreshToken',
+        message: 'Auth response missing accessToken or refreshToken',
       );
     }
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final session = AuthSession.fromTokens(
-      accessToken: tokensRaw['accessToken'] as String,
-      refreshToken: tokensRaw['refreshToken'] as String,
+      accessToken: data['accessToken'] as String,
+      refreshToken: data['refreshToken'] as String,
     );
     await _tokenStore.saveTokens(
       accessToken: session.accessToken,

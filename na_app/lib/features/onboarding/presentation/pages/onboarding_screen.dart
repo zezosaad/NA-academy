@@ -17,12 +17,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingData> _slides = [
     OnboardingData(
       kicker: 'Welcome',
-      title: 'A calm place\nto study, ask,\nand grow.',
-      body: 'NA-Academy brings your lessons, exams, and tutors into one focused space.',
+      title: 'Your study\nspace,\nreimagined.',
+      body: 'NA-Academy brings your lessons, exams, and tutors into one focused, modern platform.',
     ),
     OnboardingData(
       kicker: 'Learn',
-      title: 'Subjects that\nmove with you.',
+      title: 'Subjects that\nkeep pace\nwith you.',
       body: 'Bite-sized lessons, progress that sticks, and quick checks to prove you got it.',
     ),
     OnboardingData(
@@ -39,6 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final horizontalPadding = size.width > 600 ? size.width * 0.1 : 24.0;
 
     return Scaffold(
+      backgroundColor: AppColors.bgCanvas,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -54,26 +55,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildMobileLayout(BuildContext context, double horizontalPadding, bool isShort) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 28),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(context),
-          SizedBox(height: isShort ? 16 : 28),
-          
-          // Art Area
+          SizedBox(height: isShort ? 20 : 32),
           Expanded(
             flex: isShort ? 2 : 3,
             child: _buildArtArea(),
           ),
-          SizedBox(height: isShort ? 16 : 28),
-          
-          // Copy Area
+          SizedBox(height: isShort ? 20 : 32),
           Expanded(
             flex: 2,
             child: _buildCopyArea(context, isShort),
           ),
-          
           _buildFooter(context),
         ],
       ),
@@ -122,18 +118,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Row(
       children: [
         Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: AppColors.textPrimary,
+            color: AppColors.accent,
             borderRadius: BorderRadius.circular(10),
           ),
           alignment: Alignment.center,
-          child: Text(
+          child: const Text(
             'N',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.bgCanvas,
+            style: TextStyle(
+              color: Colors.white,
               fontSize: 18,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Sora',
             ),
           ),
         ),
@@ -151,18 +149,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color.fromRGBO(31, 28, 22, 0.04),
-            offset: Offset(0, 1),
-            blurRadius: 2,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         child: PageView.builder(
           controller: _pageController,
           onPageChanged: (index) {
@@ -196,14 +187,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
-          SizedBox(height: isShort ? 6 : 10),
+          SizedBox(height: isShort ? 8 : 12),
           FadeInUp(
             key: ValueKey('title-$_currentSlide'),
             duration: const Duration(milliseconds: 500),
             child: Text(
               _slides[_currentSlide].title,
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: isShort ? 24 : 32,
+                fontSize: isShort ? 26 : 34,
               ),
             ),
           ),
@@ -227,24 +218,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Dots
         Row(
           children: List.generate(_slides.length, (index) {
+            final isActive = index == _currentSlide;
             return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 4,
-              width: index == _currentSlide ? 32 : 16,
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              height: 5,
+              width: isActive ? 36 : 12,
               margin: const EdgeInsets.only(right: 6),
               decoration: BoxDecoration(
-                color: index == _currentSlide ? AppColors.accent : AppColors.borderSubtle,
+                color: isActive ? AppColors.accent : AppColors.borderSubtle,
                 borderRadius: BorderRadius.circular(999),
               ),
             );
           }),
         ),
-        const SizedBox(height: 16),
-        
-        // Actions
+        const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -252,7 +242,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               if (_currentSlide < _slides.length - 1) {
                 _pageController.nextPage(
                   duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
+                  curve: Curves.easeOutCubic,
                 );
               } else {
                 Navigator.push(
@@ -261,21 +251,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
+            child: Text(
+              _currentSlide < _slides.length - 1 ? 'Continue' : 'Get started',
             ),
-            child: Text(_currentSlide < _slides.length - 1 ? 'Continue' : 'Get started'),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: TextButton(
             onPressed: () {},
-            child: const Text(
-              'I have an account',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            child: const Text('I have an account'),
           ),
         ),
       ],
@@ -291,69 +277,284 @@ class OnboardingArt extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.maxWidth < constraints.maxHeight 
-            ? constraints.maxWidth 
+        final size = constraints.maxWidth < constraints.maxHeight
+            ? constraints.maxWidth
             : constraints.maxHeight;
-        final baseSize = size * 0.6;
+        final baseSize = size * 0.55;
 
         if (index == 0) {
           return Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: baseSize,
-                height: baseSize,
+                width: baseSize * 0.7,
+                height: baseSize * 0.7,
                 decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accent, width: 1.5),
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(baseSize * 0.15),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   'NA',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppColors.accentDeep,
-                    fontSize: baseSize * 0.3,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: baseSize * 0.22,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Sora',
                   ),
                 ),
               ),
               Positioned(
-                right: baseSize * 0.2,
-                top: baseSize * 0.3,
+                right: baseSize * 0.15,
+                top: baseSize * 0.2,
                 child: Container(
-                  width: baseSize * 0.17,
-                  height: baseSize * 0.17,
+                  width: baseSize * 0.18,
+                  height: baseSize * 0.18,
                   decoration: BoxDecoration(
-                    color: AppColors.secondarySoft,
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(baseSize * 0.05),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: baseSize * 0.12,
+                bottom: baseSize * 0.22,
+                child: Container(
+                  width: baseSize * 0.14,
+                  height: baseSize * 0.14,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGlow.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.secondary),
                   ),
                 ),
               ),
               Positioned(
-                left: baseSize * 0.2,
-                bottom: baseSize * 0.2,
+                right: baseSize * 0.25,
+                bottom: baseSize * 0.15,
                 child: Container(
-                  width: baseSize * 0.25,
-                  height: baseSize * 0.25,
+                  width: baseSize * 0.22,
+                  height: baseSize * 0.22,
                   decoration: BoxDecoration(
-                    color: AppColors.bgSunken,
+                    color: AppColors.accentSoft,
                     borderRadius: BorderRadius.circular(baseSize * 0.06),
-                    border: Border.all(color: AppColors.borderSubtle),
                   ),
                 ),
               ),
             ],
           );
         }
-        return Icon(
-          index == 1 ? Icons.school : Icons.chat_bubble,
-          size: baseSize,
-          color: AppColors.accentSoft,
+
+        if (index == 1) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: baseSize * 0.55,
+                height: baseSize * 0.55,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(baseSize * 0.12),
+                ),
+                child: CustomPaint(
+                  size: Size(baseSize * 0.55, baseSize * 0.55),
+                  painter: _BookPainter(),
+                ),
+              ),
+              Positioned(
+                right: baseSize * 0.18,
+                top: baseSize * 0.18,
+                child: Container(
+                  width: baseSize * 0.12,
+                  height: baseSize * 0.12,
+                  decoration: const BoxDecoration(
+                    color: AppColors.secondary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: baseSize * 0.2,
+                bottom: baseSize * 0.15,
+                child: Container(
+                  width: baseSize * 0.16,
+                  height: baseSize * 0.16,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(baseSize * 0.04),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: baseSize * 0.5,
+              height: baseSize * 0.5,
+              decoration: BoxDecoration(
+                color: AppColors.secondarySoft,
+                borderRadius: BorderRadius.circular(baseSize * 0.25),
+              ),
+              child: CustomPaint(
+                size: Size(baseSize * 0.5, baseSize * 0.5),
+                painter: _ChatPainter(),
+              ),
+            ),
+            Positioned(
+              left: baseSize * 0.2,
+              top: baseSize * 0.22,
+              child: Container(
+                width: baseSize * 0.15,
+                height: baseSize * 0.15,
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(baseSize * 0.04),
+                ),
+              ),
+            ),
+            Positioned(
+              right: baseSize * 0.15,
+              bottom: baseSize * 0.2,
+              child: Container(
+                width: baseSize * 0.1,
+                height: baseSize * 0.1,
+                decoration: const BoxDecoration(
+                  color: AppColors.accentGlow,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
+}
+
+class _BookPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.accent
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final bookWidth = size.width * 0.5;
+    final bookHeight = size.height * 0.6;
+
+    final spine = Path()
+      ..moveTo(centerX, centerY - bookHeight / 2)
+      ..lineTo(centerX, centerY + bookHeight / 2);
+    canvas.drawPath(spine, paint);
+
+    final leftPage = Path()
+      ..moveTo(centerX, centerY - bookHeight / 2)
+      ..quadraticBezierTo(
+        centerX - bookWidth * 0.3, centerY - bookHeight / 2 - 8,
+        centerX - bookWidth, centerY - bookHeight / 2 + 4,
+      )
+      ..lineTo(centerX - bookWidth, centerY + bookHeight / 2 - 4)
+      ..quadraticBezierTo(
+        centerX - bookWidth * 0.3, centerY + bookHeight / 2 + 8,
+        centerX, centerY + bookHeight / 2,
+      );
+    canvas.drawPath(leftPage, paint);
+
+    final rightPage = Path()
+      ..moveTo(centerX, centerY - bookHeight / 2)
+      ..quadraticBezierTo(
+        centerX + bookWidth * 0.3, centerY - bookHeight / 2 - 8,
+        centerX + bookWidth, centerY - bookHeight / 2 + 4,
+      )
+      ..lineTo(centerX + bookWidth, centerY + bookHeight / 2 - 4)
+      ..quadraticBezierTo(
+        centerX + bookWidth * 0.3, centerY + bookHeight / 2 + 8,
+        centerX, centerY + bookHeight / 2,
+      );
+    canvas.drawPath(rightPage, paint);
+
+    final linePaint = Paint()
+      ..color = AppColors.accent.withValues(alpha: 0.3)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 1; i <= 3; i++) {
+      final y = centerY - bookHeight / 4 + (i * bookHeight / 6);
+      canvas.drawLine(
+        Offset(centerX - bookWidth * 0.7, y),
+        Offset(centerX - bookWidth * 0.2, y),
+        linePaint,
+      );
+      canvas.drawLine(
+        Offset(centerX + bookWidth * 0.2, y),
+        Offset(centerX + bookWidth * 0.7, y),
+        linePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ChatPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.secondary
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final bubble1 = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.15, size.height * 0.2,
+        size.width * 0.55, size.height * 0.25,
+      ),
+      const Radius.circular(12),
+    );
+    canvas.drawRRect(bubble1, paint);
+
+    final bubble2 = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.3, size.height * 0.5,
+        size.width * 0.55, size.height * 0.25,
+      ),
+      const Radius.circular(12),
+    );
+    canvas.drawRRect(bubble2, paint);
+
+    final dotPaint = Paint()
+      ..color = AppColors.secondary.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 3; i++) {
+      canvas.drawCircle(
+        Offset(size.width * 0.32 + i * size.width * 0.08, size.height * 0.32),
+        3,
+        dotPaint,
+      );
+    }
+
+    final dotPaint2 = Paint()
+      ..color = AppColors.accent.withValues(alpha: 0.5)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 3; i++) {
+      canvas.drawCircle(
+        Offset(size.width * 0.47 + i * size.width * 0.08, size.height * 0.62),
+        3,
+        dotPaint2,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class OnboardingData {

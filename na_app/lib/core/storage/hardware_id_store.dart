@@ -2,9 +2,10 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:na_app/core/storage/app_secure_storage.dart';
 
 final hardwareIdStoreProvider = Provider<HardwareIdStore>((ref) {
-  return HardwareIdStore(const FlutterSecureStorage());
+  return HardwareIdStore(appSecureStorage);
 });
 
 class HardwareIdStore {

@@ -29,7 +29,8 @@ export class ChatService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Subject.name) private readonly subjectModel: Model<SubjectDocument>,
     @InjectModel(SubjectCode.name) private readonly subjectCodeModel: Model<SubjectCodeDocument>,
-    @InjectModel(SubjectBundle.name) private readonly subjectBundleModel: Model<SubjectBundleDocument>,
+    @InjectModel(SubjectBundle.name)
+    private readonly subjectBundleModel: Model<SubjectBundleDocument>,
     private readonly accessCheckHelper: AccessCheckHelper,
   ) {}
 
@@ -93,7 +94,7 @@ export class ChatService {
     return false;
   }
 
-async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
+  async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) return [];
 
@@ -105,9 +106,8 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
       .sort({ lastMessageAt: -1 })
       .exec();
 
-    const studentUnlockedIds = user.role === 'student'
-      ? await this._getUnlockedSubjectIds(userId)
-      : [];
+    const studentUnlockedIds =
+      user.role === 'student' ? await this._getUnlockedSubjectIds(userId) : [];
 
     for (const conv of existingConversations) {
       const counterpartyId = conv.participants.find((p) => !p.equals(new Types.ObjectId(userId)));
@@ -158,7 +158,9 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
           .find({ _id: { $in: user.assignedSubjects } })
           .exec();
         if (mySubjects.length > 0) {
-          const counterpartyUnlockedIds = await this._getUnlockedSubjectIds(counterpartyId.toString());
+          const counterpartyUnlockedIds = await this._getUnlockedSubjectIds(
+            counterpartyId.toString(),
+          );
           const matched = mySubjects.find((s) =>
             counterpartyUnlockedIds.includes(s._id.toString()),
           );
@@ -230,9 +232,7 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
         .find({ _id: { $in: teacherSubjects }, isActive: true })
         .exec();
 
-      const allStudents = await this.userModel
-        .find({ role: 'student' })
-        .exec();
+      const allStudents = await this.userModel.find({ role: 'student' }).exec();
 
       for (const subject of subjects) {
         for (const student of allStudents) {
@@ -296,9 +296,7 @@ async listConversations(userId: string): Promise<ConversationPreviewDto[]> {
         .map((c) => c.bundleId)
         .filter((id): id is Types.ObjectId => id !== undefined);
 
-      const bundles = await this.subjectBundleModel
-        .find({ _id: { $in: bundleIds } })
-        .exec();
+      const bundles = await this.subjectBundleModel.find({ _id: { $in: bundleIds } }).exec();
 
       for (const bundle of bundles) {
         for (const sId of bundle.subjects ?? []) {

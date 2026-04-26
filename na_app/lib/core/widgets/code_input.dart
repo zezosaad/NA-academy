@@ -111,7 +111,9 @@ class _CodeInputFieldState extends State<CodeInputField> {
     }
 
     if (chars.isNotEmpty) {
-      final focusIndex = chars.length < widget.length ? chars.length : widget.length - 1;
+      final focusIndex = chars.length < widget.length
+          ? chars.length
+          : widget.length - 1;
       _focusNodes[focusIndex].requestFocus();
     }
 
@@ -119,7 +121,8 @@ class _CodeInputFieldState extends State<CodeInputField> {
   }
 
   void _onKeyDown(int index, KeyEvent event) {
-    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace) {
       if (_controllers[index].text.isEmpty && index > 0) {
         _controllers[index - 1].clear();
         _focusNodes[index - 1].requestFocus();
@@ -142,75 +145,83 @@ class _CodeInputFieldState extends State<CodeInputField> {
 
     return FocusTraversalGroup(
       policy: OrderedTraversalPolicy(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(widget.length, (index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: SizedBox(
-              width: 48,
-              height: 56,
-              child: KeyboardListener(
-                focusNode: _keyboardFocusNodes[index],
-                onKeyEvent: (event) => _onKeyDown(index, event),
-                child: TextField(
-                  controller: _controllers[index],
-                  focusNode: _focusNodes[index],
-                  enabled: widget.enabled,
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
-                  maxLength: 1,
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(widget.length, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: SizedBox(
+                width: 48,
+                height: 56,
+                child: KeyboardListener(
+                  focusNode: _keyboardFocusNodes[index],
+                  onKeyEvent: (event) => _onKeyDown(index, event),
+                  child: TextField(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    enabled: widget.enabled,
+                    textAlign: TextAlign.center,
+                    textAlignVertical: TextAlignVertical.center,
+                    maxLength: 1,
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkBgSurface
+                          : AppColors.bgSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapes.inputRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkBorderSubtle
+                              : AppColors.borderSubtle,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapes.inputRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkBorderSubtle
+                              : AppColors.borderSubtle,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppShapes.inputRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkAccent
+                              : AppColors.accent,
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                    ],
+                    onChanged: (value) => _onChanged(index, value),
                   ),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    filled: true,
-                    fillColor: isDark
-                        ? AppColors.darkBgSurface
-                        : AppColors.bgSurface,
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppShapes.inputRadius),
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? AppColors.darkBorderSubtle
-                            : AppColors.borderSubtle,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppShapes.inputRadius),
-                      borderSide: BorderSide(
-                        color: isDark
-                            ? AppColors.darkBorderSubtle
-                            : AppColors.borderSubtle,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppShapes.inputRadius),
-                      borderSide: BorderSide(
-                        color: isDark ? AppColors.darkAccent : AppColors.accent,
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                  ],
-                  onChanged: (value) => _onChanged(index, value),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

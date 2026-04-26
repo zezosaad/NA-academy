@@ -63,7 +63,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
 
     setState(() => _isLoading = true);
 
-    final success = await ref.read(authControllerProvider.notifier).resetPassword(
+    final result = await ref.read(authControllerProvider.notifier).resetPassword(
           token: _token,
           newPassword: _passwordController.text,
         );
@@ -71,12 +71,12 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (success) {
+    if (result.ok) {
       context.go('/today');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This reset link is invalid, expired, or already used.'),
+        SnackBar(
+          content: Text(result.errorMessage ?? 'This reset link is invalid, expired, or already used.'),
         ),
       );
     }

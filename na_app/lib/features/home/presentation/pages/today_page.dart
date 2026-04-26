@@ -1,10 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+
 import 'package:na_app/core/theme/app_colors.dart';
-import 'package:na_app/core/utils/time_of_day_greeting.dart';
 import 'package:na_app/core/widgets/empty_state.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/home/data/home_repository.dart';
@@ -13,7 +14,7 @@ import 'package:na_app/features/home/presentation/widgets/due_today_card.dart';
 import 'package:na_app/features/home/presentation/widgets/resume_card.dart';
 import 'package:na_app/features/home/presentation/widgets/subject_scroller.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
-import 'package:animate_do/animate_do.dart';
+import 'package:na_app/core/widgets/max_text_scale.dart';
 
 class TodayPage extends ConsumerWidget {
   const TodayPage({super.key});
@@ -21,30 +22,86 @@ class TodayPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(todayViewStateProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.accent,
-          onRefresh: () => ref.read(todayViewStateProvider.notifier).refresh(),
-          child: stateAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+    return MaxTextScale(
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.accent,
+              onRefresh: () => ref.read(todayViewStateProvider.notifier).refresh(),
+              child: Stack(
+                children: [
+                  // Beautiful Background Blobs
+                  _buildBackgroundBlobs(context, isDark),
+                  
+                  stateAsync.when(
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    ),
+                    error: (e, stack) {
+                      debugPrint('[TodayPage] $e\n$stack');
+                      return EmptyState(
+                        icon: LucideIcons.circleAlert,
+                        title: 'حدث خطأ',
+                        message: 'لم نتمكن من تحميل بيانات اليوم. يرجى المحاولة مرة أخرى.',
+                        actionLabel: 'إعادة المحاولة',
+                        onAction: () => ref.invalidate(todayViewStateProvider),
+                      );
+                    },
+                    data: (state) => _TodayContent(state: state),
+                  ),
+                ],
+              ),
             ),
-            error: (e, stack) {
-              debugPrint('[TodayPage] $e\n$stack');
-              return EmptyState(
-                icon: LucideIcons.circleAlert,
-                title: 'Could not load today',
-                message: 'Something went wrong while loading today\'s data. Please try again.',
-                actionLabel: 'Retry',
-                onAction: () => ref.invalidate(todayViewStateProvider),
-              );
-            },
-            data: (state) => _TodayContent(state: state),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBackgroundBlobs(BuildContext context, bool isDark) {
+    final size = MediaQuery.sizeOf(context);
+    return Stack(
+      children: [
+        Positioned(
+          top: -size.width * 0.2,
+          left: -size.width * 0.1,
+          child: Pulse(
+            infinite: true,
+            duration: const Duration(seconds: 6),
+            child: Container(
+              width: size.width * 0.6,
+              height: size.width * 0.6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                    .withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: size.height * 0.3,
+          right: -size.width * 0.3,
+          child: Pulse(
+            infinite: true,
+            duration: const Duration(seconds: 8),
+            child: Container(
+              width: size.width * 0.8,
+              height: size.width * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                    .withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -57,59 +114,100 @@ class _TodayContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _GreetingHeader(userName: state.userName),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+
           if (state.analytics.streakDays > 0) ...[
-            _StreakCard(streakDays: state.analytics.streakDays),
-            const SizedBox(height: 24),
-          ],
-          if (state.resumableLesson != null) ...[
-            _SectionHeader(title: 'Continue learning'),
-            const SizedBox(height: 12),
-            ResumeCard(
-              lesson: state.resumableLesson!,
-              onTap: () => _onResumeTap(context, state.resumableLesson!),
+            FadeInUp(
+              duration: const Duration(milliseconds: 500),
+              child: _StreakCard(streakDays: state.analytics.streakDays),
             ),
             const SizedBox(height: 24),
           ],
-          if (state.dueTodayExams.isNotEmpty) ...[
-            _SectionHeader(title: 'Due today'),
+
+          if (state.resumableLesson != null) ...[
+            FadeInUp(
+              delay: const Duration(milliseconds: 100),
+              duration: const Duration(milliseconds: 500),
+              child: _SectionHeader(title: 'أكمل تعلمك'),
+            ),
             const SizedBox(height: 12),
-            ...state.dueTodayExams.map(
-              (exam) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: DueTodayCard(
-                  exam: exam,
-                  onTap: () => _onExamTap(context, exam),
-                ),
+            FadeInUp(
+              delay: const Duration(milliseconds: 150),
+              duration: const Duration(milliseconds: 500),
+              child: ResumeCard(
+                lesson: state.resumableLesson!,
+                onTap: () => _onResumeTap(context, state.resumableLesson!),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
           ],
-          if (state.allSubjects.isNotEmpty) ...[
-            _SectionHeader(
-              title: 'Your subjects',
-              onSeeAll: () => context.go('/subjects'),
+
+          if (state.dueTodayExams.isNotEmpty) ...[
+            FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 500),
+              child: _SectionHeader(title: 'المهام اليومية'),
             ),
             const SizedBox(height: 12),
-            SubjectScroller(
-              unlockedSubjects: state.allSubjects,
-              onSubjectTap: (subject) => _onSubjectTap(context, subject),
+            ...state.dueTodayExams.asMap().entries.map((entry) {
+              final index = entry.key;
+              final exam = entry.value;
+              return FadeInUp(
+                delay: Duration(milliseconds: 250 + (index * 50)),
+                duration: const Duration(milliseconds: 500),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DueTodayCard(
+                    exam: exam,
+                    onTap: () => _onExamTap(context, exam),
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 20),
+          ],
+
+          if (state.allSubjects.isNotEmpty) ...[
+            FadeInUp(
+              delay: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 500),
+              child: _SectionHeader(
+                title: 'المواد الدراسية',
+                onSeeAll: () => context.go('/subjects'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FadeInUp(
+              delay: const Duration(milliseconds: 350),
+              duration: const Duration(milliseconds: 500),
+              child: SubjectScroller(
+                unlockedSubjects: state.allSubjects,
+                onSubjectTap: (subject) => _onSubjectTap(context, subject),
+              ),
             ),
           ] else ...[
-            _SectionHeader(title: 'Your subjects'),
+            FadeInUp(
+              delay: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 500),
+              child: _SectionHeader(title: 'المواد الدراسية'),
+            ),
             const SizedBox(height: 12),
-            EmptyState(
-              icon: LucideIcons.bookOpen,
-              title: 'No subjects yet',
-              message: 'Enter a subject code to unlock your first subject.',
-              actionLabel: 'Enter code',
-              onAction: () => context.push('/subjects/enter-code'),
+            FadeInUp(
+              delay: const Duration(milliseconds: 350),
+              duration: const Duration(milliseconds: 500),
+              child: EmptyState(
+                icon: LucideIcons.bookOpen,
+                title: 'لا يوجد مواد بعد',
+                message: 'أدخل كود المادة لفتح أولى موادك الدراسية.',
+                actionLabel: 'إدخال الكود',
+                onAction: () => context.push('/subjects/enter-code'),
+              ),
             ),
           ],
         ],
@@ -141,84 +239,117 @@ class _TodayContent extends ConsumerWidget {
 class _GreetingHeader extends StatelessWidget {
   final String userName;
 
-  const _GreetingHeader({
-    required this.userName,
-  });
+  const _GreetingHeader({required this.userName});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final greeting = timeOfDayGreeting();
     final now = DateTime.now();
-    final dayName = _formatDayName(now);
+    final greeting = _getArabicGreeting(now.hour);
+    final dayName = _getArabicDayName(now.weekday);
+    final dateStr = _getArabicDate(now);
 
-    return FadeInDown(
-      duration: const Duration(milliseconds: 600),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$dayName, ${_formatDate(now)}',
-                    style: Theme.of(context).textTheme.labelSmall,
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$dayName، $dateStr',
+                  style: GoogleFonts.cairo(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$greeting,\n$userName.',
-                    style: isDark
-                        ? Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: AppColors.darkTextPrimary,
-                          )
-                        : Theme.of(context).textTheme.displayLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$greeting،\n$userName.',
+                  style: GoogleFonts.cairo(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Tooltip(
-              message: 'Settings',
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                )
+              ],
+            ),
+            child: Tooltip(
+              message: 'الإعدادات',
               child: IconButton(
                 onPressed: () => context.push('/profile/settings'),
-                icon: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorderSubtle
-                          : AppColors.borderSubtle,
-                    ),
-                  ),
-                  child: const Icon(LucideIcons.settings, size: 18),
+                icon: Icon(
+                  LucideIcons.settings,
+                  size: 24,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+
+    return FadeInDown(
+      duration: const Duration(milliseconds: 600),
+      child: content,
     );
   }
 
-  String _formatDayName(DateTime date) {
-    const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-    ];
-    return days[date.weekday - 1];
+  String _getArabicGreeting(int hour) {
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 17) return 'طاب مساؤك';
+    return 'مساء الخير';
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  String _getArabicDayName(int weekday) {
+    const days = [
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
+      'الأحد',
     ];
-    return '${months[date.month]} ${date.day}';
+    return days[weekday - 1];
+  }
+
+  String _getArabicDate(DateTime date) {
+    const months = [
+      '',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+    return '${date.day} ${months[date.month]}';
   }
 }
 
@@ -230,54 +361,69 @@ class _StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return FadeInUp(
-      delay: const Duration(milliseconds: 200),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark 
+            ? [AppColors.darkBgSurface, AppColors.darkBgSurface.withValues(alpha: 0.8)]
+            : [AppColors.bgSurface, AppColors.bgSurface.withValues(alpha: 0.9)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                LucideIcons.flame,
-                color: isDark ? AppColors.darkSecondary : AppColors.secondary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$streakDays-day streak',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontSize: 15),
-                  ),
-                  Text(
-                    'Keep going — you\'re on a roll!',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? AppColors.darkSecondary : AppColors.secondary).withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              LucideIcons.flame,
+              color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'حماس مستمر لمدة $streakDays أيام',
+                  style: GoogleFonts.cairo(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'استمر في التعلم، أنت تقدم أداءً رائعاً!',
+                  style: GoogleFonts.cairo(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,6 +437,8 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -299,25 +447,27 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(fontSize: 20),
+            style: GoogleFonts.cairo(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
               style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 0),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                backgroundColor: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: Text(
-                'See all',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                'عرض الكل',
+                style: GoogleFonts.cairo(
+                  color: isDark ? AppColors.darkAccent : AppColors.accent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
         ],

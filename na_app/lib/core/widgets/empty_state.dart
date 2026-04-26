@@ -35,8 +35,7 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: 48,
-              color:
-                  isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
             const SizedBox(height: 16),
             Text(
@@ -68,9 +67,10 @@ class EmptyState extends StatelessWidget {
               ElevatedButton(
                 onPressed: onAction,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isDark ? AppColors.darkAccent : AppColors.accent,
-                  foregroundColor: Colors.white,
+                  backgroundColor: isDark
+                      ? AppColors.darkAccent
+                      : AppColors.accent,
+                  foregroundColor: AppColors.bgElevated,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),

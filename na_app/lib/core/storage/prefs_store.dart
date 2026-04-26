@@ -11,6 +11,7 @@ class PrefsStore {
   static const _languageKey = 'language';
   static const _notificationsEnabledKey = 'notifications_enabled';
   static const _lastKnownUserNameKey = 'last_known_user_name';
+  static const _hasSeenOnboardingKey = 'has_seen_onboarding';
 
   Future<ThemeMode> get themeMode async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,8 +21,10 @@ class PrefsStore {
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
-      default:
+      case 'system':
         return ThemeMode.system;
+      default:
+        return ThemeMode.light;
     }
   }
 
@@ -58,5 +61,15 @@ class PrefsStore {
   Future<void> setLastKnownUserName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastKnownUserNameKey, name);
+  }
+
+  Future<bool> get hasSeenOnboarding async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hasSeenOnboardingKey) ?? false;
+  }
+
+  Future<void> setHasSeenOnboarding(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasSeenOnboardingKey, value);
   }
 }

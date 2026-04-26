@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
 import 'package:animate_do/animate_do.dart';
 
@@ -43,6 +44,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildGreeting(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
       child: Padding(
@@ -61,19 +63,36 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Good afternoon,\nLayla.',
-                  style: Theme.of(context).textTheme.displayLarge,
+                  style: isDark
+                      ? Theme.of(context).textTheme.displayLarge?.copyWith(
+                            color: AppColors.darkTextPrimary,
+                          )
+                      : Theme.of(context).textTheme.displayLarge,
                 ),
               ],
             ),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSubtle),
+            Tooltip(
+              message: 'Notifications',
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                  borderRadius: BorderRadius.circular(AppShapes.inputRadius),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkBorderSubtle
+                        : AppColors.borderSubtle,
+                  ),
+                ),
+                child: Icon(
+                  LucideIcons.bell,
+                  size: 18,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary,
+                ),
               ),
-              child: const Icon(LucideIcons.bell, size: 18),
             ),
           ],
         ),
@@ -82,14 +101,19 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStreakCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       delay: const Duration(milliseconds: 200),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+          border: Border.all(
+            color: isDark
+                ? AppColors.darkBorderSubtle
+                : AppColors.borderSubtle,
+          ),
         ),
         child: Row(
           children: [
@@ -97,12 +121,14 @@ class HomeScreen extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.secondarySoft,
-                borderRadius: BorderRadius.circular(10),
+                color: isDark
+                    ? AppColors.darkSecondarySoft
+                    : AppColors.secondarySoft,
+                borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.flame,
-                color: AppColors.secondary,
+                color: isDark ? AppColors.darkSecondary : AppColors.secondary,
                 size: 20,
               ),
             ),
@@ -121,18 +147,28 @@ class HomeScreen extends StatelessWidget {
                     'Keep it alive — 18 min left today',
                     style: Theme.of(
                       context,
-                    ).textTheme.bodySmall?.copyWith(fontSize: 12),
+                    ).textTheme.bodySmall?.copyWith(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
+                        ),
                   ),
                 ],
               ),
             ),
-            const ProgressRing(
+            ProgressRing(
               value: 72,
               size: 42,
               stroke: 4,
+              color: isDark ? AppColors.darkAccent : AppColors.accent,
               child: Text(
                 '72%',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -146,6 +182,7 @@ class HomeScreen extends StatelessWidget {
     String title, {
     VoidCallback? onSeeAll,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -165,9 +202,9 @@ class HomeScreen extends StatelessWidget {
               child: Text(
                 'See all',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: isDark ? AppColors.darkAccent : AppColors.accent,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ),
         ],
@@ -176,14 +213,18 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeroCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       delay: const Duration(milliseconds: 300),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
-          // overflow: ImageFiltered, // Just to indicate intentional overflow clipping
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+          border: Border.all(
+            color: isDark
+                ? AppColors.darkBorderSubtle
+                : AppColors.borderSubtle,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -192,9 +233,11 @@ class HomeScreen extends StatelessWidget {
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.accentSoft, AppColors.bgSunken],
+                    colors: isDark
+                        ? [AppColors.darkAccentSoft, AppColors.darkBgSunken]
+                        : [AppColors.accentSoft, AppColors.bgSunken],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -202,14 +245,13 @@ class HomeScreen extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Placeholder for SVG/Graph
                     Padding(
                       padding: const EdgeInsets.all(40),
                       child: Opacity(
                         opacity: 0.6,
                         child: CustomPaint(
                           size: const Size(double.infinity, double.infinity),
-                          painter: _GraphPainter(),
+                          painter: _GraphPainter(isDark: isDark),
                         ),
                       ),
                     ),
@@ -221,14 +263,18 @@ class HomeScreen extends StatelessWidget {
                           Container(
                             width: 32,
                             height: 32,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkBgElevated
+                                  : Colors.white,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               LucideIcons.play,
                               size: 14,
-                              color: AppColors.textPrimary,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -238,14 +284,21 @@ class HomeScreen extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(999),
+                              color: isDark
+                                  ? AppColors.darkBgElevated
+                                  : Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(AppShapes.pillRadius),
                             ),
                             child: Text(
                               'Resume · 4:12',
-                              style: Theme.of(context).textTheme.labelSmall
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
                                   ?.copyWith(
-                                    color: AppColors.textPrimary,
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.textPrimary,
                                     fontWeight: FontWeight.w600,
                                   ),
                             ),
@@ -264,7 +317,11 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     'CALCULUS II · LESSON 12',
-                    style: Theme.of(context).textTheme.labelSmall,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textMuted,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -274,7 +331,7 @@ class HomeScreen extends StatelessWidget {
                     ).textTheme.headlineMedium?.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 12),
-                  _buildLinearProgress(0.68),
+                  _buildLinearProgress(0.68, isDark),
                 ],
               ),
             ),
@@ -284,21 +341,21 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLinearProgress(double value) {
+  Widget _buildLinearProgress(double value, bool isDark) {
     return Container(
       height: 6,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.bgSunken,
-        borderRadius: BorderRadius.circular(999),
+        color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+        borderRadius: BorderRadius.circular(AppShapes.pillRadius),
       ),
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
         widthFactor: value,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.accent,
-            borderRadius: BorderRadius.circular(999),
+            color: isDark ? AppColors.darkAccent : AppColors.accent,
+            borderRadius: BorderRadius.circular(AppShapes.pillRadius),
           ),
         ),
       ),
@@ -306,14 +363,19 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildExamCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       delay: const Duration(milliseconds: 400),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+          border: Border.all(
+            color: isDark
+                ? AppColors.darkBorderSubtle
+                : AppColors.borderSubtle,
+          ),
         ),
         child: Row(
           children: [
@@ -321,12 +383,12 @@ class HomeScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.accentSoft,
-                borderRadius: BorderRadius.circular(10),
+                color: isDark ? AppColors.darkAccentSoft : AppColors.accentSoft,
+                borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.clipboardList,
-                color: AppColors.accentDeep,
+                color: isDark ? AppColors.darkAccentDeep : AppColors.accentDeep,
                 size: 20,
               ),
             ),
@@ -343,10 +405,12 @@ class HomeScreen extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         LucideIcons.clock,
                         size: 12,
-                        color: AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -357,8 +421,10 @@ class HomeScreen extends StatelessWidget {
                       Container(
                         width: 3,
                         height: 3,
-                        decoration: const BoxDecoration(
-                          color: AppColors.textMuted,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textMuted,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -390,24 +456,25 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSubjectsScroller(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final subjects = [
       {
         'title': 'Calculus II',
         'prog': 68.0,
         'chip': 'Lesson 12 of 18',
-        'color': AppColors.accent,
+        'color': isDark ? AppColors.darkAccent : AppColors.accent,
       },
       {
         'title': 'Organic Chem',
         'prog': 32.0,
         'chip': 'Lesson 6 of 20',
-        'color': AppColors.secondary,
+        'color': isDark ? AppColors.darkSecondary : AppColors.secondary,
       },
       {
         'title': 'Arabic Lit',
         'prog': 84.0,
         'chip': 'Lesson 15 of 18',
-        'color': AppColors.accent,
+        'color': isDark ? AppColors.darkAccent : AppColors.accent,
       },
     ];
 
@@ -426,9 +493,14 @@ class HomeScreen extends StatelessWidget {
               width: 210,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.borderSubtle),
+                color:
+                    isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkBorderSubtle
+                      : AppColors.borderSubtle,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,14 +512,16 @@ class HomeScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: (s['color'] as Color).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius:
+                          BorderRadius.circular(AppShapes.pillRadius),
                     ),
                     child: Text(
                       s['chip'] as String,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: s['color'] as Color,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: s['color'] as Color,
+                                fontWeight: FontWeight.w600,
+                              ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -491,10 +565,14 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _GraphPainter extends CustomPainter {
+  final bool isDark;
+
+  const _GraphPainter({this.isDark = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.accentDeep
+      ..color = isDark ? AppColors.darkAccentDeep : AppColors.accentDeep
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 

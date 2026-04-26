@@ -204,7 +204,7 @@ export class MediaService {
       .exec();
   }
 
-async uploadChatMedia(
+  async uploadChatMedia(
     req: Request,
     userId: string,
     options: { maxBytes: number; allowedMimeTypes: Set<string> },
@@ -293,7 +293,9 @@ async uploadChatMedia(
         writeStream.on('finish', async () => {
           try {
             if (sizeExceeded) {
-              try { await this.chatBucket.delete(writeStream.id as Types.ObjectId); } catch {}
+              try {
+                await this.chatBucket.delete(writeStream.id as Types.ObjectId);
+              } catch {}
               return reject(
                 new PayloadTooLargeException(
                   `File must be smaller than ${options.maxBytes / 1024 / 1024} MB`,
@@ -333,7 +335,9 @@ async uploadChatMedia(
             });
           } catch (error) {
             if (writeStream.id) {
-              try { await this.chatBucket.delete(writeStream.id as Types.ObjectId); } catch {}
+              try {
+                await this.chatBucket.delete(writeStream.id as Types.ObjectId);
+              } catch {}
             }
             reject(error);
           }
