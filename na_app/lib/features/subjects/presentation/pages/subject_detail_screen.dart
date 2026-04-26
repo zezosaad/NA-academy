@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
 import 'package:animate_do/animate_do.dart';
 
@@ -77,24 +78,30 @@ class SubjectDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHero(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInDown(
       duration: const Duration(milliseconds: 500),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.bgSurface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+          border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
         ),
         child: Row(
           children: [
-            const ProgressRing(
+            ProgressRing(
               value: 68,
               size: 72,
               stroke: 6,
+              color: isDark ? AppColors.darkAccent : AppColors.accent,
               child: Text(
                 '68%',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -106,14 +113,17 @@ class SubjectDetailScreen extends StatelessWidget {
                     'MATH · 18 LESSONS',
                     style: Theme.of(
                       context,
-                    ).textTheme.labelSmall?.copyWith(color: AppColors.accent),
+                    ).textTheme.labelSmall?.copyWith(color: isDark ? AppColors.darkAccent : AppColors.accent),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Integration, from first principles.',
                     style: Theme.of(
                       context,
-                    ).textTheme.headlineMedium?.copyWith(fontSize: 18),
+                    ).textTheme.headlineMedium?.copyWith(
+                      fontSize: 18,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
@@ -125,6 +135,7 @@ class SubjectDetailScreen extends StatelessWidget {
   }
 
   Widget _buildStats(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final stats = [
       {'n': '12', 'l': 'done'},
       {'n': '1', 'l': 'in progress'},
@@ -138,9 +149,9 @@ class SubjectDetailScreen extends StatelessWidget {
             margin: EdgeInsets.only(right: s == stats.last ? 0 : 10),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
-              color: AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.borderSubtle),
+              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(AppShapes.inputRadius),
+              border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
             ),
             child: Column(
               children: [
@@ -148,13 +159,20 @@ class SubjectDetailScreen extends StatelessWidget {
                   s['n']!,
                   style: Theme.of(
                     context,
-                  ).textTheme.headlineMedium?.copyWith(fontSize: 20),
+                  ).textTheme.headlineMedium?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  ),
                 ),
                 Text(
                   s['l']!,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(fontSize: 11),
+                  ).textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                  ),
                 ),
               ],
             ),
@@ -169,6 +187,7 @@ class SubjectDetailScreen extends StatelessWidget {
     String title, {
     VoidCallback? onSyllabus,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -176,7 +195,10 @@ class SubjectDetailScreen extends StatelessWidget {
           title,
           style: Theme.of(
             context,
-          ).textTheme.headlineMedium?.copyWith(fontSize: 20),
+          ).textTheme.headlineMedium?.copyWith(
+            fontSize: 20,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
         ),
         if (onSyllabus != null)
           TextButton(
@@ -185,7 +207,7 @@ class SubjectDetailScreen extends StatelessWidget {
               'Syllabus',
               style: Theme.of(
                 context,
-              ).textTheme.labelLarge?.copyWith(color: AppColors.accent),
+              ).textTheme.labelLarge?.copyWith(color: isDark ? AppColors.darkAccent : AppColors.accent),
             ),
           ),
       ],
@@ -196,11 +218,12 @@ class SubjectDetailScreen extends StatelessWidget {
     BuildContext context,
     List<Map<String, dynamic>> lessons,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderSubtle),
+        color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+        borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+        border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
       ),
       clipBehavior: Clip.antiAlias,
       child: ListView.separated(
@@ -208,7 +231,7 @@ class SubjectDetailScreen extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: lessons.length,
         separatorBuilder: (context, index) =>
-            const Divider(height: 1, color: AppColors.borderSubtle),
+            Divider(height: 1, color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
         itemBuilder: (context, index) {
           final l = lessons[index];
           final state = l['state'] as String;
@@ -218,94 +241,100 @@ class SubjectDetailScreen extends StatelessWidget {
           Widget icon;
 
           if (state == 'done') {
-            iconBg = AppColors.accent;
+            iconBg = isDark ? AppColors.darkAccent : AppColors.accent;
             iconColor = Colors.white;
             icon = const Icon(LucideIcons.check, size: 14);
           } else if (state == 'active') {
-            iconBg = AppColors.bgSunken;
-            iconColor = AppColors.accentDeep;
+            iconBg = isDark ? AppColors.darkAccentSoft : AppColors.accentSoft;
+            iconColor = isDark ? AppColors.darkAccentDeep : AppColors.accentDeep;
             icon = Text(
               '${l['n']}',
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             );
           } else {
-            iconBg = AppColors.bgSunken;
-            iconColor = AppColors.textMuted;
+            iconBg = isDark ? AppColors.darkBgElevated : AppColors.bgSunken;
+            iconColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
             icon = const Icon(LucideIcons.lock, size: 13);
           }
 
           return FadeInLeft(
             delay: Duration(milliseconds: 50 * index),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: iconBg,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: DefaultTextStyle(
-                      style: TextStyle(color: iconColor),
-                      child: IconTheme(
-                        data: IconThemeData(color: iconColor),
-                        child: icon,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l['title'] as String,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                fontSize: 15,
-                                color: state == 'locked'
-                                    ? AppColors.textMuted
-                                    : AppColors.textPrimary,
-                              ),
-                        ),
-                        Text(
-                          l['dur'] as String,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (state == 'active')
+            child: Container(
+              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.accentSoft,
-                        borderRadius: BorderRadius.circular(999),
+                        color: iconBg,
+                        shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          color: AppColors.accentDeep,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      alignment: Alignment.center,
+                      child: DefaultTextStyle(
+                        style: TextStyle(color: iconColor),
+                        child: IconTheme(
+                          data: IconThemeData(color: iconColor),
+                          child: icon,
                         ),
                       ),
                     ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    LucideIcons.chevronRight,
-                    size: 16,
-                    color: AppColors.textMuted,
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l['title'] as String,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontSize: 15,
+                                  color: state == 'locked'
+                                      ? (isDark ? AppColors.darkTextMuted : AppColors.textMuted)
+                                      : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                                ),
+                          ),
+                          Text(
+                            l['dur'] as String,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (state == 'active')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkAccentSoft : AppColors.accentSoft,
+                          borderRadius: BorderRadius.circular(AppShapes.pillRadius),
+                        ),
+                        child: Text(
+                          'Continue',
+                          style: TextStyle(
+                            color: isDark ? AppColors.darkAccentDeep : AppColors.accentDeep,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      LucideIcons.chevronRight,
+                      size: 16,
+                      color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    ),
+                  ],
+                ),
               ),
             ),
           );

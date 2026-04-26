@@ -30,18 +30,18 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
-    final success = await ref.read(authControllerProvider.notifier).forgotPassword(
+    final result = await ref.read(authControllerProvider.notifier).forgotPassword(
           email: _emailController.text.trim(),
         );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (success) {
+    if (result.ok) {
       setState(() => _emailSent = true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Something went wrong. Please try again.')),
+        SnackBar(content: Text(result.errorMessage ?? 'Something went wrong. Please try again.')),
       );
     }
   }

@@ -41,6 +41,7 @@ class Lesson with _$Lesson {
     required String title,
     required int order,
     @Default(LessonStatus.locked) LessonStatus status,
+    String? description,
     String? mediaAssetId,
     int? estimatedMinutes,
   }) = _Lesson;
@@ -56,14 +57,16 @@ class Lesson with _$Lesson {
       title: json['title'] as String? ?? '',
       order: json['order'] as int? ?? json['index'] as int? ?? 0,
       status: _parseStatus(json['status'] as String?),
-      mediaAssetId: json['mediaAssetId'] as String?,
+      description: json['description'] as String?,
+      mediaAssetId:
+          json['mediaId'] as String? ?? json['mediaAssetId'] as String?,
       estimatedMinutes: json['estimatedMinutes'] as int?,
     );
   }
 
   static LessonStatus _parseStatus(String? value) => switch (value) {
         'done' => LessonStatus.done,
-        'active' => LessonStatus.active,
-        _ => LessonStatus.locked,
+        'locked' => LessonStatus.locked,
+        _ => LessonStatus.active,
       };
 }

@@ -1,57 +1,29 @@
 import 'package:flutter/material.dart';
 
 class AppMotion {
-  static Duration get short => const Duration(milliseconds: 150);
-  static Duration get medium => const Duration(milliseconds: 240);
-  static Duration get long => const Duration(milliseconds: 400);
+  // Bouncy, spring-like playful animations
+  static const Duration fast = Duration(milliseconds: 150);
+  static const Duration normal = Duration(milliseconds: 300);
+  static const Duration slow = Duration(milliseconds: 500);
 
-  static Curve get standard => Curves.easeInOut;
-  static Curve get decelerate => Curves.decelerate;
+  // Backward compatibility getters
+  static const Duration short = Duration(milliseconds: 150);
+  static const Duration medium = Duration(milliseconds: 300);
+  static const Curve standard = Curves.easeInOut;
+  static const Duration long = Duration(milliseconds: 500);
+
+  // Use a bouncy curve for that gamified feel
+  static const Curve defaultCurve = Curves.elasticOut;
+  static const Curve emphasizeCurve = Curves.bounceOut;
+  static const Curve entranceCurve = Curves.easeOutBack;
+  static const Curve decelerate = Curves.easeOutBack;
 
   static bool shouldReduceMotion(BuildContext context) {
-    return MediaQuery.disableAnimationsOf(context);
+    return MediaQuery.of(context).disableAnimations;
   }
-
-  static Duration motionAwareDuration(BuildContext context, Duration full) {
+  
+  static Duration motionAwareDuration(BuildContext context, Duration duration) {
     if (shouldReduceMotion(context)) return Duration.zero;
-    return full;
-  }
-
-  static Widget animatedSwitcher({
-    required Widget child,
-    required Duration duration,
-    Key? key,
-  }) {
-    return _MotionAwareSwitcher(
-      duration: duration,
-      key: key,
-      child: child,
-    );
-  }
-}
-
-class _MotionAwareSwitcher extends StatelessWidget {
-  final Widget child;
-  final Duration duration;
-
-  const _MotionAwareSwitcher({
-    super.key,
-    required this.child,
-    required this.duration,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final reduce = AppMotion.shouldReduceMotion(context);
-    return AnimatedSwitcher(
-      duration: reduce ? Duration.zero : duration,
-      switchInCurve: AppMotion.standard,
-      switchOutCurve: AppMotion.standard,
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        if (reduce) return child;
-        return FadeTransition(opacity: animation, child: child);
-      },
-      child: child,
-    );
+    return duration;
   }
 }

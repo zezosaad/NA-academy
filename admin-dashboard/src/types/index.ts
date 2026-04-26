@@ -78,6 +78,19 @@ export interface SubjectBundle {
   updatedAt: string
 }
 
+// ── Lessons ──
+export interface Lesson {
+  _id: string
+  subjectId: string
+  title: string
+  description?: string
+  order: number
+  mediaId?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 // ── Media ──
 export type MediaType = "video" | "image"
 

@@ -23,8 +23,9 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor =
-        isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -49,9 +50,12 @@ class StatTile extends StatelessWidget {
                   child: Icon(icon, size: 16, color: iconColor),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall,
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -62,17 +66,13 @@ class StatTile extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: Theme.of(context)
-                      .textTheme
-                      .displayLarge
-                      ?.copyWith(fontSize: 32),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.displayLarge?.copyWith(fontSize: 32),
                 ),
                 if (unit.isNotEmpty) ...[
                   const SizedBox(width: 4),
-                  Text(
-                    unit,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(unit, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ],
             ),

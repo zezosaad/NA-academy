@@ -34,7 +34,7 @@ class AppButton extends StatelessWidget {
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: type == AppButtonType.primary
-                ? Colors.white
+                ? AppColors.bgElevated
                 : (isDark ? AppColors.darkAccent : AppColors.accent),
           ),
         ),
@@ -47,7 +47,7 @@ class AppButton extends StatelessWidget {
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: isDark ? AppColors.darkAccent : AppColors.accent,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.bgElevated,
             elevation: 0,
             padding: padding,
             shape: RoundedRectangleBorder(
@@ -75,8 +75,9 @@ class AppButton extends StatelessWidget {
         return TextButton(
           onPressed: onPressed,
           style: TextButton.styleFrom(
-            foregroundColor:
-                isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            foregroundColor: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.textSecondary,
             padding: padding,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppShapes.pillRadius),
@@ -103,10 +104,7 @@ class AppButton extends StatelessWidget {
   Widget _label(bool isDark) {
     return Text(
       label,
-      style: GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-      ),
+      style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
     );
   }
 }

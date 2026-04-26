@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
@@ -28,8 +29,10 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   async getMe(@Req() req: any) {
-    const user = await this.usersService.findById(req.user.sub);
-    if (!user) return null;
+    const user = await this.usersService.findById(req.user.userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return {
       id: user._id.toString(),
       email: user.email,

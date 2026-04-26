@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_screen.dart';
 import 'package:animate_do/animate_do.dart';
 
@@ -41,6 +42,7 @@ class SubjectsCatalogScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       child: Column(
@@ -48,12 +50,16 @@ class SubjectsCatalogScreen extends StatelessWidget {
         children: [
           Text(
             'Learn',
-            style: Theme.of(context).textTheme.displayLarge,
+            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Six subjects in play. Two due this week.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -61,26 +67,27 @@ class SubjectsCatalogScreen extends StatelessWidget {
   }
 
   Widget _buildSearchBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.bgSunken,
-        borderRadius: BorderRadius.circular(14),
+        color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+        borderRadius: BorderRadius.circular(AppShapes.inputRadius),
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.search, size: 16, color: AppColors.textMuted),
+          Icon(LucideIcons.search, size: 16, color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search subjects, lessons, notes',
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted, fontSize: 14),
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: isDark ? AppColors.darkTextMuted : AppColors.textMuted, fontSize: 14),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
             ),
           ),
         ],
@@ -89,6 +96,7 @@ class SubjectsCatalogScreen extends StatelessWidget {
   }
 
   Widget _buildCategories(BuildContext context, List<String> cats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -99,14 +107,16 @@ class SubjectsCatalogScreen extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isFirst ? AppColors.textPrimary : AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(999),
-              border: isFirst ? null : Border.all(color: AppColors.borderSubtle),
+              color: isFirst
+                  ? (isDark ? AppColors.darkAccent : AppColors.accent)
+                  : (isDark ? AppColors.darkBgSurface : AppColors.bgSurface),
+              borderRadius: BorderRadius.circular(AppShapes.pillRadius),
+              border: isFirst ? null : Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
             ),
             child: Text(
               cats[index],
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: isFirst ? AppColors.bgCanvas : AppColors.textSecondary,
+                color: isFirst ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 fontSize: 13,
               ),
             ),
@@ -117,6 +127,7 @@ class SubjectsCatalogScreen extends StatelessWidget {
   }
 
   Widget _buildGrid(BuildContext context, List<Map<String, dynamic>> items) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -144,9 +155,9 @@ class SubjectsCatalogScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.bgSurface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.borderSubtle),
+                color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+                border: Border.all(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +166,7 @@ class SubjectsCatalogScreen extends StatelessWidget {
                     height: 60,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: hue.withValues(alpha: 0.12),
+                      color: hue.withValues(alpha: isDark ? 0.18 : 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -175,7 +186,10 @@ class SubjectsCatalogScreen extends StatelessWidget {
                     s['title'] as String,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 17),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 17,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    ),
                   ),
                   const Spacer(),
                   _buildLinearProgress(context, s['prog'] as double, hue),
@@ -185,7 +199,10 @@ class SubjectsCatalogScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${s['lessons']} lessons',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                        ),
                       ),
                       Text(
                         '${(s['prog'] as double).toInt()}%',
@@ -207,12 +224,13 @@ class SubjectsCatalogScreen extends StatelessWidget {
   }
 
   Widget _buildLinearProgress(BuildContext context, double value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 4,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.bgSunken,
-        borderRadius: BorderRadius.circular(999),
+        color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+        borderRadius: BorderRadius.circular(AppShapes.pillRadius),
       ),
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
@@ -220,7 +238,7 @@ class SubjectsCatalogScreen extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppShapes.pillRadius),
           ),
         ),
       ),

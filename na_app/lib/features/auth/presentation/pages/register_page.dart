@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:na_app/core/theme/app_colors.dart';
-import 'package:na_app/core/theme/app_shapes.dart';
-import 'package:na_app/core/widgets/button.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -55,23 +54,23 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   String? _getPasswordStrength(String password) {
     if (password.isEmpty) return null;
-    if (password.length < 6) return 'Weak';
-    if (password.length < 8) return 'Fair';
+    if (password.length < 6) return 'ضعيفة';
+    if (password.length < 8) return 'مقبولة';
     final hasUpper = password.contains(RegExp(r'[A-Z]'));
     final hasDigit = password.contains(RegExp(r'\d'));
-    if (hasUpper && hasDigit && password.length >= 8) return 'Strong';
-    return 'Good';
+    if (hasUpper && hasDigit && password.length >= 8) return 'قوية';
+    return 'جيدة';
   }
 
   Color _strengthColor(String? strength) {
     switch (strength) {
-      case 'Strong':
+      case 'قوية':
         return AppColors.success;
-      case 'Good':
+      case 'جيدة':
         return AppColors.accent;
-      case 'Fair':
+      case 'مقبولة':
         return AppColors.warning;
-      case 'Weak':
+      case 'ضعيفة':
         return AppColors.danger;
       default:
         return AppColors.textMuted;
@@ -82,7 +81,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (_isLoading || !_acceptedTerms) return;
     setState(() => _isLoading = true);
 
-    final success = await ref.read(authControllerProvider.notifier).register(
+    final result = await ref.read(authControllerProvider.notifier).register(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -91,11 +90,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (success) {
+    if (result.ok) {
       context.go('/subjects');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration failed. Please try again.')),
+        SnackBar(
+          content: Text(
+            result.errorMessage ?? 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
       );
     }
   }
@@ -103,215 +108,389 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.sizeOf(context);
     final strength = _getPasswordStrength(_passwordController.text);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 32),
-              Text(
-                'Create your account',
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Start your learning journey with NA Academy.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-              const SizedBox(height: 28),
-              _buildLabel(context, 'Full name'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                decoration: _inputDecoration(
-                  context,
-                  isDark,
-                  'Ahmed Hassan',
-                  LucideIcons.user,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildLabel(context, 'Email'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                decoration: _inputDecoration(
-                  context,
-                  isDark,
-                  'you@example.com',
-                  LucideIcons.mail,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildLabel(context, 'Password'),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                onChanged: (_) => setState(() {}),
-                decoration: _inputDecoration(
-                  context,
-                  isDark,
-                  'Min 8 characters',
-                  LucideIcons.lock,
-                ).copyWith(
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
-                      size: 18,
-                    ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-              ),
-              if (strength != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Password strength: ',
-                      style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMuted),
-                    ),
-                    Text(
-                      strength,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _strengthColor(strength),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 20),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: _acceptedTerms,
-                        onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
-                        activeColor: AppColors.accent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Stack(
+          children: [
+            // Animated Background Blobs
+            _buildBackgroundBlobs(isDark, size),
+
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header Icon
+                      FadeInDown(
+                        duration: const Duration(milliseconds: 600),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                                      .withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                )
+                              ],
+                            ),
+                            child: Icon(
+                              LucideIcons.userPlus,
+                              size: 40,
+                              color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                      const SizedBox(height: 32),
+
+                      // Welcome Texts
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 100),
+                        child: Text(
+                          'إنشاء حساب جديد',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cairo(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                          ),
                         ),
-                        children: [
-                          const TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'Terms of Service',
-                            style: GoogleFonts.inter(
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            recognizer: _termsTapRecognizer,
-                          ),
-                          const TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: GoogleFonts.inter(
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            recognizer: _privacyTapRecognizer,
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              AppButton(
-                label: 'Create account',
-                onPressed: _acceptedTerms ? _submit : null,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account? ',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.go('/auth/login'),
-                    child: Text(
-                      'Sign in',
-                      style: GoogleFonts.inter(
-                        color: AppColors.accent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 8),
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 200),
+                        child: Text(
+                          'ابدأ رحلتك التعليمية الممتعة مع NA Academy.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.cairo(
+                            fontSize: 16,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 48),
+
+                      // Name Field
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 300),
+                        child: _buildTextField(
+                          controller: _nameController,
+                          label: 'الاسم الكامل',
+                          hint: 'أحمد حسن',
+                          icon: LucideIcons.user,
+                          isDark: isDark,
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Email Field
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 400),
+                        child: _buildTextField(
+                          controller: _emailController,
+                          label: 'البريد الإلكتروني',
+                          hint: 'you@example.com',
+                          icon: LucideIcons.mail,
+                          isDark: isDark,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Password Field
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 500),
+                        child: _buildTextField(
+                          controller: _passwordController,
+                          label: 'كلمة المرور',
+                          hint: '8 أحرف على الأقل',
+                          icon: LucideIcons.lock,
+                          isDark: isDark,
+                          isPassword: true,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      
+                      if (strength != null) ...[
+                        const SizedBox(height: 12),
+                        FadeIn(
+                          child: Row(
+                            children: [
+                              Text(
+                                'قوة كلمة المرور: ',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                                ),
+                              ),
+                              Text(
+                                strength,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: _strengthColor(strength),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+
+                      // Terms and Conditions
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 600),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                margin: const EdgeInsets.only(top: 2),
+                                decoration: BoxDecoration(
+                                  color: _acceptedTerms 
+                                      ? (isDark ? AppColors.darkAccent : AppColors.accent)
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: _acceptedTerms 
+                                        ? Colors.transparent 
+                                        : (isDark ? AppColors.darkBorderStrong : AppColors.borderStrong),
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: _acceptedTerms
+                                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 14,
+                                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                    height: 1.5,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: 'أوافق على '),
+                                    TextSpan(
+                                      text: 'شروط الخدمة',
+                                      style: GoogleFonts.cairo(
+                                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      recognizer: _termsTapRecognizer,
+                                    ),
+                                    const TextSpan(text: ' و '),
+                                    TextSpan(
+                                      text: 'سياسة الخصوصية',
+                                      style: GoogleFonts.cairo(
+                                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      recognizer: _privacyTapRecognizer,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Register Button
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 700),
+                        child: SizedBox(
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: (_acceptedTerms && !_isLoading) ? _submit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark ? AppColors.darkAccent : AppColors.accent,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'إنشاء حساب',
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Login Link
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 800),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "لديك حساب بالفعل؟ ",
+                              style: GoogleFonts.cairo(
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                fontSize: 15,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => context.go('/auth/login'),
+                              child: Text(
+                                'تسجيل الدخول',
+                                style: GoogleFonts.cairo(
+                                  color: isDark ? AppColors.darkAccent : AppColors.accent,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 32),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLabel(BuildContext context, String text) {
-    return Text(
-      text,
-      style: GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textSecondary,
-      ),
+  Widget _buildBackgroundBlobs(bool isDark, Size size) {
+    return Stack(
+      children: [
+        Positioned(
+          bottom: -size.width * 0.2,
+          left: -size.width * 0.1,
+          child: Pulse(
+            infinite: true,
+            duration: const Duration(seconds: 5),
+            child: Container(
+              width: size.width * 0.7,
+              height: size.width * 0.7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                    .withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  InputDecoration _inputDecoration(
-    BuildContext context,
-    bool isDark,
-    String hint,
-    IconData icon,
-  ) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, size: 18),
-      filled: true,
-      fillColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppShapes.inputRadius),
-        borderSide: BorderSide(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppShapes.inputRadius),
-        borderSide: BorderSide(color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
-      ),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool isDark,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword ? _obscurePassword : false,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            onChanged: onChanged,
+            style: GoogleFonts.cairo(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.cairo(
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
+              prefixIcon: Icon(icon, size: 20, color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                        size: 20,
+                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

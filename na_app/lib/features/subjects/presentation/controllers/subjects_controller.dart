@@ -28,6 +28,13 @@ final subjectDetailProvider =
   },
 );
 
+final lessonDetailProvider = FutureProvider.family<Lesson, String>(
+  (ref, lessonId) async {
+    final repo = ref.watch(subjectsRepositoryProvider);
+    return repo.getLesson(lessonId);
+  },
+);
+
 final activateCodeProvider = Provider<Future<ActivationResult> Function(String code)>(
   (ref) {
     return (String code) async {

@@ -19,7 +19,7 @@ class NAApp extends ConsumerStatefulWidget {
 }
 
 class _NAAppState extends ConsumerState<NAApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   bool _themeLoaded = false;
 
   @override
@@ -70,10 +70,8 @@ class _NAAppState extends ConsumerState<NAApp> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+        themeMode: ThemeMode.light,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 

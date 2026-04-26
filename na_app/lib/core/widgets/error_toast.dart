@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:na_app/core/api/api_exception.dart';
+import 'package:na_app/core/theme/app_colors.dart';
 
 class ErrorToast {
   ErrorToast._();
@@ -16,15 +17,15 @@ class ErrorToast {
         content: Text(
           message,
           style: TextStyle(
-            color: isDark ? const Color(0xFFF1ECDE) : const Color(0xFF1F1C16),
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF302D26) : const Color(0xFFFBF8F1),
+        backgroundColor: isDark ? AppColors.darkBgElevated : AppColors.bgSunken,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: isDark ? const Color(0xFF3D3930) : const Color(0xFFE0D8C6),
+            color: isDark ? AppColors.darkBorderStrong : AppColors.borderStrong,
           ),
         ),
         duration: const Duration(seconds: 4),
@@ -75,11 +76,15 @@ class ErrorToast {
       return 'This link has expired. Please request a new one.';
     }
     if (e.isClientError) {
-      return e.message.isNotEmpty ? e.message : 'Invalid request. Please check your input.';
+      return e.message.isNotEmpty
+          ? e.message
+          : 'Invalid request. Please check your input.';
     }
     if (e.statusCode >= 500) {
       return 'Server error. Please try again later.';
     }
-    return e.message.isNotEmpty ? e.message : 'Something went wrong. Please try again.';
+    return e.message.isNotEmpty
+        ? e.message
+        : 'Something went wrong. Please try again.';
   }
 }

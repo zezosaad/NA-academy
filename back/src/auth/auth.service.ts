@@ -198,7 +198,7 @@ export class AuthService {
     token: string,
     newPassword: string,
     hardwareId: string,
-  ): Promise<{ user: any; tokens: { accessToken: string; refreshToken: string } }> {
+  ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     const resetDoc = await this.passwordResetModel
@@ -227,13 +227,13 @@ export class AuthService {
     const tokens = await this.createSession(user, hardwareId);
 
     return {
+      ...tokens,
       user: {
         id: user._id.toString(),
         email: user.email,
         name: user.name,
         role: user.role,
       },
-      tokens,
     };
   }
 

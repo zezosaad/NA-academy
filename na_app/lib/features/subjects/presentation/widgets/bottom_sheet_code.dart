@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/button.dart';
-import 'package:na_app/core/widgets/code_input.dart';
+import 'package:flutter/services.dart';
 
 class BottomSheetCode extends StatefulWidget {
   final Future<void> Function(String code) onsubmit;
@@ -16,14 +16,21 @@ class BottomSheetCode extends StatefulWidget {
 const _bottomSheetCodeLength = 12;
 
 class _BottomSheetCodeState extends State<BottomSheetCode> {
-  String _code = '';
+  final _controller = TextEditingController();
   bool _isSubmitting = false;
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _submit() async {
-    if (_code.length != _bottomSheetCodeLength || _isSubmitting) return;
+    final code = _controller.text.trim().toUpperCase();
+    if (code.length != _bottomSheetCodeLength || _isSubmitting) return;
     setState(() => _isSubmitting = true);
     try {
-      await widget.onsubmit(_code);
+      await widget.onsubmit(code);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _isSubmitting = false);
@@ -56,23 +63,54 @@ class _BottomSheetCodeState extends State<BottomSheetCode> {
           const SizedBox(height: 20),
           Text(
             'Enter subject code',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          Center(
-            child: CodeInputField(
-              length: _bottomSheetCodeLength,
-              onCompleted: () => setState(() {}),
-              onChanged: (code) => setState(() => _code = code),
+          TextField(
+            controller: _controller,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: _bottomSheetCodeLength,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Enter $_bottomSheetCodeLength-character code',
+              counterText: '',
+              filled: true,
+              fillColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkBgSurface
+                  : AppColors.bgSurface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorderSubtle
+                      : AppColors.borderSubtle,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkAccent
+                      : AppColors.accent,
+                  width: 1.5,
+                ),
+              ),
             ),
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+            ],
           ),
           const SizedBox(height: 20),
           AppButton(
             label: 'Unlock',
-            onPressed: _code.length == _bottomSheetCodeLength ? _submit : null,
+            onPressed: _controller.text.trim().length == _bottomSheetCodeLength
+                ? _submit
+                : null,
             isLoading: _isSubmitting,
           ),
         ],

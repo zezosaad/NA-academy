@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:animate_do/animate_do.dart';
 
 class ExamsScreen extends StatelessWidget {
@@ -8,6 +9,8 @@ class ExamsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final available = [
       {'title': 'Midterm · Organic Chem', 'subj': 'Organic Chemistry', 'q': 20, 'min': 45, 'hue': 'secondary', 'free': false},
       {'title': 'Weekly quiz · Week 12', 'subj': 'Calculus II', 'q': 10, 'min': 15, 'hue': 'accent', 'free': true},
@@ -41,7 +44,7 @@ class ExamsScreen extends StatelessWidget {
                       Text(
                         'Three available. One due today.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textMuted,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                         ),
                       ),
                     ],
@@ -55,7 +58,10 @@ class ExamsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     'Available',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 20),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -64,8 +70,12 @@ class ExamsScreen extends StatelessWidget {
                 children: List.generate(available.length, (index) {
                   final e = available[index];
                   final isSecondary = e['hue'] == 'secondary';
-                  final hue = isSecondary ? AppColors.secondary : AppColors.accent;
-                  final soft = isSecondary ? AppColors.secondarySoft : AppColors.accentSoft;
+                  final hue = isSecondary
+                      ? (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                      : (isDark ? AppColors.darkAccent : AppColors.accent);
+                  final soft = isSecondary
+                      ? (isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft)
+                      : (isDark ? AppColors.darkAccentSoft : AppColors.accentSoft);
 
                   return FadeInUp(
                     delay: Duration(milliseconds: 300 + (index * 100)),
@@ -73,9 +83,11 @@ class ExamsScreen extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.bgSurface,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.borderSubtle),
+                        color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                        borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,34 +120,49 @@ class ExamsScreen extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             e['title'] as String,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 18),
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           Row(
                             children: [
-                              const Icon(LucideIcons.clock, size: 13, color: AppColors.textMuted),
+                              Icon(
+                                LucideIcons.clock,
+                                size: 13,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 '${e['min']} min',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                ),
                               ),
                               const SizedBox(width: 14),
-                              const Icon(LucideIcons.clipboardList, size: 13, color: AppColors.textMuted),
+                              Icon(
+                                LucideIcons.clipboardList,
+                                size: 13,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 '${e['q']} questions',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                ),
                               ),
                               const Spacer(),
                               ElevatedButton(
                                 onPressed: () {},
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: hue,
+                                  backgroundColor: isDark ? AppColors.darkAccent : AppColors.accent,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   minimumSize: Size.zero,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
+                                    borderRadius: BorderRadius.circular(AppShapes.buttonRadius),
                                   ),
                                 ),
                                 child: const Text('Start'),
@@ -155,7 +182,10 @@ class ExamsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     'Completed',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 20),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -164,9 +194,11 @@ class ExamsScreen extends StatelessWidget {
                 delay: const Duration(milliseconds: 700),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.borderSubtle),
+                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                    borderRadius: BorderRadius.circular(AppShapes.cardRadius),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+                    ),
                   ),
                   child: Column(
                     children: List.generate(done.length, (index) {
@@ -178,7 +210,11 @@ class ExamsScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
                           border: index < done.length - 1
-                              ? const Border(bottom: BorderSide(color: AppColors.borderSubtle))
+                              ? Border(
+                                  bottom: BorderSide(
+                                    color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+                                  ),
+                                )
                               : null,
                         ),
                         child: Row(
@@ -186,15 +222,17 @@ class ExamsScreen extends StatelessWidget {
                             Container(
                               width: 44,
                               height: 44,
-                              decoration: const BoxDecoration(
-                                color: AppColors.bgSunken,
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 '$score',
                                 style: TextStyle(
-                                  color: isSuccess ? AppColors.success : AppColors.textPrimary,
+                                  color: isSuccess
+                                      ? (isDark ? AppColors.darkSuccess : AppColors.success)
+                                      : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -207,17 +245,26 @@ class ExamsScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     d['title'] as String,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontSize: 15,
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${d['subj']} · ${d['when']}',
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.textMuted),
+                            Icon(
+                              LucideIcons.chevronRight,
+                              size: 16,
+                              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                            ),
                           ],
                         ),
                       );
