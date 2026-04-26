@@ -6,6 +6,7 @@ import { LoginPage } from "./components/LoginPage"
 import { AdminLayout } from "./components/AdminLayout"
 import { UsersPage } from "./pages/UsersPage"
 import { SubjectsPage } from "./pages/SubjectsPage"
+import { SubjectDetailPage } from "./pages/SubjectDetailPage"
 import { ExamsPage } from "./pages/ExamsPage"
 import { CodesPage } from "./pages/CodesPage"
 import { SecurityPage } from "./pages/SecurityPage"
@@ -41,6 +42,7 @@ function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/users" element={<UsersPage />} />
                     <Route path="/subjects" element={<SubjectsPage />} />
+                    <Route path="/subjects/:id" element={<SubjectDetailPage />} />
                     <Route path="/exams" element={<ExamsPage />} />
                     <Route path="/codes" element={<CodesPage />} />
                     <Route path="/security" element={<SecurityPage />} />

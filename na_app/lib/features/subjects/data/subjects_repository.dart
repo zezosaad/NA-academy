@@ -36,19 +36,52 @@ class SubjectsRepository {
 
   Future<({Subject subject, List<Lesson> lessons})> getSubject(String id) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        Endpoints.subjects.byId(id),
-      );
-      final data = response.data;
-      if (data == null) {
-        throw ApiException(statusCode: 0, code: 'INVALID_RESPONSE', message: 'Subject response is null');
+      final results = await Future.wait([
+        _dio.get<Map<String, dynamic>>(Endpoints.subjects.byId(id)),
+        _dio.get<dynamic>(Endpoints.subjects.lessons(id)),
+      ]);
+      final subjectData = results[0].data as Map<String, dynamic>?;
+      if (subjectData == null) {
+        throw ApiException(
+          statusCode: 0,
+          code: 'INVALID_RESPONSE',
+          message: 'Subject response is null',
+        );
       }
-      final subject = Subject.fromJson(data);
-      final lessonsRaw = data['lessons'] as List<dynamic>? ?? [];
+      final subject = Subject.fromJson(subjectData);
+
+      final lessonsBody = results[1].data;
+      final lessonsRaw = lessonsBody is List
+          ? lessonsBody
+          : lessonsBody is Map<String, dynamic>
+              ? (lessonsBody['data'] as List<dynamic>? ?? [])
+              : <dynamic>[];
       final lessons = lessonsRaw
           .map((e) => Lesson.fromJson(e as Map<String, dynamic>, subjectId: id))
           .toList();
       return (subject: subject, lessons: lessons);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    } on FormatException catch (e) {
+      throw ApiException(statusCode: 0, code: 'PARSE_ERROR', message: e.message);
+    }
+  }
+
+  Future<Lesson> getLesson(String lessonId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        Endpoints.lessons.byId(lessonId),
+      );
+      final data = response.data;
+      if (data == null) {
+        throw ApiException(
+          statusCode: 0,
+          code: 'INVALID_RESPONSE',
+          message: 'Lesson response is null',
+        );
+      }
+      final subjectId = data['subjectId'] as String? ?? '';
+      return Lesson.fromJson(data, subjectId: subjectId);
     } on DioException catch (e) {
       throw _mapDioException(e);
     } on FormatException catch (e) {

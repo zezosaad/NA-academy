@@ -6,6 +6,7 @@ import type {
   PaginatedResponse,
   Subject,
   SubjectBundle,
+  Lesson,
   Exam,
   SubjectCode,
   ExamCode,
@@ -164,6 +165,10 @@ class ApiClient {
     return this.request(`/api/v1/subjects?${qs}`)
   }
 
+  async getSubject(id: string): Promise<Subject> {
+    return this.request(`/api/v1/subjects/${id}`)
+  }
+
   async createSubject(data: {
     title: string
     description?: string
@@ -216,6 +221,35 @@ class ApiClient {
 
   async deleteBundle(id: string): Promise<void> {
     return this.request(`/api/v1/subject-bundles/${id}`, { method: "DELETE" })
+  }
+
+  // ── Lessons ──
+  async getLessons(subjectId: string): Promise<Lesson[]> {
+    return this.request(`/api/v1/subjects/${subjectId}/lessons`)
+  }
+
+  async createLesson(
+    subjectId: string,
+    data: { title: string; description?: string; order?: number; mediaId?: string }
+  ): Promise<Lesson> {
+    return this.request(`/api/v1/subjects/${subjectId}/lessons`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateLesson(
+    id: string,
+    data: { title?: string; description?: string; order?: number; mediaId?: string }
+  ): Promise<Lesson> {
+    return this.request(`/api/v1/lessons/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteLesson(id: string): Promise<void> {
+    return this.request(`/api/v1/lessons/${id}`, { method: "DELETE" })
   }
 
   // ── Media ──

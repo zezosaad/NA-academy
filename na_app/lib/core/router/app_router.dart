@@ -12,6 +12,7 @@ import 'package:na_app/features/onboarding/presentation/pages/onboarding_page.da
 import 'package:na_app/features/home/presentation/pages/today_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subjects_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/subject_detail_page.dart';
+import 'package:na_app/features/subjects/presentation/pages/lesson_detail_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/enter_subject_code_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_unlocking_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_expired_page.dart';
@@ -109,7 +110,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         path: 'lessons/:lessonId',
                         builder: (context, state) {
                           final lessonId = state.pathParameters['lessonId']!;
-                          return _PlaceholderPage(title: 'Lesson $lessonId');
+                          return LessonDetailPage(lessonId: lessonId);
                         },
                       ),
                     ],

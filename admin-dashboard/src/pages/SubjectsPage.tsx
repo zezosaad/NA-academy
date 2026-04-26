@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Pencil, Trash2, Video, RotateCw, FolderOpen } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Plus, Pencil, Trash2, RotateCw, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,11 +36,11 @@ import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
 import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
-import type { Subject, SubjectBundle, MediaAsset } from "@/types"
+import type { Subject, SubjectBundle } from "@/types"
 import { format } from "date-fns"
-import { Progress } from "@/components/ui/progress"
 
 export function SubjectsPage() {
+  const navigate = useNavigate()
   const { showError } = useAppModal()
   const [tab, setTab] = useState("subjects")
   const [subjects, setSubjects] = useState<Subject[]>([])
@@ -57,12 +58,6 @@ export function SubjectsPage() {
   const [bundleDialog, setBundleDialog] = useState(false)
   const [editingBundle, setEditingBundle] = useState<SubjectBundle | null>(null)
   const [bundleForm, setBundleForm] = useState({ name: "", subjectIds: [] as string[] })
-
-  // Media
-  const [mediaSubject, setMediaSubject] = useState<Subject | null>(null)
-  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([])
-  const [mediaLoading, setMediaLoading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -158,47 +153,6 @@ export function SubjectsPage() {
     }
   }
 
-  // ── Media ──
-  const openMedia = async (subject: Subject) => {
-    setMediaSubject(subject)
-    setMediaLoading(true)
-    try {
-      const assets = await api.getSubjectMedia(subject._id)
-      setMediaAssets(assets)
-    } catch {
-      setMediaAssets([])
-    } finally {
-      setMediaLoading(false)
-    }
-  }
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!mediaSubject || !e.target.files?.[0]) return
-    const file = e.target.files[0]
-    const mediaType = file.type.startsWith("video/") ? "video" as const : "image" as const
-    setUploadProgress(0)
-    try {
-      await api.uploadMedia(mediaSubject._id, file, mediaType, file.name, (pct) => setUploadProgress(pct))
-      const assets = await api.getSubjectMedia(mediaSubject._id)
-      setMediaAssets(assets)
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "Upload failed")
-    } finally {
-      setUploadProgress(null)
-      e.target.value = ""
-    }
-  }
-
-  const handleDeleteMedia = async (id: string) => {
-    if (!mediaSubject) return
-    try {
-      await api.deleteMedia(id)
-      setMediaAssets((prev) => prev.filter((m) => m._id !== id))
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "Delete failed")
-    }
-  }
-
   if (loading) return <LoadingState />
 
   return (
@@ -236,8 +190,17 @@ export function SubjectsPage() {
                 </TableHeader>
                 <TableBody>
                   {subjects.map((s) => (
-                    <TableRow key={s._id}>
-                      <TableCell className="font-medium">{s.title}</TableCell>
+                    <TableRow
+                      key={s._id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/subjects/${s._id}`)}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {s.title}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{s.category}</Badge>
                       </TableCell>
@@ -252,10 +215,10 @@ export function SubjectsPage() {
                         {format(new Date(s.createdAt), "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => openMedia(s)} title="Media">
-                            <Video className="h-4 w-4" />
-                          </Button>
+                        <div
+                          className="flex items-center justify-end gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Button variant="ghost" size="sm" onClick={() => openSubjectForm(s)} title="Edit">
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -410,72 +373,6 @@ export function SubjectsPage() {
               {editingBundle ? "Update" : "Create"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Media Dialog */}
-      <Dialog open={!!mediaSubject} onOpenChange={() => setMediaSubject(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              <FolderOpen className="mr-2 inline h-5 w-5" />
-              Media — {mediaSubject?.title}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Button asChild size="sm">
-                <label className="cursor-pointer">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Upload File
-                  <input type="file" className="hidden" accept="video/*,image/*" onChange={handleFileUpload} />
-                </label>
-              </Button>
-              {uploadProgress !== null && (
-                <div className="flex-1">
-                  <Progress value={uploadProgress} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">{uploadProgress}%</p>
-                </div>
-              )}
-            </div>
-
-            {mediaLoading ? (
-              <LoadingState />
-            ) : mediaAssets.length === 0 ? (
-              <EmptyState title="No media" description="Upload videos or images for this subject." />
-            ) : (
-              <div className="rounded-md border max-h-80 overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mediaAssets.map((m) => (
-                      <TableRow key={m._id}>
-                        <TableCell className="font-medium">{m.title || m.filename}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{m.mediaType}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {(m.fileSize / (1024 * 1024)).toFixed(1)} MB
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteMedia(m._id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
 
