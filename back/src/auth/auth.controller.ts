@@ -24,6 +24,7 @@ export class AuthController {
       password: dto.password,
       name: dto.name,
       hardwareId: dto.hardwareId,
+      level: dto.level,
     });
   }
 
@@ -38,6 +39,7 @@ export class AuthController {
       password: dto.password,
       name: dto.name,
       hardwareId: dto.hardwareId,
+      level: dto.level,
       role: 'admin' as any,
     });
   }

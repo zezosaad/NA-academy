@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -120,7 +121,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
               const CircularProgressIndicator(color: AppColors.accent),
               const SizedBox(height: 24),
               Text(
-                'جاري بدء الاختبار...',
+                'exams.take.starting'.tr(),
                 style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -134,55 +135,52 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     }
 
     if (_startError != null) {
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(LucideIcons.chevronRight),
-              onPressed: () => context.pop(),
-            ),
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(LucideIcons.chevronRight),
+            onPressed: () => context.pop(),
           ),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.circleAlert,
-                    size: 64,
-                    color: isDark ? AppColors.darkDanger : AppColors.danger,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.circleAlert,
+                  size: 64,
+                  color: isDark ? AppColors.darkDanger : AppColors.danger,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'exams.take.startErrorTitle'.tr(),
+                  style: GoogleFonts.cairo(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'تعذر بدء الاختبار',
-                    style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                    ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _startError!,
+                  style: GoogleFonts.cairo(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _startError!,
-                    style: GoogleFonts.cairo(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  AppButton(
-                    label: 'رجوع للاختبارات',
-                    onPressed: () => context.go('/exams'),
-                  ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                AppButton(
+                  label: 'exams.take.backToExams'.tr(),
+                  onPressed: () => context.go('/exams'),
+                ),
+              ],
             ),
           ),
         ),
@@ -194,7 +192,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
         body: Center(
           child: Text(
-            'لا توجد بيانات للاختبار',
+            'exams.take.noData'.tr(),
             style: GoogleFonts.cairo(fontWeight: FontWeight.w700),
           ),
         ),
@@ -205,9 +203,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     final progress = (_currentIndex + 1) / _questions.length;
     final isLastQuestion = _currentIndex == _questions.length - 1;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: PopScope(
+    return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) async {
           if (didPop) return;
@@ -223,7 +219,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             elevation: 0,
             leading: IconButton(
               icon: const Icon(LucideIcons.x),
-              tooltip: 'إغلاق الاختبار',
+              tooltip: 'exams.take.closeTooltip'.tr(),
               onPressed: () async {
                 final shouldLeave = await _showLeaveDialog(context);
                 if (shouldLeave == true && context.mounted) {
@@ -286,8 +282,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildProgressBar(BuildContext context, double progress, bool isDark) {
@@ -299,7 +294,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'السؤال ${_currentIndex + 1} من ${_questions.length}',
+                'exams.take.questionLabel'.tr(namedArgs: {
+                  'current': '${_currentIndex + 1}',
+                  'total': '${_questions.length}',
+                }),
                 style: GoogleFonts.cairo(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -353,7 +351,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
               if (_currentIndex > 0)
                 Expanded(
                   child: AppButton(
-                    label: 'السابق',
+                    label: 'exams.take.previous'.tr(),
                     type: AppButtonType.ghost,
                     onPressed: () => setState(() => _currentIndex--),
                   ),
@@ -362,7 +360,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
               Expanded(
                 flex: 2,
                 child: AppButton(
-                  label: isLastQuestion ? 'تسجيل الإجابات' : 'التالي',
+                  label: isLastQuestion
+                      ? 'exams.take.submit'.tr()
+                      : 'exams.take.next'.tr(),
                   type: AppButtonType.primary,
                   onPressed: _isSubmitting
                       ? null
@@ -391,7 +391,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           .catchError((e) {
             if (mounted) {
               setState(() {
-                _saveError = 'فشل الحفظ — سيتم إعادة المحاولة عند السؤال التالي';
+                _saveError = 'exams.take.saveError'.tr();
               });
             }
           });
@@ -411,14 +411,14 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       } on ApiException catch (e) {
         if (mounted) {
           setState(() {
-            _saveError = 'تعذر حفظ الإجابة: ${e.message}';
+            _saveError = 'exams.take.saveErrorWithDetail'.tr(namedArgs: {'error': e.message});
           });
         }
         return;
       } catch (e) {
         if (mounted) {
           setState(() {
-            _saveError = 'خطأ في الشبكة — حاول مرة أخرى';
+            _saveError = 'exams.take.networkError'.tr();
           });
         }
         return;
@@ -448,7 +448,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(
-          content: Text('فشل تسجيل الإجابات: $e', style: GoogleFonts.cairo()),
+          content: Text(
+            'exams.take.submitErrorWithDetail'.tr(namedArgs: {'error': '$e'}),
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: AppColors.danger,
         ));
         setState(() => _isSubmitting = false);
@@ -488,39 +491,36 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return showDialog<bool>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          backgroundColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            'مغادرة الاختبار؟',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
-          ),
-          content: Text(
-            'سيتم حفظ تقدمك، ولكن الوقت سيستمر في النفاذ. هل أنت متأكد؟',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.w600),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'البقاء',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.w800),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                'مغادرة',
-                style: GoogleFonts.cairo(
-                  color: AppColors.danger,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'exams.take.exitConfirmTitle'.tr(),
+          style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
         ),
+        content: Text(
+          'exams.take.exitConfirmMessage'.tr(),
+          style: GoogleFonts.cairo(fontWeight: FontWeight.w600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'exams.take.exitCancel'.tr(),
+              style: GoogleFonts.cairo(fontWeight: FontWeight.w800),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'exams.take.exitYes'.tr(),
+              style: GoogleFonts.cairo(
+                color: AppColors.danger,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

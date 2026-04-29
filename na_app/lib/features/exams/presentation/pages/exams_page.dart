@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,11 +18,9 @@ class ExamsPage extends ConsumerWidget {
     final examsAsync = ref.watch(examsListProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      body: SafeArea(
           child: RefreshIndicator(
             color: AppColors.accent,
             onRefresh: () => ref.read(examsListProvider.notifier).refresh(),
@@ -43,9 +42,9 @@ class ExamsPage extends ConsumerWidget {
                     child: FadeIn(
                       child: EmptyState(
                         icon: LucideIcons.circleAlert,
-                        title: 'تعذر تحميل الاختبارات',
-                        message: 'حدث خطأ أثناء جلب الاختبارات. يرجى المحاولة مرة أخرى.',
-                        actionLabel: 'إعادة المحاولة',
+                        title: 'exams.errorTitle'.tr(),
+                        message: 'exams.errorMessage'.tr(),
+                        actionLabel: 'common.retry'.tr(),
                         onAction: () => ref.invalidate(examsListProvider),
                       ),
                     ),
@@ -56,8 +55,8 @@ class ExamsPage extends ConsumerWidget {
                         child: FadeIn(
                           child: EmptyState(
                             icon: LucideIcons.fileText,
-                            title: 'لا توجد اختبارات متاحة',
-                            message: 'ستظهر الاختبارات هنا بمجرد فتح مادة باستخدام كود المادة.',
+                            title: 'exams.emptyTitle'.tr(),
+                            message: 'exams.emptyMessage'.tr(),
                           ),
                         ),
                       );
@@ -70,8 +69,7 @@ class ExamsPage extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
@@ -81,7 +79,7 @@ class ExamsPage extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'الاختبارات',
+            'exams.headerTitle'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 32,
               fontWeight: FontWeight.w800,
@@ -115,7 +113,7 @@ class ExamsPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             child: Text(
-              'المتاحة',
+              'exams.availableSection'.tr(),
               style: GoogleFonts.cairo(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -138,7 +136,7 @@ class ExamsPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
             child: Text(
-              'المكتملة',
+              'exams.completedSection'.tr(),
               style: GoogleFonts.cairo(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -229,13 +227,17 @@ class _ExamCard extends StatelessWidget {
                 children: [
                   _IconLabel(
                     icon: LucideIcons.clock,
-                    label: '${exam.durationMinutes} دقيقة',
+                    label: 'exams.durationMinutes'.tr(namedArgs: {
+                      'count': '${exam.durationMinutes}',
+                    }),
                     isDark: isDark,
                   ),
                   const SizedBox(width: 20),
                   _IconLabel(
                     icon: LucideIcons.clipboardList,
-                    label: '${exam.questionCount} سؤال',
+                    label: 'exams.questionCount'.tr(namedArgs: {
+                      'count': '${exam.questionCount}',
+                    }),
                     isDark: isDark,
                   ),
                 ],
@@ -248,10 +250,12 @@ class _ExamCard extends StatelessWidget {
   }
 
   String _getAttemptsText(int n) {
-    if (n == 1) return 'محاولة واحدة';
-    if (n == 2) return 'محاولتان';
-    if (n >= 3 && n <= 10) return '$n محاولات';
-    return '$n محاولة';
+    if (n == 1) return 'exams.attemptsOne'.tr();
+    if (n == 2) return 'exams.attemptsTwo'.tr();
+    if (n >= 3 && n <= 10) {
+      return 'exams.attemptsFew'.tr(namedArgs: {'count': '$n'});
+    }
+    return 'exams.attemptsMany'.tr(namedArgs: {'count': '$n'});
   }
 }
 
@@ -317,7 +321,7 @@ class _CompletedExamCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'مكتمل',
+                      'exams.statusCompletedLabel'.tr(),
                       style: GoogleFonts.cairo(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

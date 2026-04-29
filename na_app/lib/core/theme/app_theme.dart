@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_shapes.dart';
@@ -11,7 +12,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.bgCanvas,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         surface: AppColors.bgSurface,
         onSurface: AppColors.textPrimary,
         primary: AppColors.accent,
@@ -74,6 +75,11 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -126,15 +132,15 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBgCanvas,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         surface: AppColors.darkBgSurface,
         onSurface: AppColors.darkTextPrimary,
         primary: AppColors.darkAccent,
-        onPrimary: Colors.white,
+        onPrimary: AppColors.darkOnAccent,
         secondary: AppColors.darkSecondary,
-        onSecondary: Colors.white,
+        onSecondary: AppColors.darkOnSecondary,
         error: AppColors.darkDanger,
-        onError: Colors.white,
+        onError: AppColors.darkOnAccent,
         outline: AppColors.darkBorderStrong,
         outlineVariant: AppColors.darkBorderSubtle,
       ),
@@ -142,13 +148,15 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkAccent,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.darkOnAccent,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: const RoundedRectangleBorder(
             borderRadius: AppShapes.shapePill,
           ),
-          textStyle: textTheme.labelLarge,
+          textStyle: textTheme.labelLarge?.copyWith(
+            color: AppColors.darkOnAccent,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -189,6 +197,11 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

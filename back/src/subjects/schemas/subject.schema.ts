@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { EducationLevel } from '../../common/enums/education-level.enum.js';
 
 export type SubjectDocument = HydratedDocument<Subject>;
 
@@ -15,6 +16,9 @@ export class Subject {
 
   @Prop({ type: String, required: true, index: true })
   category!: string;
+
+  @Prop({ type: String, enum: EducationLevel, index: true })
+  level?: EducationLevel;
 
   @Prop({ type: Boolean, default: true, index: true })
   isActive!: boolean;

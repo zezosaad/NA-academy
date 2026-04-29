@@ -3,6 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Subject, SubjectSchema } from './schemas/subject.schema.js';
 import { SubjectBundle, SubjectBundleSchema } from './schemas/subject-bundle.schema.js';
 import { SubjectCode, SubjectCodeSchema } from '../activation-codes/schemas/subject-code.schema.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
+import { Lesson, LessonSchema } from '../lessons/schemas/lesson.schema.js';
+import {
+  LessonProgress,
+  LessonProgressSchema,
+} from '../lesson-progress/schemas/lesson-progress.schema.js';
 import { SubjectsService } from './subjects.service.js';
 import { SubjectsController } from './subjects.controller.js';
 
@@ -12,6 +18,9 @@ import { SubjectsController } from './subjects.controller.js';
       { name: Subject.name, schema: SubjectSchema },
       { name: SubjectBundle.name, schema: SubjectBundleSchema },
       { name: SubjectCode.name, schema: SubjectCodeSchema },
+      { name: User.name, schema: UserSchema },
+      { name: Lesson.name, schema: LessonSchema },
+      { name: LessonProgress.name, schema: LessonProgressSchema },
     ]),
   ],
   controllers: [SubjectsController],

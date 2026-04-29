@@ -90,7 +90,12 @@ class SubjectsRepository {
           message: 'Lesson response is null',
         );
       }
-      final subjectId = data['subjectId'] as String? ?? '';
+      final subjectId = data['subjectId'] as String?;
+      if (subjectId == null || subjectId.isEmpty) {
+        throw FormatException(
+          'Lesson.getLesson: missing "subjectId" in response for lessonId=$lessonId',
+        );
+      }
       return Lesson.fromJson(data, subjectId: subjectId);
     } on DioException catch (e) {
       throw _mapDioException(e);

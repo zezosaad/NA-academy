@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/empty_state.dart';
 import 'package:na_app/core/widgets/max_text_scale.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
+import 'package:na_app/features/home/data/home_repository.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/features/subjects/presentation/controllers/subjects_controller.dart';
 import 'package:animate_do/animate_do.dart';
@@ -21,40 +23,54 @@ class SubjectDetailPage extends ConsumerWidget {
     final detailAsync = ref.watch(subjectDetailProvider(subjectId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          // Refresh the subjects list and today view so the unlock state is in
+          // sync when the user returns to either screen.
+          ref.invalidate(subjectsListProvider);
+          ref.invalidate(todayViewStateProvider);
+        }
+      },
       child: detailAsync.when(
-        loading: () => Scaffold(
-          backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: const _BackButton(),
-          ),
-          body: const Center(
-            child: CircularProgressIndicator(color: AppColors.accent),
-          ),
-        ),
-        error: (e, _) {
-          debugPrint('[SubjectDetail] load error: $e');
-          return Scaffold(
-            backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+          loading: () => Scaffold(
+            backgroundColor: isDark
+                ? AppColors.darkBgCanvas
+                : AppColors.bgCanvas,
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
               leading: const _BackButton(),
             ),
-            body: EmptyState(
-              icon: LucideIcons.circleAlert,
-              title: 'تعذر تحميل المادة',
-              message: 'حدث خطأ أثناء جلب تفاصيل المادة، يرجى المحاولة مرة أخرى.',
-              actionLabel: 'إعادة المحاولة',
-              onAction: () => ref.invalidate(subjectDetailProvider(subjectId)),
+            body: const Center(
+              child: CircularProgressIndicator(color: AppColors.accent),
             ),
-          );
-        },
-        data: (data) => _Content(subject: data.subject, lessons: data.lessons),
-      ),
+          ),
+          error: (e, _) {
+            debugPrint('[SubjectDetail] load error: $e');
+            return Scaffold(
+              backgroundColor: isDark
+                  ? AppColors.darkBgCanvas
+                  : AppColors.bgCanvas,
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: const _BackButton(),
+              ),
+              body: EmptyState(
+                icon: LucideIcons.circleAlert,
+                title: 'subjects.detail.loadErrorTitle'.tr(),
+                message: 'subjects.detail.loadErrorMessage'.tr(),
+                actionLabel: 'common.retry'.tr(),
+                onAction: () =>
+                    ref.invalidate(subjectDetailProvider(subjectId)),
+              ),
+            );
+          },
+          data: (data) =>
+              _Content(subject: data.subject, lessons: data.lessons),
+        ),
     );
   }
 }
@@ -81,7 +97,7 @@ class _BackButton extends StatelessWidget {
           size: 20,
         ),
         onPressed: () => context.pop(),
-        tooltip: 'رجوع',
+        tooltip: 'common.back'.tr(),
       ),
     );
   }
@@ -135,11 +151,13 @@ class _Content extends StatelessWidget {
                 delay: const Duration(milliseconds: 200),
                 duration: const Duration(milliseconds: 500),
                 child: Text(
-                  'قائمة الدروس',
+                  'subjects.detail.lessonsListTitle'.tr(),
                   style: GoogleFonts.cairo(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -157,8 +175,12 @@ class _Content extends StatelessWidget {
   }
 
   Widget _buildHero(BuildContext context, bool isDark) {
-    final activeColor = subject.progressPercent > 0 ? AppColors.accent : AppColors.secondary;
-    final darkActiveColor = subject.progressPercent > 0 ? AppColors.darkAccent : AppColors.darkSecondary;
+    final activeColor = subject.progressPercent > 0
+        ? AppColors.accent
+        : AppColors.secondary;
+    final darkActiveColor = subject.progressPercent > 0
+        ? AppColors.darkAccent
+        : AppColors.darkSecondary;
     final color = isDark ? darkActiveColor : activeColor;
 
     return Container(
@@ -166,10 +188,7 @@ class _Content extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.1),
@@ -202,7 +221,9 @@ class _Content extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -212,13 +233,18 @@ class _Content extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        '${subject.lessonCount} دروس',
+                        'subjects.lessonsCount'.tr(namedArgs: {
+                          'count': '${subject.lessonCount}',
+                        }),
                         style: GoogleFonts.cairo(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -235,7 +261,9 @@ class _Content extends StatelessWidget {
                         style: GoogleFonts.cairo(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
                           height: 1.4,
                         ),
                       ),
@@ -265,9 +293,24 @@ class _Content extends StatelessWidget {
     }
 
     final stats = [
-      {'n': '$done', 'l': 'تمت', 'icon': LucideIcons.check, 'color': AppColors.success},
-      {'n': '$active', 'l': 'قيد الدراسة', 'icon': LucideIcons.clock, 'color': AppColors.warning},
-      {'n': '$locked', 'l': 'متبقية', 'icon': LucideIcons.lock, 'color': AppColors.textMuted},
+      {
+        'n': '$done',
+        'l': 'subjects.detail.statsCompleted'.tr(),
+        'icon': LucideIcons.check,
+        'color': AppColors.success,
+      },
+      {
+        'n': '$active',
+        'l': 'subjects.detail.statsInProgress'.tr(),
+        'icon': LucideIcons.clock,
+        'color': AppColors.warning,
+      },
+      {
+        'n': '$locked',
+        'l': 'subjects.detail.statsRemaining'.tr(),
+        'icon': LucideIcons.lock,
+        'color': AppColors.textMuted,
+      },
     ];
 
     return Row(
@@ -275,36 +318,36 @@ class _Content extends StatelessWidget {
         final color = s['color'] as Color;
         return Expanded(
           child: Container(
-            margin: EdgeInsets.only(left: s == stats.last ? 0 : 12),
+            margin: EdgeInsetsDirectional.only(end: s == stats.last ? 0 : 12),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+                color: isDark
+                    ? AppColors.darkBorderSubtle
+                    : AppColors.borderSubtle,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             child: Column(
               children: [
-                Icon(
-                  s['icon'] as IconData,
-                  color: color,
-                  size: 24,
-                ),
+                Icon(s['icon'] as IconData, color: color, size: 24),
                 const SizedBox(height: 8),
                 Text(
                   s['n'] as String,
                   style: GoogleFonts.cairo(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 Text(
@@ -312,7 +355,9 @@ class _Content extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -329,10 +374,27 @@ class _Content extends StatelessWidget {
     List<Lesson> lessons,
   ) {
     if (lessons.isEmpty) {
-      return EmptyState(
-        icon: LucideIcons.bookOpen,
-        title: 'لا توجد دروس بعد',
-        message: 'ستظهر الدروس هنا بمجرد إضافتها للمادة.',
+      return Container(
+        height: 160,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: EmptyState(
+          icon: LucideIcons.bookOpen,
+          title: 'subjects.detail.noLessonsTitle'.tr(),
+          message: 'subjects.detail.noLessonsMessage'.tr(),
+        ),
       );
     }
 
@@ -348,7 +410,7 @@ class _Content extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 15,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -385,7 +447,9 @@ class _LessonRow extends StatelessWidget {
 
     switch (lesson.status) {
       case LessonStatus.done:
-        iconBg = (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.15);
+        iconBg = (isDark ? AppColors.darkAccent : AppColors.accent).withValues(
+          alpha: 0.15,
+        );
         iconColor = isDark ? AppColors.darkAccent : AppColors.accent;
         icon = const Icon(LucideIcons.check, size: 16);
       case LessonStatus.active:
@@ -410,16 +474,13 @@ class _LessonRow extends StatelessWidget {
               );
             },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: iconBg,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
               alignment: Alignment.center,
               child: DefaultTextStyle(
                 style: TextStyle(color: iconColor),
@@ -440,17 +501,25 @@ class _LessonRow extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: lesson.status == LessonStatus.locked
-                          ? (isDark ? AppColors.darkTextMuted : AppColors.textMuted)
-                          : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                          ? (isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted)
+                          : (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary),
                     ),
                   ),
                   if (lesson.estimatedMinutes != null)
                     Text(
-                      '${lesson.estimatedMinutes} دقيقة',
+                      'subjects.minutesCount'.tr(namedArgs: {
+                        'count': '${lesson.estimatedMinutes}',
+                      }),
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                 ],
@@ -463,13 +532,17 @@ class _LessonRow extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.darkSecondary : AppColors.secondary).withValues(alpha: 0.15),
+                  color:
+                      (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                          .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'متابعة',
+                  'subjects.detail.continueAction'.tr(),
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                    color: isDark
+                        ? AppColors.darkSecondary
+                        : AppColors.secondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -477,7 +550,7 @@ class _LessonRow extends StatelessWidget {
               ),
             if (lesson.status == LessonStatus.locked)
               Tooltip(
-                message: 'أكمل الدروس السابقة أولاً',
+                message: 'subjects.detail.lockedTooltip'.tr(),
                 child: Icon(
                   LucideIcons.lock,
                   size: 18,
@@ -487,7 +560,8 @@ class _LessonRow extends StatelessWidget {
             const SizedBox(width: 8),
             if (lesson.status != LessonStatus.locked)
               Icon(
-                LucideIcons.chevronLeft, // Arrow left since RTL direction means forward is left
+                LucideIcons
+                    .chevronLeft, // Arrow left since RTL direction means forward is left
                 size: 20,
                 color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               ),

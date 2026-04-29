@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,11 +19,9 @@ class SubjectsPage extends ConsumerWidget {
     final subjectsAsync = ref.watch(subjectsListProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      body: SafeArea(
           child: RefreshIndicator(
             color: AppColors.accent,
             onRefresh: () => ref.read(subjectsListProvider.notifier).refresh(),
@@ -52,9 +51,9 @@ class SubjectsPage extends ConsumerWidget {
                     child: FadeIn(
                       child: EmptyState(
                         icon: LucideIcons.circleAlert,
-                        title: 'تعذر تحميل المواد',
-                        message: 'حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.',
-                        actionLabel: 'إعادة المحاولة',
+                        title: 'subjects.errorTitle'.tr(),
+                        message: 'subjects.errorMessage'.tr(),
+                        actionLabel: 'common.retry'.tr(),
                         onAction: () { ref.invalidate(subjectsListProvider); },
                       ),
                     ),
@@ -65,9 +64,9 @@ class SubjectsPage extends ConsumerWidget {
                         child: FadeIn(
                           child: EmptyState(
                             icon: LucideIcons.bookOpen,
-                            title: 'لا توجد مواد بعد',
-                            message: 'أدخل كود المادة لفتح أول مادة دراسية لك.',
-                            actionLabel: 'إدخال الكود',
+                            title: 'subjects.emptyTitle'.tr(),
+                            message: 'subjects.emptyMessage'.tr(),
+                            actionLabel: 'subjects.enterCodeAction'.tr(),
                             onAction: () => context.go('/subjects/enter-code'),
                           ),
                         ),
@@ -81,8 +80,7 @@ class SubjectsPage extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
@@ -92,7 +90,7 @@ class SubjectsPage extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'المواد الدراسية',
+            'subjects.headerTitle'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 32,
               fontWeight: FontWeight.w800,
@@ -164,7 +162,7 @@ class SubjectsPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'هل لديك كود مادة؟',
+                      'subjects.codeBanner.title'.tr(),
                       style: GoogleFonts.cairo(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -173,7 +171,7 @@ class SubjectsPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'انقر هنا لفتح مادة جديدة',
+                      'subjects.codeBanner.subtitle'.tr(),
                       style: GoogleFonts.cairo(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

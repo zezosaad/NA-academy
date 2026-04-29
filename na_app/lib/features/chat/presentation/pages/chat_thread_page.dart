@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -178,7 +179,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
               color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
             onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Go back',
+            tooltip: 'chat.thread.goBack'.tr(),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,8 +244,9 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
               onSendText: _handleSendText,
               onTextChanged: _handleTypingChanged,
               enabled: true,
-              hintText:
-                  'Message ${widget.counterpartyName.split(' ').first}...',
+              hintText: 'chat.thread.composerHintNamed'.tr(namedArgs: {
+                'name': widget.counterpartyName.split(' ').first,
+              }),
             ),
           ],
         ),
@@ -312,7 +314,7 @@ class _EmptyConversation extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              'Send a message to start the conversation.',
+              'chat.thread.startConversationPrompt'.tr(),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               ),

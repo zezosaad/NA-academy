@@ -299,6 +299,8 @@ mixin _$Lesson {
   String get title => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
   LessonStatus get status => throw _privateConstructorUsedError;
+  bool get isCompleted => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
   String? get mediaAssetId => throw _privateConstructorUsedError;
   int? get estimatedMinutes => throw _privateConstructorUsedError;
 
@@ -319,6 +321,8 @@ abstract class $LessonCopyWith<$Res> {
     String title,
     int order,
     LessonStatus status,
+    bool isCompleted,
+    String? description,
     String? mediaAssetId,
     int? estimatedMinutes,
   });
@@ -344,6 +348,8 @@ class _$LessonCopyWithImpl<$Res, $Val extends Lesson>
     Object? title = null,
     Object? order = null,
     Object? status = null,
+    Object? isCompleted = null,
+    Object? description = freezed,
     Object? mediaAssetId = freezed,
     Object? estimatedMinutes = freezed,
   }) {
@@ -369,6 +375,14 @@ class _$LessonCopyWithImpl<$Res, $Val extends Lesson>
                 ? _value.status
                 : status // ignore: cast_nullable_to_non_nullable
                       as LessonStatus,
+            isCompleted: null == isCompleted
+                ? _value.isCompleted
+                : isCompleted // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            description: freezed == description
+                ? _value.description
+                : description // ignore: cast_nullable_to_non_nullable
+                      as String?,
             mediaAssetId: freezed == mediaAssetId
                 ? _value.mediaAssetId
                 : mediaAssetId // ignore: cast_nullable_to_non_nullable
@@ -397,6 +411,8 @@ abstract class _$$LessonImplCopyWith<$Res> implements $LessonCopyWith<$Res> {
     String title,
     int order,
     LessonStatus status,
+    bool isCompleted,
+    String? description,
     String? mediaAssetId,
     int? estimatedMinutes,
   });
@@ -421,6 +437,8 @@ class __$$LessonImplCopyWithImpl<$Res>
     Object? title = null,
     Object? order = null,
     Object? status = null,
+    Object? isCompleted = null,
+    Object? description = freezed,
     Object? mediaAssetId = freezed,
     Object? estimatedMinutes = freezed,
   }) {
@@ -446,6 +464,14 @@ class __$$LessonImplCopyWithImpl<$Res>
             ? _value.status
             : status // ignore: cast_nullable_to_non_nullable
                   as LessonStatus,
+        isCompleted: null == isCompleted
+            ? _value.isCompleted
+            : isCompleted // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        description: freezed == description
+            ? _value.description
+            : description // ignore: cast_nullable_to_non_nullable
+                  as String?,
         mediaAssetId: freezed == mediaAssetId
             ? _value.mediaAssetId
             : mediaAssetId // ignore: cast_nullable_to_non_nullable
@@ -468,6 +494,8 @@ class _$LessonImpl implements _Lesson {
     required this.title,
     required this.order,
     this.status = LessonStatus.locked,
+    this.isCompleted = false,
+    this.description,
     this.mediaAssetId,
     this.estimatedMinutes,
   });
@@ -484,13 +512,18 @@ class _$LessonImpl implements _Lesson {
   @JsonKey()
   final LessonStatus status;
   @override
+  @JsonKey()
+  final bool isCompleted;
+  @override
+  final String? description;
+  @override
   final String? mediaAssetId;
   @override
   final int? estimatedMinutes;
 
   @override
   String toString() {
-    return 'Lesson(id: $id, subjectId: $subjectId, title: $title, order: $order, status: $status, mediaAssetId: $mediaAssetId, estimatedMinutes: $estimatedMinutes)';
+    return 'Lesson(id: $id, subjectId: $subjectId, title: $title, order: $order, status: $status, isCompleted: $isCompleted, description: $description, mediaAssetId: $mediaAssetId, estimatedMinutes: $estimatedMinutes)';
   }
 
   @override
@@ -504,6 +537,10 @@ class _$LessonImpl implements _Lesson {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.order, order) || other.order == order) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.isCompleted, isCompleted) ||
+                other.isCompleted == isCompleted) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
             (identical(other.mediaAssetId, mediaAssetId) ||
                 other.mediaAssetId == mediaAssetId) &&
             (identical(other.estimatedMinutes, estimatedMinutes) ||
@@ -518,6 +555,8 @@ class _$LessonImpl implements _Lesson {
     title,
     order,
     status,
+    isCompleted,
+    description,
     mediaAssetId,
     estimatedMinutes,
   );
@@ -538,6 +577,8 @@ abstract class _Lesson implements Lesson {
     required final String title,
     required final int order,
     final LessonStatus status,
+    final bool isCompleted,
+    final String? description,
     final String? mediaAssetId,
     final int? estimatedMinutes,
   }) = _$LessonImpl;
@@ -552,6 +593,10 @@ abstract class _Lesson implements Lesson {
   int get order;
   @override
   LessonStatus get status;
+  @override
+  bool get isCompleted;
+  @override
+  String? get description;
   @override
   String? get mediaAssetId;
   @override

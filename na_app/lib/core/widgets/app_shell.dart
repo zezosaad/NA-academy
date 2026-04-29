@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -14,22 +15,19 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: OfflineBanner(
-        child: Scaffold(
-          extendBody: true,
-          body: navigationShell,
-          bottomNavigationBar: _FloatingTabBar(
-            currentIndex: navigationShell.currentIndex,
-            onTabSelected: (index) {
-              HapticFeedback.mediumImpact();
-              navigationShell.goBranch(
-                index,
-                initialLocation: index == navigationShell.currentIndex,
-              );
-            },
-          ),
+    return OfflineBanner(
+      child: Scaffold(
+        extendBody: true,
+        body: navigationShell,
+        bottomNavigationBar: _FloatingTabBar(
+          currentIndex: navigationShell.currentIndex,
+          onTabSelected: (index) {
+            HapticFeedback.mediumImpact();
+            navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            );
+          },
         ),
       ),
     );
@@ -46,11 +44,11 @@ class _FloatingTabBar extends StatelessWidget {
   });
 
   static final _tabs = [
-    _TabData(icon: LucideIcons.sun, label: 'اليوم'),
-    _TabData(icon: LucideIcons.bookOpen, label: 'المواد'),
-    _TabData(icon: LucideIcons.graduationCap, label: 'الاختبارات'),
-    _TabData(icon: LucideIcons.messageCircle, label: 'المحادثات'),
-    _TabData(icon: LucideIcons.user, label: 'الحساب'),
+    _TabData(icon: LucideIcons.sun, labelKey: 'appShell.tabToday'),
+    _TabData(icon: LucideIcons.bookOpen, labelKey: 'appShell.tabSubjects'),
+    _TabData(icon: LucideIcons.graduationCap, labelKey: 'appShell.tabExams'),
+    _TabData(icon: LucideIcons.messageCircle, labelKey: 'appShell.tabChat'),
+    _TabData(icon: LucideIcons.user, labelKey: 'appShell.tabProfile'),
   ];
 
   @override
@@ -142,9 +140,9 @@ class _TabItem extends StatelessWidget {
               child: SizedBox(
                 child: isActive
                     ? Padding(
-                        padding: const EdgeInsets.only(right: 6.0),
+                        padding: const EdgeInsetsDirectional.only(start: 6.0),
                         child: Text(
-                          tab.label,
+                          tab.labelKey.tr(),
                           style: GoogleFonts.cairo(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -164,7 +162,7 @@ class _TabItem extends StatelessWidget {
 
 class _TabData {
   final IconData icon;
-  final String label;
+  final String labelKey;
 
-  const _TabData({required this.icon, required this.label});
+  const _TabData({required this.icon, required this.labelKey});
 }

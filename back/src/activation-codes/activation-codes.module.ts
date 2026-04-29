@@ -13,6 +13,7 @@ import { SubjectsModule } from '../subjects/subjects.module.js';
 import { ExamsModule } from '../exams/exams.module.js';
 
 import { SubjectBundle, SubjectBundleSchema } from '../subjects/schemas/subject-bundle.schema.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SubjectBundle, SubjectBundleSchema } from '../subjects/schemas/subject-
       { name: ExamCode.name, schema: ExamCodeSchema },
       { name: ActivationRateLimit.name, schema: ActivationRateLimitSchema },
       { name: SubjectBundle.name, schema: SubjectBundleSchema },
+      { name: User.name, schema: UserSchema },
     ]),
     SubjectsModule,
     forwardRef(() => ExamsModule),

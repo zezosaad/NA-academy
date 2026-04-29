@@ -49,6 +49,8 @@ class _LessonEndpoints {
   static const String _prefix = '/lessons';
 
   String byId(String id) => '$_prefix/$id';
+  String progress(String id) => '$_prefix/$id/progress';
+  String complete(String id) => '$_prefix/$id/complete';
 }
 
 class _ActivationCodeEndpoints {

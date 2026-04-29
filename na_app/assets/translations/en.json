@@ -1,0 +1,405 @@
+{
+  "common": {
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "save": "Save",
+    "close": "Close",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "tryAgain": "Try again",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "session": {
+    "expired": "Session ended — please sign in again"
+  },
+  "appShell": {
+    "tabToday": "Today",
+    "tabSubjects": "Subjects",
+    "tabExams": "Exams",
+    "tabChat": "Chat",
+    "tabProfile": "Profile"
+  },
+  "today": {
+    "errorTitle": "Something went wrong",
+    "errorMessage": "We couldn't load today's data. Please try again.",
+    "settingsTooltip": "Settings",
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "streakTitle": "On a {count}-day streak",
+    "streakSubtitle": "Keep going — you're doing great!",
+    "resumeLearningHeader": "Continue learning",
+    "dailyTasksHeader": "Today's tasks",
+    "subjectsHeader": "Your subjects",
+    "seeAll": "See all",
+    "noSubjectsTitle": "No subjects yet",
+    "noSubjectsMessage": "Enter your subject code to unlock your first subject.",
+    "enterCode": "Enter code",
+    "dateFormat": "{day}, {month} {dayNumber}",
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue your learning journey.",
+      "emailLabel": "Email",
+      "emailHint": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordHint": "Enter your password",
+      "forgotPassword": "Forgot your password?",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account? ",
+      "createAccount": "Create one",
+      "invalidCredentials": "Invalid email or password"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Begin your learning journey with NA Academy.",
+      "nameLabel": "Full name",
+      "nameHint": "John Doe",
+      "emailLabel": "Email",
+      "emailHint": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordHint": "At least 8 characters",
+      "passwordStrengthLabel": "Password strength: ",
+      "passwordStrong": "Strong",
+      "passwordGood": "Good",
+      "passwordOk": "Fair",
+      "passwordWeak": "Weak",
+      "levelLabel": "Education level",
+      "levelMissing": "Please choose your education level.",
+      "termsIntro": "I agree to the ",
+      "termsOfService": "Terms of Service",
+      "termsAnd": " and ",
+      "privacyPolicy": "Privacy Policy",
+      "submit": "Create account",
+      "failure": "Registration failed. Please try again.",
+      "haveAccount": "Already have an account? ",
+      "signIn": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Forgot password?",
+      "subtitle": "Enter your email and we'll send you a link to reset your password.",
+      "emailLabel": "Email",
+      "emailHint": "you@example.com",
+      "submit": "Send reset link",
+      "successTitle": "Check your inbox",
+      "successMessage": "We sent a password reset link to {email}. It expires in 30 minutes.",
+      "backToSignIn": "Back to sign in",
+      "resend": "Resend email",
+      "failure": "Something went wrong. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set new password",
+      "subtitle": "Choose a strong password for your account.",
+      "newPasswordLabel": "New password",
+      "newPasswordHint": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordHint": "Re-enter your password",
+      "passwordsMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "invalidToken": "Invalid or missing reset token",
+      "minLengthHint": "At least 8 characters",
+      "submit": "Reset password",
+      "failure": "This reset link is invalid, expired, or already used."
+    },
+    "splash": {
+      "loading": "Loading…"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "preferences": "Preferences",
+    "theme": {
+      "system": "System",
+      "systemDescription": "Follow device settings",
+      "light": "Light",
+      "lightDescription": "Always use light theme",
+      "dark": "Dark",
+      "darkDescription": "Always use dark theme",
+      "semanticLabel": "{label} theme: {description}"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "enabled": "Daily reminders are enabled",
+      "disabled": "Daily reminders are disabled"
+    },
+    "language": {
+      "title": "Language",
+      "system": "System",
+      "systemDescription": "Follow device settings",
+      "english": "English",
+      "englishDescription": "Use English",
+      "arabic": "العربية",
+      "arabicDescription": "Use Arabic",
+      "semanticLabel": "{label} language: {description}"
+    }
+  },
+  "subjects": {
+    "headerTitle": "Subjects",
+    "emptyTitle": "No subjects yet",
+    "emptyMessage": "Enter your subject code to unlock your first subject.",
+    "enterCodeAction": "Enter code",
+    "errorTitle": "Couldn't load subjects",
+    "errorMessage": "Something went wrong while contacting the server. Please try again.",
+    "lockedBadge": "Locked",
+    "lessonsCount": "{count} lessons",
+    "minutesCount": "{count} min",
+    "progressLabel": "Progress",
+    "codeBanner": {
+      "title": "Have a subject code?",
+      "subtitle": "Tap here to unlock a new subject."
+    },
+    "detail": {
+      "lessonsListTitle": "Lessons",
+      "noLessonsTitle": "No lessons yet",
+      "noLessonsMessage": "Lessons will appear here once they're added to this subject.",
+      "loadErrorTitle": "Couldn't load this subject",
+      "loadErrorMessage": "Something went wrong fetching this subject. Please try again.",
+      "statsCompleted": "Completed",
+      "statsInProgress": "In progress",
+      "statsRemaining": "Remaining",
+      "continueAction": "Continue",
+      "lockedTooltip": "Finish the previous lessons first"
+    },
+    "lesson": {
+      "loadErrorTitle": "Could not load lesson",
+      "loadErrorMessage": "Unable to load lesson. Please try again.",
+      "markCompleteAction": "Mark as complete",
+      "completed": "Completed",
+      "markCompleteFailure": "Failed to mark complete. Try again.",
+      "noVideo": "No video for this lesson",
+      "videoLoadFailure": "Failed to load video",
+      "goBackTooltip": "Go back"
+    },
+    "card": {
+      "semanticLabel": "{title}, {count} lessons",
+      "lockedBadge": "Locked — needs code"
+    },
+    "enterCode": {
+      "title": "Enter subject code",
+      "subtitleNamed": "Enter the {length}-character code to unlock \"{name}\".",
+      "subtitleGeneric": "Enter the {length}-character code your instructor gave you to unlock a new subject.",
+      "codeHint": "Enter {length}-character code",
+      "submit": "Unlock subject",
+      "helpText": "Codes are provided by your instructor or school administration.",
+      "errorRateLimited": "Too many attempts. Please wait and try again.",
+      "errorDeviceMismatch": "This code is linked to another device.",
+      "errorInvalid": "Invalid code. Please check and try again.",
+      "errorGeneric": "Something went wrong. Please try again."
+    },
+    "unlocking": {
+      "loadingTitle": "Unlocking subject…",
+      "successTitle": "Subject unlocked!",
+      "step1": "Verifying code",
+      "step2": "Linking to teacher",
+      "step3": "Downloading lesson index"
+    },
+    "codeExpired": {
+      "title": "Code expired",
+      "detail": "This code expired on {date}"
+    },
+    "codeUsed": {
+      "title": "Code already used",
+      "message": "This activation code has already been redeemed.",
+      "detail": "Used on {date}"
+    },
+    "codeErrorActions": {
+      "tryAnother": "Try another code",
+      "messageTeacher": "Message teacher"
+    }
+  },
+  "exams": {
+    "headerTitle": "Exams",
+    "emptyTitle": "No exams available",
+    "emptyMessage": "Exams will appear here once you unlock a subject with a code.",
+    "errorTitle": "Couldn't load exams",
+    "errorMessage": "Something went wrong fetching exams. Please try again.",
+    "availableSection": "Available",
+    "completedSection": "Completed",
+    "statusCompletedLabel": "Completed",
+    "durationMinutes": "{count} min",
+    "questionCount": "{count} questions",
+    "attemptsOne": "1 attempt",
+    "attemptsTwo": "2 attempts",
+    "attemptsFew": "{count} attempts",
+    "attemptsMany": "{count} attempts",
+    "examFallbackTitle": "Exam",
+    "enterCode": {
+      "title": "Enter exam code",
+      "heading": "Enter your exam code",
+      "helpText": "Type or paste the 6-character code from your instructor",
+      "submit": "Unlock and start exam",
+      "errorInvalid": "Invalid code. Please check and try again.",
+      "errorRateLimited": "Too many attempts. Please wait and try again.",
+      "errorDeviceMismatch": "This code is linked to another device."
+    },
+    "take": {
+      "starting": "Starting exam…",
+      "startErrorTitle": "Couldn't start the exam",
+      "backToExams": "Back to exams",
+      "noData": "No exam data available",
+      "closeTooltip": "Close exam",
+      "questionLabel": "Question {current} of {total}",
+      "next": "Next",
+      "previous": "Previous",
+      "submit": "Submit answers",
+      "submitting": "Submitting…",
+      "exitConfirmTitle": "Leave exam?",
+      "exitConfirmMessage": "Your progress will be saved but time will keep running. Are you sure?",
+      "exitYes": "Leave",
+      "exitCancel": "Stay",
+      "saveError": "Save failed — we'll retry on next question",
+      "saveErrorWithDetail": "Couldn't save the answer: {error}",
+      "networkError": "Network error — try again",
+      "submitErrorWithDetail": "Failed to submit answers: {error}",
+      "optionSemanticLabel": "Option {label}: {text}"
+    },
+    "result": {
+      "title": "Exam result",
+      "passed": "Passed",
+      "failed": "Failed",
+      "timedOut": "Time's up",
+      "scorePercent": "You scored {percent}%",
+      "titleExcellent": "Excellent!",
+      "titleGreat": "Well done!",
+      "titlePractice": "Keep practicing",
+      "titleKeepStudying": "Keep studying",
+      "reviewSection": "Question review",
+      "yourAnswer": "Your answer:",
+      "correctAnswer": "Correct answer:",
+      "backToExams": "Back to exams",
+      "backToSubjects": "Back to subjects"
+    }
+  },
+  "chat": {
+    "headerTitle": "Conversations",
+    "headerSubtitle": "Connect with your teachers and classmates easily.",
+    "emptyTitle": "No conversations yet",
+    "emptyMessage": "Enter a subject code to unlock your teacher and group chats.",
+    "emptyAction": "Enter subject code",
+    "errorTitle": "Couldn't load conversations",
+    "noMessagesYet": "No messages yet",
+    "imageMessagePreview": "📷 Image",
+    "thread": {
+      "inputHint": "Type a message…",
+      "sendTooltip": "Send",
+      "loadError": "Couldn't load the conversation.",
+      "sendError": "Failed to send. Tap to retry.",
+      "typing": "Typing…",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "fallbackName": "Tutor",
+      "imageAttached": "Image attached",
+      "goBack": "Go back",
+      "composerHintNamed": "Message {name}…",
+      "startConversationPrompt": "Send a message to start the conversation.",
+      "messageDeleted": "Message removed",
+      "imageSemantic": "Chat image",
+      "isTyping": "{name} is typing"
+    },
+    "composer": {
+      "hint": "Type a message…",
+      "attachImage": "Attach image",
+      "send": "Send",
+      "imageTooLarge": "Image must be smaller than 10 MB",
+      "imageTypeNotAllowed": "Only JPEG, PNG, WebP, and HEIC images are allowed"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get started",
+    "haveAccount": "I already have an account",
+    "slide1": {
+      "title": "Welcome to NA-Academy",
+      "description": "Your all-in-one learning platform. Discover a world of knowledge and engage with your subjects in a modern, innovative way."
+    },
+    "slide2": {
+      "title": "Connect with top teachers",
+      "description": "Don't hesitate to ask questions. Talk directly with the best teachers and get the guidance and support you need."
+    },
+    "slide3": {
+      "title": "Test your skills and excel",
+      "description": "Take exams smoothly and track your academic progress so you can reach your goals with confidence."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "headerTitle": "Your account",
+    "settingsButton": "Account settings",
+    "defaultName": "Student",
+    "studentBadge": "Student",
+    "weeklyActivity": "Your weekly activity",
+    "settingsContent": "Settings & content",
+    "editAction": "Edit profile",
+    "logoutAction": "Sign out",
+    "logoutConfirmTitle": "Sign out",
+    "logoutConfirmMessage": "Are you sure you want to sign out of your account?",
+    "logoutConfirmYes": "Sign out",
+    "logoutConfirmCancel": "Cancel",
+    "edit": {
+      "title": "Edit profile",
+      "nameLabel": "Full name",
+      "emailLabel": "Email",
+      "save": "Save changes",
+      "successMessage": "Profile updated.",
+      "failure": "Couldn't save changes. Please try again."
+    },
+    "stats": {
+      "subjects": "Subjects",
+      "lessons": "Lessons completed",
+      "streak": "Day streak",
+      "streakLabel": "Streak",
+      "streakUnit": "days",
+      "lessonsLabel": "Lessons",
+      "lessonsUnit": "completed",
+      "examsLabel": "Exams",
+      "examsUnit": "done"
+    },
+    "menu": {
+      "settings": "Settings",
+      "help": "Help & support",
+      "about": "About",
+      "certificates": "Certificates",
+      "certificatesHint": "View your earned certificates",
+      "savedLessons": "Saved lessons",
+      "savedLessonsHint": "Lessons you've bookmarked"
+    }
+  },
+  "education": {
+    "level": {
+      "secondary2": "Secondary — Year 2",
+      "secondary3": "Secondary — Year 3",
+      "secondary4": "Secondary — Year 4"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -31,11 +32,9 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final examAsync = ref.watch(examsListProvider);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: Container(
@@ -57,7 +56,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
             ),
           ),
           title: Text(
-            'إدخال كود الاختبار',
+            'exams.enterCode.title'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -79,7 +78,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                   data: (exams) {
                     final exam = exams.whereType<Exam>().firstWhere(
                           (e) => e.id == widget.examId,
-                          orElse: () => Exam(id: widget.examId, title: 'الاختبار', subjectId: ''),
+                          orElse: () => Exam(id: widget.examId, title: 'exams.examFallbackTitle'.tr(), subjectId: ''),
                         );
                     return FadeInDown(
                       duration: const Duration(milliseconds: 500),
@@ -92,7 +91,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                   delay: const Duration(milliseconds: 100),
                   duration: const Duration(milliseconds: 500),
                   child: Text(
-                    'أدخل كود الاختبار الخاص بك',
+                    'exams.enterCode.heading'.tr(),
                     style: GoogleFonts.cairo(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -106,7 +105,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                   delay: const Duration(milliseconds: 200),
                   duration: const Duration(milliseconds: 500),
                   child: Text(
-                    'اكتب أو الصق الكود المكون من 6 رموز والذي حصلت عليه من معلمك',
+                    'exams.enterCode.helpText'.tr(),
                     style: GoogleFonts.cairo(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -119,14 +118,11 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                 FadeInUp(
                   delay: const Duration(milliseconds: 300),
                   duration: const Duration(milliseconds: 500),
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: CodeInputField(
-                      length: 6,
-                      onChanged: (code) => setState(() => _code = code),
-                      onCompleted: null,
-                      enabled: !_isLoading,
-                    ),
+                  child: CodeInputField(
+                    length: 6,
+                    onChanged: (code) => setState(() => _code = code),
+                    onCompleted: null,
+                    enabled: !_isLoading,
                   ),
                 ),
                 if (_error != null) ...[
@@ -169,7 +165,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                   delay: const Duration(milliseconds: 400),
                   duration: const Duration(milliseconds: 500),
                   child: AppButton(
-                    label: 'فتح وبدء الاختبار',
+                    label: 'exams.enterCode.submit'.tr(),
                     type: AppButtonType.primary,
                     onPressed: _code.length == 6 && !_isLoading ? _activateAndStart : null,
                     isLoading: _isLoading,
@@ -179,14 +175,13 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   String _getArabicErrorMessage(String englishMsg) {
-    if (englishMsg.contains('Invalid code')) return 'كود غير صالح. يرجى التحقق والمحاولة مرة أخرى.';
-    if (englishMsg.contains('Too many attempts')) return 'محاولات كثيرة. يرجى الانتظار والمحاولة مرة أخرى.';
-    if (englishMsg.contains('linked to a different device')) return 'هذا الكود مرتبط بجهاز آخر.';
+    if (englishMsg.contains('Invalid code')) return 'exams.enterCode.errorInvalid'.tr();
+    if (englishMsg.contains('Too many attempts')) return 'exams.enterCode.errorRateLimited'.tr();
+    if (englishMsg.contains('linked to a different device')) return 'exams.enterCode.errorDeviceMismatch'.tr();
     return englishMsg;
   }
 
@@ -226,13 +221,17 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
             children: [
               _IconLabel(
                 icon: LucideIcons.clock,
-                label: '${exam.durationMinutes} دقيقة',
+                label: 'exams.durationMinutes'.tr(namedArgs: {
+                  'count': '${exam.durationMinutes}',
+                }),
                 isDark: isDark,
               ),
               const SizedBox(width: 20),
               _IconLabel(
                 icon: LucideIcons.clipboardList,
-                label: '${exam.questionCount} سؤال',
+                label: 'exams.questionCount'.tr(namedArgs: {
+                  'count': '${exam.questionCount}',
+                }),
                 isDark: isDark,
               ),
             ],

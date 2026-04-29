@@ -6,9 +6,32 @@ final prefsStoreProvider = Provider<PrefsStore>((ref) {
   return PrefsStore();
 });
 
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
+  return ThemeModeController(ref.watch(prefsStoreProvider), ThemeMode.light)
+    .._loadFromStore();
+});
+
+class ThemeModeController extends StateNotifier<ThemeMode> {
+  ThemeModeController(this._store, ThemeMode initial) : super(initial);
+
+  final PrefsStore _store;
+
+  Future<void> _loadFromStore() async {
+    final stored = await _store.themeMode;
+    if (mounted && stored != state) state = stored;
+  }
+
+  Future<void> setMode(ThemeMode mode) async {
+    if (state == mode) return;
+    state = mode;
+    await _store.setThemeMode(mode);
+  }
+}
+
 class PrefsStore {
   static const _themeModeKey = 'theme_mode';
-  static const _languageKey = 'language';
+  static const _localeFollowsSystemKey = 'locale_follows_system';
   static const _notificationsEnabledKey = 'notifications_enabled';
   static const _lastKnownUserNameKey = 'last_known_user_name';
   static const _hasSeenOnboardingKey = 'has_seen_onboarding';
@@ -33,14 +56,14 @@ class PrefsStore {
     await prefs.setString(_themeModeKey, mode.name);
   }
 
-  Future<String> get language async {
+  Future<bool> get localeFollowsSystem async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_languageKey) ?? 'en';
+    return prefs.getBool(_localeFollowsSystemKey) ?? true;
   }
 
-  Future<void> setLanguage(String language) async {
+  Future<void> setLocaleFollowsSystem(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_languageKey, language);
+    await prefs.setBool(_localeFollowsSystemKey, value);
   }
 
   Future<bool> get notificationsEnabled async {

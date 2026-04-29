@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { UpdateStatusDto } from './dto/update-status.dto.js';
+import { UpdateLevelDto } from './dto/update-level.dto.js';
 import { ListUsersQueryDto } from './dto/list-users-query.dto.js';
 import { DevicesService } from '../devices/devices.service.js';
 
@@ -39,6 +40,7 @@ export class UsersController {
       name: user.name,
       role: user.role,
       status: user.status,
+      level: user.level,
     };
   }
 
@@ -50,12 +52,27 @@ export class UsersController {
     return { data, total, page: query.page, limit: query.limit };
   }
 
+  @Get(':id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get full user detail with activations, activity, and security flags (admin only)' })
+  async findOne(@Param('id') id: string) {
+    return this.usersService.findUserDetail(id);
+  }
+
   @Patch(':id/status')
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update user status (admin only)' })
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
     return this.usersService.updateStatus(id, dto.status);
+  }
+
+  @Patch(':id/level')
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user education level (admin only)' })
+  async updateLevel(@Param('id') id: string, @Body() dto: UpdateLevelDto) {
+    return this.usersService.updateLevel(id, dto.level);
   }
 
   @Patch(':id/device-reset')

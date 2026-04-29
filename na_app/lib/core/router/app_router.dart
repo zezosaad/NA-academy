@@ -114,20 +114,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'code-expired',
                     builder: (context, state) {
-                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      final extra = state.extra is Map<String, dynamic>
+                          ? state.extra as Map<String, dynamic>
+                          : <String, dynamic>{};
+                      final expiredAtRaw = extra['expiredAt'];
                       return CodeExpiredPage(
                         code: extra['code'] as String? ?? '',
-                        expiredAt: extra['expiredAt'] as DateTime?,
+                        expiredAt: expiredAtRaw is DateTime
+                            ? expiredAtRaw
+                            : expiredAtRaw is String
+                                ? DateTime.tryParse(expiredAtRaw)
+                                : null,
                       );
                     },
                   ),
                   GoRoute(
                     path: 'code-used',
                     builder: (context, state) {
-                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      final extra = state.extra is Map<String, dynamic>
+                          ? state.extra as Map<String, dynamic>
+                          : <String, dynamic>{};
+                      final consumedAtRaw = extra['consumedAt'];
                       return CodeUsedPage(
                         code: extra['code'] as String? ?? '',
-                        consumedAt: extra['consumedAt'] as DateTime?,
+                        consumedAt: consumedAtRaw is DateTime
+                            ? consumedAtRaw
+                            : consumedAtRaw is String
+                                ? DateTime.tryParse(consumedAtRaw)
+                                : null,
                       );
                     },
                   ),

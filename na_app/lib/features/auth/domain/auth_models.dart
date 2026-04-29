@@ -1,8 +1,49 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
+
 enum UserRole { student, teacher, admin }
 
 enum UserStatus { active, suspended }
+
+enum EducationLevel { secondary2, secondary3, secondary4 }
+
+extension EducationLevelX on EducationLevel {
+  String get apiValue {
+    switch (this) {
+      case EducationLevel.secondary2:
+        return 'secondary_2';
+      case EducationLevel.secondary3:
+        return 'secondary_3';
+      case EducationLevel.secondary4:
+        return 'secondary_4';
+    }
+  }
+
+  String get displayLabel {
+    switch (this) {
+      case EducationLevel.secondary2:
+        return 'education.level.secondary2'.tr();
+      case EducationLevel.secondary3:
+        return 'education.level.secondary3'.tr();
+      case EducationLevel.secondary4:
+        return 'education.level.secondary4'.tr();
+    }
+  }
+
+  static EducationLevel? fromApi(String? value) {
+    switch (value) {
+      case 'secondary_2':
+        return EducationLevel.secondary2;
+      case 'secondary_3':
+        return EducationLevel.secondary3;
+      case 'secondary_4':
+        return EducationLevel.secondary4;
+      default:
+        return null;
+    }
+  }
+}
 
 class User {
   final String id;
@@ -11,6 +52,7 @@ class User {
   final String? avatarUrl;
   final UserRole role;
   final UserStatus status;
+  final EducationLevel? level;
 
   const User({
     required this.id,
@@ -19,6 +61,7 @@ class User {
     this.avatarUrl,
     required this.role,
     required this.status,
+    this.level,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -43,6 +86,7 @@ class User {
       avatarUrl: json['avatarUrl'] as String?,
       role: _parseRole(json['role'] as String?),
       status: _parseStatus(json['status'] as String?),
+      level: EducationLevelX.fromApi(json['level'] as String?),
     );
   }
 
@@ -53,6 +97,7 @@ class User {
         'avatarUrl': avatarUrl,
         'role': role.name,
         'status': status.name,
+        'level': level?.apiValue,
       };
 
   User copyWith({
@@ -62,6 +107,7 @@ class User {
     String? avatarUrl,
     UserRole? role,
     UserStatus? status,
+    EducationLevel? level,
   }) {
     return User(
       id: id ?? this.id,
@@ -70,6 +116,7 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       status: status ?? this.status,
+      level: level ?? this.level,
     );
   }
 

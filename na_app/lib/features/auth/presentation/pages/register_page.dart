@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:na_app/core/theme/app_colors.dart';
+import 'package:na_app/features/auth/domain/auth_models.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -25,6 +27,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
   bool _isLoading = false;
+  EducationLevel? _selectedLevel;
 
   @override
   void initState() {
@@ -52,39 +55,68 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  String? _getPasswordStrength(String password) {
+  _PasswordStrength? _getPasswordStrength(String password) {
     if (password.isEmpty) return null;
-    if (password.length < 6) return 'ضعيفة';
-    if (password.length < 8) return 'مقبولة';
+    if (password.length < 6) return _PasswordStrength.weak;
+    if (password.length < 8) return _PasswordStrength.ok;
     final hasUpper = password.contains(RegExp(r'[A-Z]'));
     final hasDigit = password.contains(RegExp(r'\d'));
-    if (hasUpper && hasDigit && password.length >= 8) return 'قوية';
-    return 'جيدة';
+    if (hasUpper && hasDigit && password.length >= 8) {
+      return _PasswordStrength.strong;
+    }
+    return _PasswordStrength.good;
   }
 
-  Color _strengthColor(String? strength) {
+  String _strengthLabel(_PasswordStrength strength) {
     switch (strength) {
-      case 'قوية':
+      case _PasswordStrength.strong:
+        return 'auth.register.passwordStrong'.tr();
+      case _PasswordStrength.good:
+        return 'auth.register.passwordGood'.tr();
+      case _PasswordStrength.ok:
+        return 'auth.register.passwordOk'.tr();
+      case _PasswordStrength.weak:
+        return 'auth.register.passwordWeak'.tr();
+    }
+  }
+
+  Color _strengthColor(_PasswordStrength? strength) {
+    switch (strength) {
+      case _PasswordStrength.strong:
         return AppColors.success;
-      case 'جيدة':
+      case _PasswordStrength.good:
         return AppColors.accent;
-      case 'مقبولة':
+      case _PasswordStrength.ok:
         return AppColors.warning;
-      case 'ضعيفة':
+      case _PasswordStrength.weak:
         return AppColors.danger;
-      default:
+      case null:
         return AppColors.textMuted;
     }
   }
 
   Future<void> _submit() async {
     if (_isLoading || !_acceptedTerms) return;
+    final level = _selectedLevel;
+    if (level == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'auth.register.levelMissing'.tr(),
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
 
     final result = await ref.read(authControllerProvider.notifier).register(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          level: level,
         );
 
     if (!mounted) return;
@@ -96,7 +128,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.errorMessage ?? 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
+            result.errorMessage ?? 'auth.register.failure'.tr(),
             style: GoogleFonts.cairo(),
           ),
           backgroundColor: AppColors.danger,
@@ -113,12 +145,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Stack(
-          children: [
-            // Animated Background Blobs
-            _buildBackgroundBlobs(isDark, size),
+      body: Stack(
+        children: [
+          // Animated Background Blobs
+          _buildBackgroundBlobs(isDark, size),
 
             SafeArea(
               child: Center(
@@ -161,7 +191,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         duration: const Duration(milliseconds: 600),
                         delay: const Duration(milliseconds: 100),
                         child: Text(
-                          'إنشاء حساب جديد',
+                          'auth.register.title'.tr(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.cairo(
                             fontSize: 32,
@@ -175,7 +205,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         duration: const Duration(milliseconds: 600),
                         delay: const Duration(milliseconds: 200),
                         child: Text(
-                          'ابدأ رحلتك التعليمية الممتعة مع NA Academy.',
+                          'auth.register.subtitle'.tr(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.cairo(
                             fontSize: 16,
@@ -191,8 +221,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         delay: const Duration(milliseconds: 300),
                         child: _buildTextField(
                           controller: _nameController,
-                          label: 'الاسم الكامل',
-                          hint: 'أحمد حسن',
+                          label: 'auth.register.nameLabel'.tr(),
+                          hint: 'auth.register.nameHint'.tr(),
                           icon: LucideIcons.user,
                           isDark: isDark,
                           textCapitalization: TextCapitalization.words,
@@ -206,8 +236,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         delay: const Duration(milliseconds: 400),
                         child: _buildTextField(
                           controller: _emailController,
-                          label: 'البريد الإلكتروني',
-                          hint: 'you@example.com',
+                          label: 'auth.register.emailLabel'.tr(),
+                          hint: 'auth.register.emailHint'.tr(),
                           icon: LucideIcons.mail,
                           isDark: isDark,
                           keyboardType: TextInputType.emailAddress,
@@ -221,8 +251,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         delay: const Duration(milliseconds: 500),
                         child: _buildTextField(
                           controller: _passwordController,
-                          label: 'كلمة المرور',
-                          hint: '8 أحرف على الأقل',
+                          label: 'auth.register.passwordLabel'.tr(),
+                          hint: 'auth.register.passwordHint'.tr(),
                           icon: LucideIcons.lock,
                           isDark: isDark,
                           isPassword: true,
@@ -236,14 +266,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           child: Row(
                             children: [
                               Text(
-                                'قوة كلمة المرور: ',
+                                'auth.register.passwordStrengthLabel'.tr(),
                                 style: GoogleFonts.cairo(
                                   fontSize: 13,
                                   color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                                 ),
                               ),
                               Text(
-                                strength,
+                                _strengthLabel(strength),
                                 style: GoogleFonts.cairo(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -254,6 +284,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 24),
+
+                      // Education Level Selector
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 550),
+                        child: _buildLevelSelector(isDark),
+                      ),
                       const SizedBox(height: 24),
 
                       // Terms and Conditions
@@ -296,18 +334,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     height: 1.5,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'أوافق على '),
+                                    TextSpan(text: 'auth.register.termsIntro'.tr()),
                                     TextSpan(
-                                      text: 'شروط الخدمة',
+                                      text: 'auth.register.termsOfService'.tr(),
                                       style: GoogleFonts.cairo(
                                         color: isDark ? AppColors.darkAccent : AppColors.accent,
                                         fontWeight: FontWeight.bold,
                                       ),
                                       recognizer: _termsTapRecognizer,
                                     ),
-                                    const TextSpan(text: ' و '),
+                                    TextSpan(text: 'auth.register.termsAnd'.tr()),
                                     TextSpan(
-                                      text: 'سياسة الخصوصية',
+                                      text: 'auth.register.privacyPolicy'.tr(),
                                       style: GoogleFonts.cairo(
                                         color: isDark ? AppColors.darkAccent : AppColors.accent,
                                         fontWeight: FontWeight.bold,
@@ -350,7 +388,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     ),
                                   )
                                 : Text(
-                                    'إنشاء حساب',
+                                    'auth.register.submit'.tr(),
                                     style: GoogleFonts.cairo(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -369,7 +407,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "لديك حساب بالفعل؟ ",
+                              'auth.register.haveAccount'.tr(),
                               style: GoogleFonts.cairo(
                                 color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                                 fontSize: 15,
@@ -378,7 +416,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             GestureDetector(
                               onTap: () => context.go('/auth/login'),
                               child: Text(
-                                'تسجيل الدخول',
+                                'auth.register.signIn'.tr(),
                                 style: GoogleFonts.cairo(
                                   color: isDark ? AppColors.darkAccent : AppColors.accent,
                                   fontSize: 15,
@@ -394,8 +432,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -493,4 +530,88 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ],
     );
   }
+
+  Widget _buildLevelSelector(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'auth.register.levelLabel'.tr(),
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Column(
+          children: EducationLevel.values.map((level) {
+            final selected = _selectedLevel == level;
+            final accent = isDark ? AppColors.darkAccent : AppColors.accent;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedLevel = level),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? accent.withValues(alpha: 0.12)
+                        : (isDark ? AppColors.darkBgSurface : AppColors.bgSurface),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selected
+                          ? accent
+                          : (isDark ? AppColors.darkBorderStrong : AppColors.borderStrong)
+                              .withValues(alpha: 0.4),
+                      width: selected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: selected ? accent : Colors.transparent,
+                          border: Border.all(
+                            color: selected
+                                ? Colors.transparent
+                                : (isDark ? AppColors.darkBorderStrong : AppColors.borderStrong),
+                            width: 2,
+                          ),
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check, size: 14, color: Colors.white)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          level.displayLabel,
+                          style: GoogleFonts.cairo(
+                            fontSize: 15,
+                            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                            color: selected
+                                ? accent
+                                : (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
 }
+
+enum _PasswordStrength { weak, ok, good, strong }

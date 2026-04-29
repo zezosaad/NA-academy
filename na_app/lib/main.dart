@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/theme/app_theme.dart';
@@ -6,9 +7,29 @@ import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/api/dio_client.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: NAApp()));
+  await EasyLocalization.ensureInitialized();
+  final prefs = PrefsStore();
+  final initialThemeMode = await prefs.themeMode;
+
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      useOnlyLangCode: true,
+      child: ProviderScope(
+        overrides: [
+          prefsStoreProvider.overrideWithValue(prefs),
+          themeModeProvider.overrideWith(
+            (ref) => ThemeModeController(prefs, initialThemeMode),
+          ),
+        ],
+        child: const NAApp(),
+      ),
+    ),
+  );
 }
 
 class NAApp extends ConsumerStatefulWidget {
@@ -19,25 +40,10 @@ class NAApp extends ConsumerStatefulWidget {
 }
 
 class _NAAppState extends ConsumerState<NAApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-  bool _themeLoaded = false;
-
   @override
   void initState() {
     super.initState();
-    _loadTheme();
     _listenSessionExpiry();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefsStore = ref.read(prefsStoreProvider);
-    final mode = await prefsStore.themeMode;
-    if (mounted) {
-      setState(() {
-        _themeMode = mode;
-        _themeLoaded = true;
-      });
-    }
   }
 
   void _listenSessionExpiry() {
@@ -49,6 +55,7 @@ class _NAAppState extends ConsumerState<NAApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     ref.listen<AsyncValue>(authControllerProvider, (prev, next) {
       if (prev?.value != null && next.value == null) {
@@ -56,31 +63,24 @@ class _NAAppState extends ConsumerState<NAApp> {
         if (messenger != null) {
           messenger.clearSnackBars();
           messenger.showSnackBar(
-            const SnackBar(
-              content: Text('Session ended — please sign in again'),
-              duration: Duration(seconds: 3),
+            SnackBar(
+              content: Text('session.expired'.tr()),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
       }
     });
 
-    if (!_themeLoaded) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
-    }
-
     return MaterialApp.router(
       title: 'NA-Academy',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: _themeMode,
+      themeMode: themeMode,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       routerConfig: router,
     );
   }

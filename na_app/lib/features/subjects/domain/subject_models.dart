@@ -41,6 +41,7 @@ class Lesson with _$Lesson {
     required String title,
     required int order,
     @Default(LessonStatus.locked) LessonStatus status,
+    @Default(false) bool isCompleted,
     String? description,
     String? mediaAssetId,
     int? estimatedMinutes,
@@ -51,12 +52,14 @@ class Lesson with _$Lesson {
     if (id == null || id.isEmpty) {
       throw FormatException('Lesson.fromJson: missing "id" in $json');
     }
+    final isCompleted = json['isCompleted'] as bool? ?? false;
     return _Lesson(
       id: id,
       subjectId: subjectId,
       title: json['title'] as String? ?? '',
       order: json['order'] as int? ?? json['index'] as int? ?? 0,
-      status: _parseStatus(json['status'] as String?),
+      status: isCompleted ? LessonStatus.done : _parseStatus(json['status'] as String?),
+      isCompleted: isCompleted,
       description: json['description'] as String?,
       mediaAssetId:
           json['mediaId'] as String? ?? json['mediaAssetId'] as String?,

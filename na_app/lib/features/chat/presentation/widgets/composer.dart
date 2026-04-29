@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -78,8 +79,8 @@ class _ComposerState extends State<Composer> {
     if (fileSize > maxBytes) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Image must be smaller than 10 MB'),
+        SnackBar(
+          content: Text('chat.composer.imageTooLarge'.tr()),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -91,8 +92,8 @@ class _ComposerState extends State<Composer> {
     if (!allowedTypes.contains(mimeType)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Only JPEG, PNG, WebP, and HEIC images are allowed'),
+        SnackBar(
+          content: Text('chat.composer.imageTypeNotAllowed'.tr()),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -131,7 +132,7 @@ class _ComposerState extends State<Composer> {
                   size: 22,
                 ),
                 onPressed: _handleImagePick,
-                tooltip: 'Attach image',
+                tooltip: 'chat.composer.attachImage'.tr(),
                 padding: const EdgeInsets.all(8),
                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               ),
@@ -146,7 +147,7 @@ class _ComposerState extends State<Composer> {
                   maxLines: null,
                   textInputAction: TextInputAction.newline,
                   decoration: InputDecoration(
-                    hintText: widget.hintText ?? 'Type a message...',
+                    hintText: widget.hintText ?? 'chat.composer.hint'.tr(),
                     hintStyle: theme.textTheme.bodyMedium?.copyWith(
                       color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                     ),
@@ -184,7 +185,7 @@ class _ComposerState extends State<Composer> {
                 size: 22,
               ),
               onPressed: _isComposing && widget.enabled ? _handleSend : null,
-              tooltip: 'Send',
+              tooltip: 'chat.composer.send'.tr(),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             ),

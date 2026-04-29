@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,24 +20,21 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   int _currentPage = 0;
   static const _totalSlides = 3;
 
-  final _slides = const [
+  static const _slides = [
     _OnboardingSlideData(
       icon: LucideIcons.rocket,
-      title: 'مرحباً بك في NA-Academy',
-      description:
-          'منصتك التعليمية المتكاملة. اكتشف عالماً من المعرفة وتفاعل مع موادك الدراسية بأسلوب عصري ومبتكر.',
+      titleKey: 'onboarding.slide1.title',
+      descriptionKey: 'onboarding.slide1.description',
     ),
     _OnboardingSlideData(
       icon: LucideIcons.messagesSquare,
-      title: 'تواصل مع نخبة المعلمين',
-      description:
-          'لا تتردد في طرح أسئلتك. تواصل مباشرة مع أفضل المعلمين واحصل على التوجيه والدعم الذي تحتاجه.',
+      titleKey: 'onboarding.slide2.title',
+      descriptionKey: 'onboarding.slide2.description',
     ),
     _OnboardingSlideData(
       icon: LucideIcons.award,
-      title: 'اختبر مهاراتك وتفوق',
-      description:
-          'قم بأداء الاختبارات بسلاسة، وتابع تقدمك الأكاديمي أولاً بأول لتصل إلى أهدافك بثقة ونجاح.',
+      titleKey: 'onboarding.slide3.title',
+      descriptionKey: 'onboarding.slide3.description',
     ),
   ];
 
@@ -67,12 +65,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-      body: Directionality(
-        textDirection: TextDirection.rtl, // Ensure Arabic layout
-        child: Stack(
-          children: [
-            // Animated Background Blobs
-            _buildBackgroundBlobs(isDark, size),
+      body: Stack(
+        children: [
+          // Animated Background Blobs
+          _buildBackgroundBlobs(isDark, size),
 
             // Main Content
             SafeArea(
@@ -104,8 +100,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildBackgroundBlobs(bool isDark, Size size) {
@@ -180,10 +175,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 FadeInUp(
                   delay: const Duration(milliseconds: 200),
                   duration: const Duration(milliseconds: 600),
-                  child: _buildTitle(slide.title, isDark),
+                  child: _buildTitle(slide.titleKey.tr(), isDark),
                 )
               else
-                _buildTitle(slide.title, isDark),
+                _buildTitle(slide.titleKey.tr(), isDark),
 
               const SizedBox(height: 20),
 
@@ -192,10 +187,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 FadeInUp(
                   delay: const Duration(milliseconds: 400),
                   duration: const Duration(milliseconds: 600),
-                  child: _buildDescription(slide.description, isDark),
+                  child: _buildDescription(slide.descriptionKey.tr(), isDark),
                 )
               else
-                _buildDescription(slide.description, isDark),
+                _buildDescription(slide.descriptionKey.tr(), isDark),
             ],
           ),
         ),
@@ -438,7 +433,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: const Text('التالي'),
+                          child: Text('onboarding.next'.tr()),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -453,7 +448,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        child: const Text('تخطي'),
+                        child: Text('onboarding.skip'.tr()),
                       ),
                     ],
                   )
@@ -479,7 +474,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: const Text('ابدأ الآن'),
+                          child: Text('onboarding.getStarted'.tr()),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -494,7 +489,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        child: const Text('لدي حساب بالفعل'),
+                        child: Text('onboarding.haveAccount'.tr()),
                       ),
                     ],
                   ),
@@ -507,12 +502,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
 class _OnboardingSlideData {
   final IconData icon;
-  final String title;
-  final String description;
+  final String titleKey;
+  final String descriptionKey;
 
   const _OnboardingSlideData({
     required this.icon,
-    required this.title,
-    required this.description,
+    required this.titleKey,
+    required this.descriptionKey,
   });
 }

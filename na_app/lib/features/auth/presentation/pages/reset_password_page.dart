@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -44,19 +45,19 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
     if (_isLoading) return;
     if (!_passwordsMatch) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text('auth.resetPassword.passwordsMismatch'.tr())),
       );
       return;
     }
     if (!_passwordStrong) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters')),
+        SnackBar(content: Text('auth.resetPassword.passwordTooShort'.tr())),
       );
       return;
     }
     if (_token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid or missing reset token')),
+        SnackBar(content: Text('auth.resetPassword.invalidToken'.tr())),
       );
       return;
     }
@@ -76,7 +77,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.errorMessage ?? 'This reset link is invalid, expired, or already used.'),
+          content: Text(result.errorMessage ?? 'auth.resetPassword.failure'.tr()),
         ),
       );
     }
@@ -103,12 +104,12 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
             children: [
               const SizedBox(height: 16),
               Text(
-                'Set new password',
+                'auth.resetPassword.title'.tr(),
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose a strong password for your account.',
+                'auth.resetPassword.subtitle'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   color: AppColors.textSecondary,
@@ -116,14 +117,14 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                 ),
               ),
               const SizedBox(height: 32),
-              _buildLabel(context, 'New password'),
+              _buildLabel(context, 'auth.resetPassword.newPasswordLabel'.tr()),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'At least 8 characters',
+                  hintText: 'auth.resetPassword.newPasswordHint'.tr(),
                   prefixIcon: const Icon(LucideIcons.lock, size: 18),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -147,14 +148,14 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
               const SizedBox(height: 8),
               _buildStrengthIndicator(),
               const SizedBox(height: 16),
-              _buildLabel(context, 'Confirm password'),
+              _buildLabel(context, 'auth.resetPassword.confirmPasswordLabel'.tr()),
               const SizedBox(height: 8),
               TextField(
                 controller: _confirmController,
                 obscureText: _obscureConfirm,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Re-enter your password',
+                  hintText: 'auth.resetPassword.confirmPasswordHint'.tr(),
                   prefixIcon: const Icon(LucideIcons.lock, size: 18),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -174,13 +175,13 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                         color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
                   ),
                   errorText: _confirmController.text.isNotEmpty && !_passwordsMatch
-                      ? 'Passwords do not match'
+                      ? 'auth.resetPassword.passwordsMismatch'.tr()
                       : null,
                 ),
               ),
               const SizedBox(height: 32),
               AppButton(
-                label: 'Reset password',
+                label: 'auth.resetPassword.submit'.tr(),
                 onPressed: _passwordStrong && _passwordsMatch && _token.isNotEmpty ? _submit : null,
                 isLoading: _isLoading,
               ),
@@ -205,7 +206,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
         ),
         const SizedBox(width: 4),
         Text(
-          'At least 8 characters',
+          'auth.resetPassword.minLengthHint'.tr(),
           style: GoogleFonts.inter(
             fontSize: 12,
             color: hasMinLength ? AppColors.success : AppColors.textMuted,

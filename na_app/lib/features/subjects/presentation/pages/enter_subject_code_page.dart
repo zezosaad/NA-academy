@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,32 +62,32 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
         ):
           switch (reason) {
             case ActivationErrorReason.expired:
-              context.go(
+              context.push(
                 '/subjects/code-expired',
                 extra: {'code': code, 'expiredAt': expiredAt},
               );
             case ActivationErrorReason.alreadyUsed:
-              context.go(
+              context.push(
                 '/subjects/code-used',
                 extra: {'code': code, 'consumedAt': consumedAt},
               );
             case ActivationErrorReason.rateLimited:
               setState(
-                () => _error = 'محاولات كثيرة. يرجى الانتظار والمحاولة مرة أخرى.',
+                () => _error = 'subjects.enterCode.errorRateLimited'.tr(),
               );
             case ActivationErrorReason.deviceMismatch:
               setState(
-                () => _error = 'هذا الكود مرتبط بجهاز آخر.',
+                () => _error = 'subjects.enterCode.errorDeviceMismatch'.tr(),
               );
             case ActivationErrorReason.invalid:
               setState(
-                () => _error = 'كود غير صالح. يرجى التحقق والمحاولة مرة أخرى.',
+                () => _error = 'subjects.enterCode.errorInvalid'.tr(),
               );
           }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'حدث خطأ ما. يرجى المحاولة مرة أخرى.');
+        setState(() => _error = 'subjects.enterCode.errorGeneric'.tr());
       }
     } finally {
       if (mounted) {
@@ -99,11 +100,9 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: Container(
@@ -125,7 +124,7 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
             ),
           ),
           title: Text(
-            'إدخال كود المادة',
+            'subjects.enterCode.title'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -168,8 +167,13 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                   duration: const Duration(milliseconds: 500),
                   child: Text(
                     widget.subjectTitle != null
-                        ? 'أدخل الكود المكون من $_subjectCodeLength رمزاً لفتح مادة "${widget.subjectTitle}".'
-                        : 'أدخل الكود المكون من $_subjectCodeLength رمزاً الذي حصلت عليه من معلمك لفتح مادة جديدة.',
+                        ? 'subjects.enterCode.subtitleNamed'.tr(namedArgs: {
+                            'length': '$_subjectCodeLength',
+                            'name': widget.subjectTitle!,
+                          })
+                        : 'subjects.enterCode.subtitleGeneric'.tr(namedArgs: {
+                            'length': '$_subjectCodeLength',
+                          }),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.cairo(
                       fontSize: 16,
@@ -183,16 +187,16 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                 FadeInUp(
                   delay: const Duration(milliseconds: 200),
                   duration: const Duration(milliseconds: 500),
-                  child: Directionality(
-                    textDirection: TextDirection.ltr, // Input field is English/Numbers
-                    child: TextField(
-                      controller: _controller,
-                      textCapitalization: TextCapitalization.characters,
+                  child: TextField(
+                    controller: _controller,
+                    textCapitalization: TextCapitalization.characters,
                       maxLength: _subjectCodeLength,
                       textAlign: TextAlign.center,
                       onChanged: (_) => setState(() => _error = null),
                       decoration: InputDecoration(
-                        hintText: 'Enter $_subjectCodeLength-character code',
+                        hintText: 'subjects.enterCode.codeHint'.tr(namedArgs: {
+                          'length': '$_subjectCodeLength',
+                        }),
                         counterText: '',
                         filled: true,
                         fillColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
@@ -228,7 +232,6 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                       ],
                     ),
                   ),
-                ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   FadeIn(
@@ -269,7 +272,7 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                   delay: const Duration(milliseconds: 300),
                   duration: const Duration(milliseconds: 500),
                   child: AppButton(
-                    label: 'فتح المادة',
+                    label: 'subjects.enterCode.submit'.tr(),
                     onPressed: _controller.text.trim().length == _subjectCodeLength
                         ? _submit
                         : null,
@@ -282,7 +285,7 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                   duration: const Duration(milliseconds: 500),
                   child: Center(
                     child: Text(
-                      'يتم توفير الأكواد من قبل معلمك أو الإدارة المدرسية.',
+                      'subjects.enterCode.helpText'.tr(),
                       style: GoogleFonts.cairo(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -295,7 +298,6 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

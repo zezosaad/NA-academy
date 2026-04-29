@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +46,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.errorMessage ?? 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+            result.errorMessage ?? 'auth.login.invalidCredentials'.tr(),
             style: GoogleFonts.cairo(),
           ),
           backgroundColor: AppColors.danger,
@@ -61,12 +62,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Stack(
-          children: [
-            // Animated Background Blobs
-            _buildBackgroundBlobs(isDark, size),
+      body: Stack(
+        children: [
+          // Animated Background Blobs
+          _buildBackgroundBlobs(isDark, size),
 
             SafeArea(
               child: Center(
@@ -109,7 +108,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         duration: const Duration(milliseconds: 600),
                         delay: const Duration(milliseconds: 200),
                         child: Text(
-                          'مرحباً بعودتك',
+                          'auth.login.title'.tr(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.cairo(
                             fontSize: 32,
@@ -123,7 +122,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         duration: const Duration(milliseconds: 600),
                         delay: const Duration(milliseconds: 300),
                         child: Text(
-                          'قم بتسجيل الدخول لمتابعة رحلتك التعليمية.',
+                          'auth.login.subtitle'.tr(),
                           textAlign: TextAlign.center,
                           style: GoogleFonts.cairo(
                             fontSize: 16,
@@ -139,8 +138,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         delay: const Duration(milliseconds: 400),
                         child: _buildTextField(
                           controller: _emailController,
-                          label: 'البريد الإلكتروني',
-                          hint: 'you@example.com',
+                          label: 'auth.login.emailLabel'.tr(),
+                          hint: 'auth.login.emailHint'.tr(),
                           icon: LucideIcons.mail,
                           isDark: isDark,
                           keyboardType: TextInputType.emailAddress,
@@ -154,8 +153,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         delay: const Duration(milliseconds: 500),
                         child: _buildTextField(
                           controller: _passwordController,
-                          label: 'كلمة المرور',
-                          hint: 'أدخل كلمة المرور',
+                          label: 'auth.login.passwordLabel'.tr(),
+                          hint: 'auth.login.passwordHint'.tr(),
                           icon: LucideIcons.lock,
                           isDark: isDark,
                           isPassword: true,
@@ -172,7 +171,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: TextButton(
                             onPressed: () => context.go('/auth/forgot-password'),
                             child: Text(
-                              'هل نسيت كلمة المرور؟',
+                              'auth.login.forgotPassword'.tr(),
                               style: GoogleFonts.cairo(
                                 color: isDark ? AppColors.darkAccent : AppColors.accent,
                                 fontSize: 14,
@@ -210,7 +209,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     ),
                                   )
                                 : Text(
-                                    'تسجيل الدخول',
+                                    'auth.login.submit'.tr(),
                                     style: GoogleFonts.cairo(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -229,7 +228,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "ليس لديك حساب؟ ",
+                              'auth.login.noAccount'.tr(),
                               style: GoogleFonts.cairo(
                                 color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                                 fontSize: 15,
@@ -238,7 +237,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             GestureDetector(
                               onTap: () => context.go('/auth/register'),
                               child: Text(
-                                'إنشاء حساب جديد',
+                                'auth.login.createAccount'.tr(),
                                 style: GoogleFonts.cairo(
                                   color: isDark ? AppColors.darkAccent : AppColors.accent,
                                   fontSize: 15,
@@ -254,8 +253,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

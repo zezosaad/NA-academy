@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -22,7 +23,10 @@ class SubjectCard extends StatelessWidget {
 
     return Semantics(
       button: onTap != null,
-      label: '${subject.title}, ${subject.lessonCount} دروس',
+      label: 'subjects.card.semanticLabel'.tr(namedArgs: {
+        'title': subject.title,
+        'count': '${subject.lessonCount}',
+      }),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -121,7 +125,9 @@ class SubjectCard extends StatelessWidget {
   }
 
   Widget _buildUnlockedFooter(BuildContext context, bool isDark, Color activeColor) {
-    final pct = (subject.progressPercent * 100).toInt();
+    final pct = subject.progressPercent.isFinite
+        ? (subject.progressPercent * 100).toInt()
+        : 0;
     return Column(
       children: [
         Container(
@@ -133,7 +139,9 @@ class SubjectCard extends StatelessWidget {
           ),
           alignment: Alignment.centerRight,
           child: FractionallySizedBox(
-            widthFactor: subject.progressPercent.clamp(0.0, 1.0),
+            widthFactor: subject.progressPercent.isFinite
+                ? subject.progressPercent.clamp(0.0, 1.0)
+                : 0.0,
             child: Container(
               decoration: BoxDecoration(
                 color: activeColor,
@@ -154,7 +162,9 @@ class SubjectCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${subject.lessonCount} دروس',
+              'subjects.lessonsCount'.tr(namedArgs: {
+                'count': '${subject.lessonCount}',
+              }),
               style: GoogleFonts.cairo(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -187,7 +197,7 @@ class SubjectCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            'مغلق، يحتاج كود',
+            'subjects.card.lockedBadge'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 11,
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,

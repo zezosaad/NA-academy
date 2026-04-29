@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:na_app/core/theme/app_colors.dart';
@@ -176,7 +177,7 @@ class _ImageBubble extends StatelessWidget {
         : <String, String>{};
 
     return Semantics(
-      label: 'Chat image',
+      label: 'chat.thread.imageSemantic'.tr(),
       image: true,
       child: ClipRRect(
         borderRadius: BorderRadius.only(
@@ -245,7 +246,7 @@ class _DeletedBubble extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppShapes.cardRadius),
           ),
           child: Text(
-            'Message removed',
+            'chat.thread.messageDeleted'.tr(),
             style: theme.textTheme.bodySmall?.copyWith(
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               fontStyle: FontStyle.italic,

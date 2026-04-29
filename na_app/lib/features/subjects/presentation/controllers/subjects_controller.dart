@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:na_app/features/home/data/home_repository.dart';
 import 'package:na_app/features/subjects/data/subjects_repository.dart';
 import 'package:na_app/features/subjects/domain/activation_result.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
@@ -42,6 +43,7 @@ final activateCodeProvider = Provider<Future<ActivationResult> Function(String c
       final result = await repo.activateCode(code);
       if (result is ActivationSuccess) {
         ref.invalidate(subjectsListProvider);
+        ref.invalidate(todayViewStateProvider);
       }
       return result;
     };

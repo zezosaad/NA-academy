@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,11 +22,9 @@ class ExamResultPage extends StatelessWidget {
     final isPass = score.passFail == PassFail.pass ||
         (score.passFail == PassFail.none && percentageScore >= 70);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
@@ -35,7 +34,7 @@ class ExamResultPage extends StatelessWidget {
               child: TextButton(
                 onPressed: () => context.go('/exams'),
                 child: Text(
-                  'تم',
+                  'common.done'.tr(),
                   style: GoogleFonts.cairo(
                     fontWeight: FontWeight.w800,
                     color: isDark ? AppColors.darkAccent : AppColors.accent,
@@ -66,7 +65,7 @@ class ExamResultPage extends StatelessWidget {
                           Icon(LucideIcons.timer, size: 16, color: isDark ? AppColors.darkWarning : AppColors.warning),
                           const SizedBox(width: 8),
                           Text(
-                            'انتهى الوقت',
+                            'exams.result.timedOut'.tr(),
                             style: GoogleFonts.cairo(
                               color: isDark ? AppColors.darkWarning : AppColors.warning,
                               fontWeight: FontWeight.w800,
@@ -117,7 +116,9 @@ class ExamResultPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'لقد حصلت على $percentageScore%',
+                          'exams.result.scorePercent'.tr(namedArgs: {
+                            'percent': '$percentageScore',
+                          }),
                           style: GoogleFonts.cairo(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -136,7 +137,9 @@ class ExamResultPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              isPass ? 'ناجح' : 'راسب',
+                              isPass
+                                  ? 'exams.result.passed'.tr()
+                                  : 'exams.result.failed'.tr(),
                               style: GoogleFonts.cairo(
                                 color: isPass
                                     ? (isDark ? AppColors.darkSuccess : AppColors.success)
@@ -164,7 +167,7 @@ class ExamResultPage extends StatelessWidget {
                 FadeInUp(
                   delay: const Duration(milliseconds: 300),
                   child: AppButton(
-                    label: 'العودة للاختبارات',
+                    label: 'exams.result.backToExams'.tr(),
                     type: AppButtonType.primary,
                     onPressed: () => context.go('/exams'),
                   ),
@@ -173,7 +176,7 @@ class ExamResultPage extends StatelessWidget {
                 FadeInUp(
                   delay: const Duration(milliseconds: 400),
                   child: AppButton(
-                    label: 'العودة للمواد الدراسية',
+                    label: 'exams.result.backToSubjects'.tr(),
                     type: AppButtonType.ghost,
                     onPressed: () => context.go('/subjects'),
                   ),
@@ -183,15 +186,14 @@ class ExamResultPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   String _getResultTitle(int percentage, bool isPass) {
-    if (percentage >= 90) return 'ممتاز!';
-    if (percentage >= 70) return 'أحسنت!';
-    if (percentage >= 50) return 'استمر في التدريب';
-    return 'استمر في المذاكرة';
+    if (percentage >= 90) return 'exams.result.titleExcellent'.tr();
+    if (percentage >= 70) return 'exams.result.titleGreat'.tr();
+    if (percentage >= 50) return 'exams.result.titlePractice'.tr();
+    return 'exams.result.titleKeepStudying'.tr();
   }
 
   Widget _buildReviewSection(BuildContext context, bool isDark) {
@@ -201,7 +203,7 @@ class ExamResultPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4.0),
           child: Text(
-            'مراجعة الأسئلة',
+            'exams.result.reviewSection'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -276,14 +278,14 @@ class _QuestionReviewTile extends StatelessWidget {
               children: [
                 if (review.studentAnswer != null)
                   _AnswerRow(
-                    label: 'إجابتك:',
+                    label: 'exams.result.yourAnswer'.tr(),
                     value: review.studentAnswer!,
                     isDark: isDark,
                   ),
                 if (!isCorrect && review.correctAnswer != null) ...[
                   const SizedBox(height: 8),
                   _AnswerRow(
-                    label: 'الإجابة الصحيحة:',
+                    label: 'exams.result.correctAnswer'.tr(),
                     value: review.correctAnswer!,
                     isDark: isDark,
                     valueColor: isDark ? AppColors.darkSuccess : AppColors.success,

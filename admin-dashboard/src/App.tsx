@@ -5,6 +5,7 @@ import { Dashboard } from "./components/Dashboard"
 import { LoginPage } from "./components/LoginPage"
 import { AdminLayout } from "./components/AdminLayout"
 import { UsersPage } from "./pages/UsersPage"
+import { UserDetailPage } from "./pages/UserDetailPage"
 import { SubjectsPage } from "./pages/SubjectsPage"
 import { SubjectDetailPage } from "./pages/SubjectDetailPage"
 import { ExamsPage } from "./pages/ExamsPage"
@@ -45,6 +46,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/users" element={<UsersPage />} />
+                    <Route path="/users/:id" element={<UserDetailPage />} />
                     <Route path="/subjects" element={<SubjectsPage />} />
                     <Route path="/subjects/:id" element={<SubjectDetailPage />} />
                     <Route path="/exams" element={<ExamsPage />} />

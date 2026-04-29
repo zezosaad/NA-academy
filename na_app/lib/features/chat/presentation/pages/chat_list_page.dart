@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -59,11 +60,9 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final conversationsAsync = ref.watch(chatListProvider);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+      body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -78,7 +77,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'المحادثات',
+                            'chat.headerTitle'.tr(),
                             style: GoogleFonts.cairo(
                               fontSize: 32,
                               fontWeight: FontWeight.w800,
@@ -87,7 +86,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'تواصل مع مدرسيك وزملائك بسهولة.',
+                            'chat.headerSubtitle'.tr(),
                             style: GoogleFonts.cairo(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -122,7 +121,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                         const Icon(LucideIcons.circleAlert, size: 48, color: AppColors.danger),
                         const SizedBox(height: 16),
                         Text(
-                          'تعذر تحميل المحادثات',
+                          'chat.errorTitle'.tr(),
                           style: GoogleFonts.cairo(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -131,7 +130,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                         ),
                         TextButton(
                           onPressed: () => ref.read(chatListProvider.notifier).refresh(),
-                          child: Text('إعادة المحاولة', style: GoogleFonts.cairo()),
+                          child: Text('common.retry'.tr(), style: GoogleFonts.cairo()),
                         ),
                       ],
                     ),
@@ -141,9 +140,9 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                       return FadeIn(
                         child: EmptyState(
                           icon: LucideIcons.messageCircle,
-                          title: 'لا توجد محادثات بعد',
-                          message: 'أدخل كود المادة لفتح محادثات المعلمين والمجموعات.',
-                          actionLabel: 'إدخال كود مادة',
+                          title: 'chat.emptyTitle'.tr(),
+                          message: 'chat.emptyMessage'.tr(),
+                          actionLabel: 'chat.emptyAction'.tr(),
                           onAction: () => context.go('/subjects/enter-code'),
                         ),
                       );
@@ -175,8 +174,7 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   void _openConversation(Conversation conv) {
@@ -280,7 +278,10 @@ class _ConversationRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     if (conversation.lastMessage != null)
                       Text(
-                        conversation.lastMessage!.text ?? (conversation.lastMessage!.hasImage ? '📷 صورة' : ''),
+                        conversation.lastMessage!.text ??
+                            (conversation.lastMessage!.hasImage
+                                ? 'chat.imageMessagePreview'.tr()
+                                : ''),
                         style: GoogleFonts.cairo(
                           fontSize: 13,
                           fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
@@ -295,7 +296,7 @@ class _ConversationRow extends StatelessWidget {
                     Text(
                       conversation.lastMessage != null
                           ? timeAgo(conversation.lastMessage!.sentAt)
-                          : 'لا توجد رسائل بعد',
+                          : 'chat.noMessagesYet'.tr(),
                       style: GoogleFonts.cairo(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -307,7 +308,7 @@ class _ConversationRow extends StatelessWidget {
               ),
               if (hasUnread)
                 Container(
-                  margin: const EdgeInsets.only(right: 12),
+                  margin: const EdgeInsetsDirectional.only(start: 12),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: accentColor,
