@@ -5,10 +5,16 @@ import { AnalyticsService } from './analytics.service.js';
 import { AnalyticsController } from './analytics.controller.js';
 import { MediaModule } from '../media/media.module.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
+import { LessonProgress, LessonProgressSchema } from '../lesson-progress/schemas/lesson-progress.schema.js';
+import { ExamScore, ExamScoreSchema } from '../exams/schemas/exam-score.schema.js';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: WatchTime.name, schema: WatchTimeSchema }]),
+    MongooseModule.forFeature([
+      { name: WatchTime.name, schema: WatchTimeSchema },
+      { name: LessonProgress.name, schema: LessonProgressSchema },
+      { name: ExamScore.name, schema: ExamScoreSchema },
+    ]),
     MediaModule,
     ActivationCodesModule, // for AccessCheckHelper
   ],

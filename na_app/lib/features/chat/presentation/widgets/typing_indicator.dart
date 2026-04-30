@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:na_app/core/widgets/typing_indicator.dart';
 import 'package:na_app/core/theme/app_colors.dart';
@@ -20,7 +21,7 @@ class ChatTypingIndicator extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 16, bottom: 4),
+      padding: const EdgeInsetsDirectional.only(start: 16, bottom: 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -29,7 +30,7 @@ class ChatTypingIndicator extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            '$userName is typing',
+            'chat.thread.isTyping'.tr(namedArgs: {'name': userName}),
             style: theme.textTheme.bodySmall?.copyWith(
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               fontStyle: FontStyle.italic,

@@ -8,6 +8,12 @@ import {
   SubjectCodeDocument,
   CodeStatus as SubjectCodeStatus,
 } from '../activation-codes/schemas/subject-code.schema.js';
+import { User, UserDocument } from '../users/schemas/user.schema.js';
+import { Lesson, LessonDocument } from '../lessons/schemas/lesson.schema.js';
+import {
+  LessonProgress,
+  LessonProgressDocument,
+} from '../lesson-progress/schemas/lesson-progress.schema.js';
 import { CreateSubjectDto } from './dto/create-subject.dto.js';
 import { UpdateSubjectDto } from './dto/update-subject.dto.js';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
@@ -20,7 +26,60 @@ export class SubjectsService {
     @InjectModel(Subject.name) private readonly subjectModel: Model<SubjectDocument>,
     @InjectModel(SubjectBundle.name) private readonly bundleModel: Model<SubjectBundleDocument>,
     @InjectModel(SubjectCode.name) private readonly subjectCodeModel: Model<SubjectCodeDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Lesson.name) private readonly lessonModel: Model<LessonDocument>,
+    @InjectModel(LessonProgress.name)
+    private readonly lessonProgressModel: Model<LessonProgressDocument>,
   ) {}
+
+  private async computeProgressPercents(
+    userId: string,
+    subjectIds: string[],
+  ): Promise<Map<string, number>> {
+    const result = new Map<string, number>();
+    if (subjectIds.length === 0) return result;
+
+    const validIds = subjectIds
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+    if (validIds.length === 0) return result;
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    const [totals, completedAgg] = await Promise.all([
+      this.lessonModel.aggregate<{ _id: Types.ObjectId; total: number }>([
+        { $match: { subjectId: { $in: validIds }, isActive: true } },
+        { $group: { _id: '$subjectId', total: { $sum: 1 } } },
+      ]),
+      this.lessonProgressModel.aggregate<{
+        _id: Types.ObjectId;
+        completed: number;
+      }>([
+        {
+          $match: {
+            userId: userObjectId,
+            subjectId: { $in: validIds },
+            isCompleted: true,
+          },
+        },
+        { $group: { _id: '$subjectId', completed: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const completedMap = new Map<string, number>();
+    for (const row of completedAgg) {
+      completedMap.set(row._id.toString(), row.completed);
+    }
+    for (const row of totals) {
+      const id = row._id.toString();
+      const completed = completedMap.get(id) ?? 0;
+      result.set(id, row.total > 0 ? completed / row.total : 0);
+    }
+    for (const id of subjectIds) {
+      if (!result.has(id)) result.set(id, 0);
+    }
+    return result;
+  }
 
   async createSubject(dto: CreateSubjectDto, userId: string): Promise<SubjectDocument> {
     const subject = new this.subjectModel({
@@ -48,6 +107,14 @@ export class SubjectsService {
     }
     if (role === 'student') {
       filter.isActive = true;
+      if (userId) {
+        const student = await this.userModel.findById(userId).select('level').lean().exec();
+        if (student?.level) {
+          filter.level = student.level;
+        }
+      }
+    } else if (query.level) {
+      filter.level = query.level;
     }
 
     const skip = (query.page - 1) * query.limit;
@@ -64,22 +131,31 @@ export class SubjectsService {
     ]);
 
     if (role === 'student' && userId) {
-      const unlockedIds = await this.getUnlockedSubjectIds(userId);
-      const data = subjects.map((subject) => ({
-        ...subject,
-        isUnlocked: unlockedIds.has(subject._id.toString()),
-      }));
+      const subjectIds = subjects.map((s) => s._id.toString());
+      const [unlockedIds, progressMap] = await Promise.all([
+        this.getUnlockedSubjectIds(userId),
+        this.computeProgressPercents(userId, subjectIds),
+      ]);
+      const data = subjects.map((subject) => {
+        const id = subject._id.toString();
+        return {
+          ...subject,
+          isUnlocked: unlockedIds.has(id),
+          progressPercent: progressMap.get(id) ?? 0,
+        };
+      });
       return { data, total };
     }
 
     const data = subjects.map((subject) => ({
       ...subject,
       isUnlocked: false,
+      progressPercent: 0,
     }));
     return { data, total };
   }
 
-  private async getUnlockedSubjectIds(userId: string): Promise<Set<string>> {
+  async getUnlockedSubjectIds(userId: string): Promise<Set<string>> {
     const sId = new Types.ObjectId(userId);
 
     const directCodes = await this.subjectCodeModel
@@ -134,6 +210,39 @@ export class SubjectsService {
     const subject = await this.subjectModel.findById(id).exec();
     if (!subject) throw new NotFoundException('Subject not found');
     return subject;
+  }
+
+  async findSubjectByIdForUser(
+    id: string,
+    role?: string,
+    userId?: string,
+  ): Promise<any> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid subject id');
+    }
+    const subject = await this.subjectModel.findById(id).lean().exec();
+    if (!subject) throw new NotFoundException('Subject not found');
+
+    if (role === 'student' && userId) {
+      const student = await this.userModel.findById(userId).select('level').lean().exec();
+      if (student?.level && subject.level && subject.level !== student.level) {
+        throw new NotFoundException('Subject not found');
+      }
+    }
+
+    let isUnlocked = false;
+    let progressPercent = 0;
+    if (role === 'student' && userId) {
+      const [unlockedIds, progressMap] = await Promise.all([
+        this.getUnlockedSubjectIds(userId),
+        this.computeProgressPercents(userId, [subject._id.toString()]),
+      ]);
+      isUnlocked = unlockedIds.has(subject._id.toString());
+      progressPercent = progressMap.get(subject._id.toString()) ?? 0;
+    } else if (role !== 'student') {
+      isUnlocked = true;
+    }
+    return { ...subject, isUnlocked, progressPercent };
   }
 
   async updateSubject(id: string, dto: UpdateSubjectDto): Promise<SubjectDocument> {

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,35 +28,33 @@ class TodayPage extends ConsumerWidget {
     return MaxTextScale(
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-        body: Directionality(
-          textDirection: TextDirection.rtl,
-          child: SafeArea(
-            child: RefreshIndicator(
-              color: AppColors.accent,
-              onRefresh: () => ref.read(todayViewStateProvider.notifier).refresh(),
-              child: Stack(
-                children: [
-                  // Beautiful Background Blobs
-                  _buildBackgroundBlobs(context, isDark),
-                  
-                  stateAsync.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(color: AppColors.accent),
-                    ),
-                    error: (e, stack) {
-                      debugPrint('[TodayPage] $e\n$stack');
-                      return EmptyState(
-                        icon: LucideIcons.circleAlert,
-                        title: 'حدث خطأ',
-                        message: 'لم نتمكن من تحميل بيانات اليوم. يرجى المحاولة مرة أخرى.',
-                        actionLabel: 'إعادة المحاولة',
-                        onAction: () => ref.invalidate(todayViewStateProvider),
-                      );
-                    },
-                    data: (state) => _TodayContent(state: state),
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: () =>
+                ref.read(todayViewStateProvider.notifier).refresh(),
+            child: Stack(
+              children: [
+                // Beautiful Background Blobs
+                _buildBackgroundBlobs(context, isDark),
+
+                stateAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.accent),
                   ),
-                ],
-              ),
+                  error: (e, stack) {
+                    debugPrint('[TodayPage] $e\n$stack');
+                    return EmptyState(
+                      icon: LucideIcons.circleAlert,
+                      title: 'today.errorTitle'.tr(),
+                      message: 'today.errorMessage'.tr(),
+                      actionLabel: 'common.retry'.tr(),
+                      onAction: () => ref.invalidate(todayViewStateProvider),
+                    );
+                  },
+                  data: (state) => _TodayContent(state: state),
+                ),
+              ],
             ),
           ),
         ),
@@ -114,7 +113,9 @@ class _TodayContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +135,7 @@ class _TodayContent extends ConsumerWidget {
             FadeInUp(
               delay: const Duration(milliseconds: 100),
               duration: const Duration(milliseconds: 500),
-              child: _SectionHeader(title: 'أكمل تعلمك'),
+              child: _SectionHeader(title: 'today.resumeLearningHeader'.tr()),
             ),
             const SizedBox(height: 12),
             FadeInUp(
@@ -152,7 +153,7 @@ class _TodayContent extends ConsumerWidget {
             FadeInUp(
               delay: const Duration(milliseconds: 200),
               duration: const Duration(milliseconds: 500),
-              child: _SectionHeader(title: 'المهام اليومية'),
+              child: _SectionHeader(title: 'today.dailyTasksHeader'.tr()),
             ),
             const SizedBox(height: 12),
             ...state.dueTodayExams.asMap().entries.map((entry) {
@@ -178,7 +179,7 @@ class _TodayContent extends ConsumerWidget {
               delay: const Duration(milliseconds: 300),
               duration: const Duration(milliseconds: 500),
               child: _SectionHeader(
-                title: 'المواد الدراسية',
+                title: 'today.subjectsHeader'.tr(),
                 onSeeAll: () => context.go('/subjects'),
               ),
             ),
@@ -195,7 +196,7 @@ class _TodayContent extends ConsumerWidget {
             FadeInUp(
               delay: const Duration(milliseconds: 300),
               duration: const Duration(milliseconds: 500),
-              child: _SectionHeader(title: 'المواد الدراسية'),
+              child: _SectionHeader(title: 'today.subjectsHeader'.tr()),
             ),
             const SizedBox(height: 12),
             FadeInUp(
@@ -203,9 +204,9 @@ class _TodayContent extends ConsumerWidget {
               duration: const Duration(milliseconds: 500),
               child: EmptyState(
                 icon: LucideIcons.bookOpen,
-                title: 'لا يوجد مواد بعد',
-                message: 'أدخل كود المادة لفتح أولى موادك الدراسية.',
-                actionLabel: 'إدخال الكود',
+                title: 'today.noSubjectsTitle'.tr(),
+                message: 'today.noSubjectsMessage'.tr(),
+                actionLabel: 'today.enterCode'.tr(),
                 onAction: () => context.push('/subjects/enter-code'),
               ),
             ),
@@ -220,7 +221,9 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onExamTap(BuildContext context, Exam exam) {
-    if (exam.status == ExamStatus.available && exam.attemptsRemaining > 0) {
+    if (exam.canStartDirectly) {
+      context.push('/exams/${exam.id}/take');
+    } else if (exam.status == ExamStatus.available) {
       context.push('/exams/${exam.id}/enter-code');
     } else {
       context.push('/exams/${exam.id}');
@@ -228,11 +231,7 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onSubjectTap(BuildContext context, Subject subject) {
-    if (subject.isUnlocked) {
-      context.push('/subjects/${subject.id}');
-    } else {
-      context.push('/subjects/enter-code');
-    }
+    context.push('/subjects/${subject.id}');
   }
 }
 
@@ -245,9 +244,16 @@ class _GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final greeting = _getArabicGreeting(now.hour);
-    final dayName = _getArabicDayName(now.weekday);
-    final dateStr = _getArabicDate(now);
+    final greeting = _getGreeting(now.hour);
+    final dayName = _getDayName(now.weekday);
+    final monthName = _getMonthName(now.month);
+    final dateStr = 'today.dateFormat'.tr(
+      namedArgs: {
+        'day': dayName,
+        'month': monthName,
+        'dayNumber': '${now.day}',
+      },
+    );
 
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -260,9 +266,11 @@ class _GreetingHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$dayName، $dateStr',
+                  dateStr,
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -271,7 +279,9 @@ class _GreetingHeader extends StatelessWidget {
                 Text(
                   '$greeting،\n$userName.',
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
@@ -289,17 +299,19 @@ class _GreetingHeader extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
-                )
+                ),
               ],
             ),
             child: Tooltip(
-              message: 'الإعدادات',
+              message: 'today.settingsTooltip'.tr(),
               child: IconButton(
                 onPressed: () => context.push('/profile/settings'),
                 icon: Icon(
                   LucideIcons.settings,
                   size: 24,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -314,42 +326,42 @@ class _GreetingHeader extends StatelessWidget {
     );
   }
 
-  String _getArabicGreeting(int hour) {
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 17) return 'طاب مساؤك';
-    return 'مساء الخير';
+  String _getGreeting(int hour) {
+    if (hour < 12) return 'today.greetingMorning'.tr();
+    if (hour < 17) return 'today.greetingAfternoon'.tr();
+    return 'today.greetingEvening'.tr();
   }
 
-  String _getArabicDayName(int weekday) {
-    const days = [
-      'الإثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد',
+  String _getDayName(int weekday) {
+    const keys = [
+      'today.days.monday',
+      'today.days.tuesday',
+      'today.days.wednesday',
+      'today.days.thursday',
+      'today.days.friday',
+      'today.days.saturday',
+      'today.days.sunday',
     ];
-    return days[weekday - 1];
+    return keys[weekday - 1].tr();
   }
 
-  String _getArabicDate(DateTime date) {
-    const months = [
+  String _getMonthName(int month) {
+    const keys = [
       '',
-      'يناير',
-      'فبراير',
-      'مارس',
-      'أبريل',
-      'مايو',
-      'يونيو',
-      'يوليو',
-      'أغسطس',
-      'سبتمبر',
-      'أكتوبر',
-      'نوفمبر',
-      'ديسمبر',
+      'today.months.january',
+      'today.months.february',
+      'today.months.march',
+      'today.months.april',
+      'today.months.may',
+      'today.months.june',
+      'today.months.july',
+      'today.months.august',
+      'today.months.september',
+      'today.months.october',
+      'today.months.november',
+      'today.months.december',
     ];
-    return '${date.day} ${months[date.month]}';
+    return keys[month].tr();
   }
 }
 
@@ -361,14 +373,20 @@ class _StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark 
-            ? [AppColors.darkBgSurface, AppColors.darkBgSurface.withValues(alpha: 0.8)]
-            : [AppColors.bgSurface, AppColors.bgSurface.withValues(alpha: 0.9)],
+          colors: isDark
+              ? [
+                  AppColors.darkBgSurface,
+                  AppColors.darkBgSurface.withValues(alpha: 0.8),
+                ]
+              : [
+                  AppColors.bgSurface,
+                  AppColors.bgSurface.withValues(alpha: 0.9),
+                ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -378,10 +396,11 @@ class _StreakCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? AppColors.darkSecondary : AppColors.secondary).withValues(alpha: 0.1),
+            color: (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                .withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -390,7 +409,9 @@ class _StreakCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
+              color: isDark
+                  ? AppColors.darkSecondarySoft
+                  : AppColors.secondarySoft,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -405,17 +426,21 @@ class _StreakCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'حماس مستمر لمدة $streakDays أيام',
+                  'today.streakTitle'.tr(namedArgs: {'count': '$streakDays'}),
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 Text(
-                  'استمر في التعلم، أنت تقدم أداءً رائعاً!',
+                  'today.streakSubtitle'.tr(),
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -438,7 +463,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -457,12 +482,19 @@ class _SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onSeeAll,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                backgroundColor: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                backgroundColor:
+                    (isDark ? AppColors.darkAccent : AppColors.accent)
+                        .withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Text(
-                'عرض الكل',
+                'today.seeAll'.tr(),
                 style: GoogleFonts.cairo(
                   color: isDark ? AppColors.darkAccent : AppColors.accent,
                   fontSize: 13,

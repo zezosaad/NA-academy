@@ -17,7 +17,23 @@
       "PowerShell(& \"C:\\\\Users\\\\zezo\\\\Desktop\\\\work\\\\NA-Academy\\\\.specify\\\\scripts\\\\powershell\\\\update-agent-context.ps1\" -AgentType claude 2>&1)",
       "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)",
       "Bash(flutter analyze *)",
-      "Bash(npm pkg *)"
+      "Bash(npm pkg *)",
+      "Bash(npm run *)",
+      "Bash(node --env-file=.env dist/src/scripts/backfill-user-level.js)",
+      "Bash(npx tsc *)",
+      "Bash(xargs grep *)",
+      "Bash(xargs cat *)",
+      "Bash(flutter pub *)",
+      "Bash(node *)",
+      "Bash(flutter build *)",
+      "Bash(flutter clean *)",
+      "Bash(gh pr *)",
+      "Bash(git fetch *)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "Bash(git status *)",
+      "Bash(git checkout *)",
+      "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)"
     ]
   }
 }

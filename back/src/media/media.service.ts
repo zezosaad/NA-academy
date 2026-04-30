@@ -152,6 +152,7 @@ export class MediaService {
   }> {
     const asset = preFetchedAsset || (await this.mediaAssetModel.findById(id).exec());
     if (!asset) throw new NotFoundException('Media asset not found');
+    const bucket = asset.chatUpload ? this.chatBucket : this.mediaBucket;
 
     const range = headers.range;
     let start = 0;
@@ -179,7 +180,7 @@ export class MediaService {
       resHeaders['Content-Length'] = asset.fileSize;
     }
 
-    const stream = this.mediaBucket.openDownloadStream(asset.gridFsFileId, {
+    const stream = bucket.openDownloadStream(asset.gridFsFileId, {
       start,
       end: end + 1, // exclusive end
     });
@@ -191,7 +192,8 @@ export class MediaService {
     const asset = await this.mediaAssetModel.findById(id).exec();
     if (!asset) throw new NotFoundException('Media asset not found');
 
-    await this.mediaBucket.delete(asset.gridFsFileId);
+    const bucket = asset.chatUpload ? this.chatBucket : this.mediaBucket;
+    await bucket.delete(asset.gridFsFileId);
     await this.mediaAssetModel.deleteOne({ _id: asset._id }).exec();
 
     this.logger.log(`Deleted media asset: ${id}`);

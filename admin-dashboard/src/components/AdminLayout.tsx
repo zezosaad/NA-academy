@@ -7,6 +7,7 @@ import {
   FileQuestion,
   KeyRound,
   ShieldAlert,
+  MessageCircle,
   LogOut,
   Menu,
   X,
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { label: "Exams", href: "/exams", icon: FileQuestion },
   { label: "Activation Codes", href: "/codes", icon: KeyRound },
   { label: "Security", href: "/security", icon: ShieldAlert },
+  { label: "Chat", href: "/chat", icon: MessageCircle },
 ]
 
 interface AdminLayoutProps {

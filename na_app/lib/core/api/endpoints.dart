@@ -49,6 +49,8 @@ class _LessonEndpoints {
   static const String _prefix = '/lessons';
 
   String byId(String id) => '$_prefix/$id';
+  String progress(String id) => '$_prefix/$id/progress';
+  String complete(String id) => '$_prefix/$id/complete';
 }
 
 class _ActivationCodeEndpoints {
@@ -80,6 +82,8 @@ class _ChatEndpoints {
   static const String _prefix = '/chat';
 
   String get conversations => '$_prefix/conversations';
+  String messages(String conversationId) =>
+      '$_prefix/conversations/$conversationId/messages';
   String get pending => '$_prefix/pending';
 }
 

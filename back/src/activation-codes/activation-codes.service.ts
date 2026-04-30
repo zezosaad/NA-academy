@@ -17,6 +17,7 @@ import {
   CodeStatus as ExamCodeStatus,
   ExamUsageType,
 } from './schemas/exam-code.schema.js';
+import { User, UserDocument } from '../users/schemas/user.schema.js';
 import { generateBatch, generateBatchId, formatCode } from './utils/code-generator.js';
 import { GenerateSubjectCodesDto } from './dto/generate-subject-codes.dto.js';
 import { GenerateExamCodesDto } from './dto/generate-exam-codes.dto.js';
@@ -33,6 +34,7 @@ export class ActivationCodesService {
   constructor(
     @InjectModel(SubjectCode.name) private readonly subjectCodeModel: Model<SubjectCodeDocument>,
     @InjectModel(ExamCode.name) private readonly examCodeModel: Model<ExamCodeDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly subjectsService: SubjectsService,
     private readonly examsService: ExamsService,
   ) {}
@@ -195,15 +197,18 @@ export class ActivationCodesService {
 
     if (isSubject) {
       const subjectDoc = codeDoc as SubjectCodeDocument;
-      subjectDoc.status = SubjectCodeStatus.USED;
-      subjectDoc.activatedBy = sId;
-      subjectDoc.activatedAt = new Date();
-      subjectDoc.activationDeviceId = hardwareId;
-      await subjectDoc.save();
+
+      const student = await this.userModel.findById(sId).select('level').lean().exec();
+      const studentLevel = student?.level;
 
       let targetItems: any = [];
       if (subjectDoc.subjectId) {
         const sub = await this.subjectsService.findSubjectById(subjectDoc.subjectId.toString());
+        if (studentLevel && sub.level && sub.level !== studentLevel) {
+          throw new BadRequestException(
+            'This code is for a different educational level than your account',
+          );
+        }
         targetItems = [sub];
       } else if (subjectDoc.bundleId) {
         // Find bundle subjects
@@ -212,9 +217,25 @@ export class ActivationCodesService {
           (b) => b._id.toString() === subjectDoc.bundleId?.toString(),
         );
         if (targetedBundle && targetedBundle.subjects) {
+          if (studentLevel) {
+            const mismatched = (targetedBundle.subjects as any[]).some(
+              (s) => s?.level && s.level !== studentLevel,
+            );
+            if (mismatched) {
+              throw new BadRequestException(
+                'This bundle contains subjects from a different educational level',
+              );
+            }
+          }
           targetItems = targetedBundle.subjects;
         }
       }
+
+      subjectDoc.status = SubjectCodeStatus.USED;
+      subjectDoc.activatedBy = sId;
+      subjectDoc.activatedAt = new Date();
+      subjectDoc.activationDeviceId = hardwareId;
+      await subjectDoc.save();
 
       return {
         type: 'subject',
@@ -262,6 +283,181 @@ export class ActivationCodesService {
         timeLimitMinutes: examDoc.timeLimitMinutes,
       };
     }
+  }
+
+  async listByEntity(): Promise<{
+    subjects: any[];
+    bundles: any[];
+    exams: any[];
+  }> {
+    const subjectAgg = await this.subjectCodeModel.aggregate([
+      { $match: { subjectId: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: '$subjectId',
+          total: { $sum: 1 },
+          available: {
+            $sum: { $cond: [{ $eq: ['$status', 'available'] }, 1, 0] },
+          },
+          used: { $sum: { $cond: [{ $eq: ['$status', 'used'] }, 1, 0] } },
+          expired: {
+            $sum: { $cond: [{ $eq: ['$status', 'expired'] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'subjects',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'subject',
+        },
+      },
+      { $unwind: { path: '$subject', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          total: 1,
+          available: 1,
+          used: 1,
+          expired: 1,
+          title: '$subject.title',
+          category: '$subject.category',
+          isActive: '$subject.isActive',
+        },
+      },
+      { $sort: { title: 1 } },
+    ]);
+
+    const bundleAgg = await this.subjectCodeModel.aggregate([
+      { $match: { bundleId: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: '$bundleId',
+          total: { $sum: 1 },
+          available: {
+            $sum: { $cond: [{ $eq: ['$status', 'available'] }, 1, 0] },
+          },
+          used: { $sum: { $cond: [{ $eq: ['$status', 'used'] }, 1, 0] } },
+          expired: {
+            $sum: { $cond: [{ $eq: ['$status', 'expired'] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'subjectbundles',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'bundle',
+        },
+      },
+      { $unwind: { path: '$bundle', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          total: 1,
+          available: 1,
+          used: 1,
+          expired: 1,
+          name: '$bundle.name',
+          isActive: '$bundle.isActive',
+        },
+      },
+      { $sort: { name: 1 } },
+    ]);
+
+    const examAgg = await this.examCodeModel.aggregate([
+      {
+        $group: {
+          _id: '$examId',
+          total: { $sum: 1 },
+          available: {
+            $sum: { $cond: [{ $eq: ['$status', 'available'] }, 1, 0] },
+          },
+          used: { $sum: { $cond: [{ $eq: ['$status', 'used'] }, 1, 0] } },
+          expired: {
+            $sum: { $cond: [{ $eq: ['$status', 'expired'] }, 1, 0] },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'exams',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'exam',
+        },
+      },
+      { $unwind: { path: '$exam', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          total: 1,
+          available: 1,
+          used: 1,
+          expired: 1,
+          title: '$exam.title',
+          isActive: '$exam.isActive',
+        },
+      },
+      { $sort: { title: 1 } },
+    ]);
+
+    return { subjects: subjectAgg, bundles: bundleAgg, exams: examAgg };
+  }
+
+  async findCodesBySubject(subjectId: string, query: ListCodesQueryDto) {
+    if (!Types.ObjectId.isValid(subjectId)) {
+      throw new BadRequestException('Invalid subject id');
+    }
+    const filter: Record<string, any> = {
+      subjectId: new Types.ObjectId(subjectId),
+    };
+    if (query.status) filter.status = query.status;
+    return this.findCodesWithFilter(this.subjectCodeModel, filter, query);
+  }
+
+  async findCodesByBundle(bundleId: string, query: ListCodesQueryDto) {
+    if (!Types.ObjectId.isValid(bundleId)) {
+      throw new BadRequestException('Invalid bundle id');
+    }
+    const filter: Record<string, any> = {
+      bundleId: new Types.ObjectId(bundleId),
+    };
+    if (query.status) filter.status = query.status;
+    return this.findCodesWithFilter(this.subjectCodeModel, filter, query);
+  }
+
+  async findCodesByExam(examId: string, query: ListCodesQueryDto) {
+    if (!Types.ObjectId.isValid(examId)) {
+      throw new BadRequestException('Invalid exam id');
+    }
+    const filter: Record<string, any> = {
+      examId: new Types.ObjectId(examId),
+    };
+    if (query.status) filter.status = query.status;
+    return this.findCodesWithFilter(this.examCodeModel, filter, query);
+  }
+
+  private async findCodesWithFilter(
+    model: Model<any>,
+    filter: Record<string, any>,
+    query: ListCodesQueryDto,
+  ) {
+    const skip = (query.page - 1) * query.limit;
+    const [data, total] = await Promise.all([
+      model
+        .find(filter)
+        .populate('activatedBy', 'name email')
+        .skip(skip)
+        .limit(query.limit)
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
+      model.countDocuments(filter).exec(),
+    ]);
+    return { data, total };
   }
 
   async findByBatch(batchId: string, query: ListCodesQueryDto) {

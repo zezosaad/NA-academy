@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,15 +15,21 @@ class SubjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // Theme colors based on unlock status
-    final baseColor = subject.isUnlocked ? AppColors.accent : AppColors.secondary;
-    final darkBaseColor = subject.isUnlocked ? AppColors.darkAccent : AppColors.darkSecondary;
+    final baseColor = subject.isUnlocked
+        ? AppColors.accent
+        : AppColors.secondary;
+    final darkBaseColor = subject.isUnlocked
+        ? AppColors.darkAccent
+        : AppColors.darkSecondary;
     final activeColor = isDark ? darkBaseColor : baseColor;
 
     return Semantics(
       button: onTap != null,
-      label: '${subject.title}, ${subject.lessonCount} دروس',
+      label: 'subjects.card.semanticLabel'.tr(
+        namedArgs: {'title': subject.title, 'count': '${subject.lessonCount}'},
+      ),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -31,14 +38,16 @@ class SubjectCard extends StatelessWidget {
             color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
+              color: isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.borderSubtle,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: Column(
@@ -46,7 +55,8 @@ class SubjectCard extends StatelessWidget {
             children: [
               _buildCover(context, isDark, activeColor),
               const SizedBox(height: 12),
-              if (subject.description != null && subject.description!.isNotEmpty) ...[
+              if (subject.description != null &&
+                  subject.description!.isNotEmpty) ...[
                 Text(
                   subject.description!,
                   maxLines: 1,
@@ -54,7 +64,9 @@ class SubjectCard extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.textMuted,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -66,7 +78,9 @@ class SubjectCard extends StatelessWidget {
                 style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                   height: 1.2,
                 ),
               ),
@@ -106,9 +120,7 @@ class SubjectCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: activeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: activeColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: activeColor.withValues(alpha: 0.2)),
       ),
       child: Center(
         child: Icon(
@@ -120,8 +132,14 @@ class SubjectCard extends StatelessWidget {
     );
   }
 
-  Widget _buildUnlockedFooter(BuildContext context, bool isDark, Color activeColor) {
-    final pct = (subject.progressPercent * 100).toInt();
+  Widget _buildUnlockedFooter(
+    BuildContext context,
+    bool isDark,
+    Color activeColor,
+  ) {
+    final pct = subject.progressPercent.isFinite
+        ? subject.progressPercent.toInt()
+        : 0;
     return Column(
       children: [
         Container(
@@ -133,7 +151,9 @@ class SubjectCard extends StatelessWidget {
           ),
           alignment: Alignment.centerRight,
           child: FractionallySizedBox(
-            widthFactor: subject.progressPercent.clamp(0.0, 1.0),
+            widthFactor: subject.progressPercent.isFinite
+                ? (subject.progressPercent / 100).clamp(0.0, 1.0)
+                : 0.0,
             child: Container(
               decoration: BoxDecoration(
                 color: activeColor,
@@ -143,7 +163,7 @@ class SubjectCard extends StatelessWidget {
                     color: activeColor.withValues(alpha: 0.4),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -154,11 +174,15 @@ class SubjectCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${subject.lessonCount} دروس',
+              'subjects.lessonsCount'.tr(
+                namedArgs: {'count': '${subject.lessonCount}'},
+              ),
               style: GoogleFonts.cairo(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
               ),
             ),
             Text(
@@ -178,7 +202,11 @@ class SubjectCard extends StatelessWidget {
   Widget _buildLockedFooter(BuildContext context, bool isDark) {
     return Row(
       children: [
-        Icon(LucideIcons.lock, size: 14, color: isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+        Icon(
+          LucideIcons.lock,
+          size: 14,
+          color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+        ),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -187,7 +215,7 @@ class SubjectCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            'مغلق، يحتاج كود',
+            'subjects.card.lockedBadge'.tr(),
             style: GoogleFonts.cairo(
               fontSize: 11,
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,

@@ -1,0 +1,434 @@
+{
+  "common": {
+    "retry": "إعادة المحاولة",
+    "cancel": "إلغاء",
+    "remove": "إزالة",
+    "ok": "حسناً",
+    "save": "حفظ",
+    "close": "إغلاق",
+    "next": "التالي",
+    "back": "رجوع",
+    "done": "تم",
+    "loading": "جاري التحميل…",
+    "error": "حدث خطأ",
+    "tryAgain": "حاول مرة أخرى",
+    "yes": "نعم",
+    "no": "لا",
+    "refresh": "تحديث"
+  },
+  "session": {
+    "expired": "انتهت الجلسة — يرجى تسجيل الدخول مرة أخرى"
+  },
+  "appShell": {
+    "tabToday": "اليوم",
+    "tabSubjects": "المواد",
+    "tabExams": "الاختبارات",
+    "tabChat": "المحادثات",
+    "tabProfile": "الحساب"
+  },
+  "today": {
+    "errorTitle": "حدث خطأ",
+    "errorMessage": "لم نتمكن من تحميل بيانات اليوم. يرجى المحاولة مرة أخرى.",
+    "settingsTooltip": "الإعدادات",
+    "greetingMorning": "صباح الخير",
+    "greetingAfternoon": "طاب مساؤك",
+    "greetingEvening": "مساء الخير",
+    "streakTitle": "حماس مستمر لمدة {count} أيام",
+    "streakSubtitle": "استمر في التعلم، أنت تقدم أداءً رائعاً!",
+    "resumeLearningHeader": "أكمل تعلمك",
+    "dailyTasksHeader": "المهام اليومية",
+    "subjectsHeader": "المواد الدراسية",
+    "seeAll": "عرض الكل",
+    "noSubjectsTitle": "لا يوجد مواد بعد",
+    "noSubjectsMessage": "أدخل كود المادة لفتح أولى موادك الدراسية.",
+    "enterCode": "إدخال الكود",
+    "dateFormat": "{day}، {dayNumber} {month}",
+    "days": {
+      "monday": "الإثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت",
+      "sunday": "الأحد"
+    },
+    "months": {
+      "january": "يناير",
+      "february": "فبراير",
+      "march": "مارس",
+      "april": "أبريل",
+      "may": "مايو",
+      "june": "يونيو",
+      "july": "يوليو",
+      "august": "أغسطس",
+      "september": "سبتمبر",
+      "october": "أكتوبر",
+      "november": "نوفمبر",
+      "december": "ديسمبر"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "مرحباً بعودتك",
+      "subtitle": "قم بتسجيل الدخول لمتابعة رحلتك التعليمية.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailHint": "you@example.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordHint": "أدخل كلمة المرور",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "submit": "تسجيل الدخول",
+      "noAccount": "ليس لديك حساب؟ ",
+      "createAccount": "إنشاء حساب جديد",
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+    },
+    "register": {
+      "title": "إنشاء حساب جديد",
+      "subtitle": "ابدأ رحلتك التعليمية الممتعة مع NA Academy.",
+      "nameLabel": "الاسم الكامل",
+      "nameHint": "أحمد حسن",
+      "emailLabel": "البريد الإلكتروني",
+      "emailHint": "you@example.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordHint": "8 أحرف على الأقل",
+      "passwordStrengthLabel": "قوة كلمة المرور: ",
+      "passwordStrong": "قوية",
+      "passwordGood": "جيدة",
+      "passwordOk": "مقبولة",
+      "passwordWeak": "ضعيفة",
+      "levelLabel": "المستوى الدراسي",
+      "levelMissing": "من فضلك اختر المستوى الدراسي.",
+      "termsIntro": "أوافق على ",
+      "termsOfService": "شروط الخدمة",
+      "termsAnd": " و ",
+      "privacyPolicy": "سياسة الخصوصية",
+      "submit": "إنشاء حساب",
+      "failure": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+      "haveAccount": "لديك حساب بالفعل؟ ",
+      "signIn": "تسجيل الدخول"
+    },
+    "forgotPassword": {
+      "title": "نسيت كلمة المرور؟",
+      "subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailHint": "you@example.com",
+      "submit": "إرسال رابط إعادة التعيين",
+      "successTitle": "تحقق من بريدك",
+      "successMessage": "أرسلنا رابط إعادة تعيين كلمة المرور إلى {email}. ينتهي خلال 30 دقيقة.",
+      "backToSignIn": "العودة لتسجيل الدخول",
+      "resend": "إعادة إرسال البريد",
+      "failure": "حدث خطأ. يرجى المحاولة مرة أخرى."
+    },
+    "resetPassword": {
+      "title": "تعيين كلمة مرور جديدة",
+      "subtitle": "اختر كلمة مرور قوية لحسابك.",
+      "newPasswordLabel": "كلمة المرور الجديدة",
+      "newPasswordHint": "8 أحرف على الأقل",
+      "confirmPasswordLabel": "تأكيد كلمة المرور",
+      "confirmPasswordHint": "أعد إدخال كلمة المرور",
+      "passwordsMismatch": "كلمتا المرور غير متطابقتين",
+      "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+      "invalidToken": "رمز إعادة التعيين غير صالح أو مفقود",
+      "minLengthHint": "8 أحرف على الأقل",
+      "submit": "إعادة تعيين كلمة المرور",
+      "failure": "هذا الرابط غير صالح أو منتهي الصلاحية أو سبق استخدامه."
+    },
+    "splash": {
+      "loading": "جاري التحميل…"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "appearance": "المظهر",
+    "preferences": "التفضيلات",
+    "theme": {
+      "system": "تلقائي",
+      "systemDescription": "يتبع إعدادات الجهاز",
+      "light": "فاتح",
+      "lightDescription": "استخدم المظهر الفاتح دائماً",
+      "dark": "غامق",
+      "darkDescription": "استخدم المظهر الغامق دائماً",
+      "semanticLabel": "المظهر {label}: {description}"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "enabled": "التذكيرات اليومية مفعّلة",
+      "disabled": "التذكيرات اليومية معطّلة"
+    },
+    "language": {
+      "title": "اللغة",
+      "system": "تلقائي",
+      "systemDescription": "يتبع إعدادات الجهاز",
+      "english": "English",
+      "englishDescription": "استخدم اللغة الإنجليزية",
+      "arabic": "العربية",
+      "arabicDescription": "استخدم اللغة العربية",
+      "semanticLabel": "اللغة {label}: {description}"
+    }
+  },
+  "subjects": {
+    "headerTitle": "المواد الدراسية",
+    "emptyTitle": "لا توجد مواد بعد",
+    "emptyMessage": "أدخل كود المادة لفتح أول مادة دراسية لك.",
+    "enterCodeAction": "إدخال الكود",
+    "errorTitle": "تعذر تحميل المواد",
+    "errorMessage": "حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.",
+    "lockedBadge": "مقفلة",
+    "lessonsCount": "{count} دروس",
+    "minutesCount": "{count} دقيقة",
+    "progressLabel": "التقدم",
+    "codeBanner": {
+      "title": "هل لديك كود مادة؟",
+      "subtitle": "انقر هنا لفتح مادة جديدة"
+    },
+    "detail": {
+      "lessonsListTitle": "قائمة الدروس",
+      "noLessonsTitle": "لا توجد دروس بعد",
+      "noLessonsMessage": "ستظهر الدروس هنا بمجرد إضافتها للمادة.",
+      "loadErrorTitle": "تعذر تحميل المادة",
+      "loadErrorMessage": "حدث خطأ أثناء جلب تفاصيل المادة، يرجى المحاولة مرة أخرى.",
+      "statsCompleted": "تمت",
+      "statsInProgress": "قيد الدراسة",
+      "statsRemaining": "متبقية",
+      "continueAction": "متابعة",
+      "lockedTooltip": "أكمل الدروس السابقة أولاً"
+    },
+    "lesson": {
+      "loadErrorTitle": "تعذّر تحميل الدرس",
+      "loadErrorMessage": "تعذّر تحميل الدرس. يرجى المحاولة مرة أخرى.",
+      "markCompleteAction": "وضع علامة كمكتمل",
+      "completed": "مكتمل",
+      "completedSub": "أحسنت! تم وضع علامة على هذا الدرس كمكتمل.",
+      "markCompleteFailure": "فشل وضع علامة كمكتمل. حاول مرة أخرى.",
+      "savedToList": "تم حفظ الدرس في المحفوظات",
+      "removedFromSaved": "تمت إزالة الدرس من المحفوظات",
+      "noVideo": "لا يوجد فيديو لهذا الدرس",
+      "videoLoadFailure": "فشل تحميل الفيديو",
+      "goBackTooltip": "رجوع"
+    },
+    "card": {
+      "semanticLabel": "{title}، {count} دروس",
+      "lockedBadge": "مغلق، يحتاج كود"
+    },
+    "enterCode": {
+      "title": "إدخال كود المادة",
+      "subtitleNamed": "أدخل الكود المكون من {length} رمزاً لفتح مادة \"{name}\".",
+      "subtitleGeneric": "أدخل الكود المكون من {length} رمزاً الذي حصلت عليه من معلمك لفتح مادة جديدة.",
+      "codeHint": "أدخل الكود المكون من {length} رمزاً",
+      "submit": "فتح المادة",
+      "helpText": "يتم توفير الأكواد من قبل معلمك أو الإدارة المدرسية.",
+      "errorRateLimited": "محاولات كثيرة. يرجى الانتظار والمحاولة مرة أخرى.",
+      "errorDeviceMismatch": "هذا الكود مرتبط بجهاز آخر.",
+      "errorInvalid": "كود غير صالح. يرجى التحقق والمحاولة مرة أخرى.",
+      "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    },
+    "unlocking": {
+      "loadingTitle": "جاري فتح المادة…",
+      "successTitle": "تم فتح المادة!",
+      "step1": "التحقق من الكود",
+      "step2": "الربط بالمعلم",
+      "step3": "تحميل قائمة الدروس"
+    },
+    "codeExpired": {
+      "title": "انتهت صلاحية الكود",
+      "detail": "انتهت صلاحية هذا الكود في {date}"
+    },
+    "codeUsed": {
+      "title": "الكود مستخدم بالفعل",
+      "message": "تم استخدام كود التفعيل هذا بالفعل.",
+      "detail": "تم استخدامه في {date}"
+    },
+    "codeErrorActions": {
+      "tryAnother": "جرّب كوداً آخر",
+      "messageTeacher": "مراسلة المعلم"
+    }
+  },
+  "exams": {
+    "headerTitle": "الاختبارات",
+    "emptyTitle": "لا توجد اختبارات متاحة",
+    "emptyMessage": "ستظهر الاختبارات هنا بمجرد فتح مادة باستخدام كود المادة.",
+    "errorTitle": "تعذر تحميل الاختبارات",
+    "errorMessage": "حدث خطأ أثناء جلب الاختبارات. يرجى المحاولة مرة أخرى.",
+    "availableSection": "المتاحة",
+    "completedSection": "المكتملة",
+    "statusCompletedLabel": "مكتمل",
+    "durationMinutes": "{count} دقيقة",
+    "questionCount": "{count} سؤال",
+    "attemptsOne": "محاولة واحدة",
+    "attemptsTwo": "محاولتان",
+    "attemptsFew": "{count} محاولات",
+    "attemptsMany": "{count} محاولة",
+    "examFallbackTitle": "الاختبار",
+    "enterCode": {
+      "title": "إدخال كود الاختبار",
+      "heading": "أدخل كود الاختبار الخاص بك",
+      "helpText": "اكتب أو الصق الكود المكون من 6 رموز والذي حصلت عليه من معلمك",
+      "submit": "فتح وبدء الاختبار",
+      "errorInvalid": "كود غير صالح. يرجى التحقق والمحاولة مرة أخرى.",
+      "errorRateLimited": "محاولات كثيرة. يرجى الانتظار والمحاولة مرة أخرى.",
+      "errorDeviceMismatch": "هذا الكود مرتبط بجهاز آخر."
+    },
+    "take": {
+      "starting": "جاري بدء الاختبار…",
+      "startErrorTitle": "تعذر بدء الاختبار",
+      "backToExams": "رجوع للاختبارات",
+      "noData": "لا توجد بيانات للاختبار",
+      "closeTooltip": "إغلاق الاختبار",
+      "questionLabel": "السؤال {current} من {total}",
+      "next": "التالي",
+      "previous": "السابق",
+      "submit": "تسجيل الإجابات",
+      "submitting": "جاري الإرسال…",
+      "exitConfirmTitle": "مغادرة الاختبار؟",
+      "exitConfirmMessage": "سيتم حفظ تقدمك، ولكن الوقت سيستمر في النفاذ. هل أنت متأكد؟",
+      "exitYes": "مغادرة",
+      "exitCancel": "البقاء",
+      "saveError": "فشل الحفظ — سيتم إعادة المحاولة عند السؤال التالي",
+      "saveErrorWithDetail": "تعذر حفظ الإجابة: {error}",
+      "networkError": "خطأ في الشبكة — حاول مرة أخرى",
+      "submitErrorWithDetail": "فشل تسجيل الإجابات: {error}",
+      "optionSemanticLabel": "الخيار {label}: {text}"
+    },
+    "result": {
+      "title": "نتيجة الاختبار",
+      "passed": "ناجح",
+      "failed": "راسب",
+      "timedOut": "انتهى الوقت",
+      "scorePercent": "لقد حصلت على {percent}%",
+      "titleExcellent": "ممتاز!",
+      "titleGreat": "أحسنت!",
+      "titlePractice": "استمر في التدريب",
+      "titleKeepStudying": "استمر في المذاكرة",
+      "reviewSection": "مراجعة الأسئلة",
+      "yourAnswer": "إجابتك:",
+      "correctAnswer": "الإجابة الصحيحة:",
+      "backToExams": "العودة للاختبارات",
+      "backToSubjects": "العودة للمواد الدراسية",
+      "correct": "صحيحة",
+      "wrong": "خاطئة",
+      "total": "الإجمالي"
+    }
+  },
+  "chat": {
+    "headerTitle": "المحادثات",
+    "headerSubtitle": "تواصل مع مدرسيك وزملائك بسهولة.",
+    "emptyTitle": "لا توجد محادثات بعد",
+    "emptyMessage": "أدخل كود المادة لفتح محادثات المعلمين والمجموعات.",
+    "emptyAction": "إدخال كود مادة",
+    "emptyMessageNoTeacher": "ستظهر محادثاتك هنا فور استعداد معلمك.",
+    "errorTitle": "تعذر تحميل المحادثات",
+    "noMessagesYet": "لا توجد رسائل بعد",
+    "imageMessagePreview": "📷 صورة",
+    "thread": {
+      "inputHint": "اكتب رسالة…",
+      "sendTooltip": "إرسال",
+      "loadError": "تعذّر تحميل المحادثة.",
+      "sendError": "فشل الإرسال. اضغط لإعادة المحاولة.",
+      "typing": "يكتب…",
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "fallbackName": "المدرس",
+      "imageAttached": "صورة مرفقة",
+      "goBack": "رجوع",
+      "composerHintNamed": "رسالة إلى {name}…",
+      "startConversationPrompt": "أرسل رسالة لبدء المحادثة.",
+      "messageDeleted": "تم حذف الرسالة",
+      "imageSemantic": "صورة المحادثة",
+      "isTyping": "{name} يكتب",
+      "textCopied": "تم نسخ النص"
+    },
+    "composer": {
+      "hint": "اكتب رسالة…",
+      "attachImage": "إرفاق صورة",
+      "send": "إرسال",
+      "imageTooLarge": "يجب أن تكون الصورة أصغر من 10 ميجابايت",
+      "imageTypeNotAllowed": "يسمح فقط بصور JPEG و PNG و WebP و HEIC"
+    }
+  },
+  "onboarding": {
+    "skip": "تخطي",
+    "next": "التالي",
+    "getStarted": "ابدأ الآن",
+    "haveAccount": "لدي حساب بالفعل",
+    "slide1": {
+      "title": "مرحباً بك في NA-Academy",
+      "description": "منصتك التعليمية المتكاملة. اكتشف عالماً من المعرفة وتفاعل مع موادك الدراسية بأسلوب عصري ومبتكر."
+    },
+    "slide2": {
+      "title": "تواصل مع نخبة المعلمين",
+      "description": "لا تتردد في طرح أسئلتك. تواصل مباشرة مع أفضل المعلمين واحصل على التوجيه والدعم الذي تحتاجه."
+    },
+    "slide3": {
+      "title": "اختبر مهاراتك وتفوق",
+      "description": "قم بأداء الاختبارات بسلاسة، وتابع تقدمك الأكاديمي أولاً بأول لتصل إلى أهدافك بثقة ونجاح."
+    }
+  },
+  "profile": {
+    "title": "الحساب",
+    "headerTitle": "حسابك",
+    "settingsButton": "إعدادات الحساب",
+    "defaultName": "طالب علم",
+    "studentBadge": "طالب",
+    "weeklyActivity": "نشاطك الأسبوعي",
+    "weeklyChart": {
+      "title": "هذا الأسبوع",
+      "semanticsLabel": "مخطط النشاط الأسبوعي",
+      "days": {
+        "mon": "ن",
+        "tue": "ث",
+        "wed": "ر",
+        "thu": "خ",
+        "fri": "ج",
+        "sat": "س",
+        "sun": "ح"
+      }
+    },
+    "settingsContent": "الإعدادات والمحتوى",
+    "editAction": "تعديل الحساب",
+    "logoutAction": "تسجيل الخروج",
+    "logoutConfirmTitle": "تسجيل الخروج",
+    "logoutConfirmMessage": "هل أنت متأكد من رغبتك في تسجيل الخروج من حسابك؟",
+    "logoutConfirmYes": "تسجيل الخروج",
+    "logoutConfirmCancel": "إلغاء",
+    "edit": {
+      "title": "تعديل الحساب",
+      "nameLabel": "الاسم الكامل",
+      "emailLabel": "البريد الإلكتروني",
+      "save": "حفظ التغييرات",
+      "successMessage": "تم تحديث الحساب.",
+      "failure": "تعذّر حفظ التغييرات. يرجى المحاولة مرة أخرى."
+    },
+    "stats": {
+      "subjects": "المواد",
+      "lessons": "الدروس المكتملة",
+      "streak": "أيام متواصلة",
+      "streakLabel": "استمرارية",
+      "streakUnit": "أيام",
+      "lessonsLabel": "دروس",
+      "lessonsUnit": "مكتملة",
+      "examsLabel": "اختبارات",
+      "examsUnit": "منجزة"
+    },
+    "menu": {
+      "settings": "الإعدادات",
+      "help": "المساعدة والدعم",
+      "about": "حول التطبيق",
+      "certificates": "الشهادات",
+      "certificatesHint": "عرض شهاداتك المكتملة",
+      "savedLessons": "الدروس المحفوظة",
+      "savedLessonsHint": "الدروس التي قمت بحفظها"
+    },
+    "savedLessonsPage": {
+      "title": "الدروس المحفوظة",
+      "emptyTitle": "لا توجد دروس محفوظة",
+      "emptyMessage": "افتح أي درس واضغط علامة الحفظ ليظهر هنا.",
+      "lessonNumber": "الدرس {n}"
+    }
+  },
+  "education": {
+    "level": {
+      "secondary2": "المستوى الثاني",
+      "secondary3": "المستوى الثالث",
+      "secondary4": "المستوى الرابع"
+    }
+  }
+}

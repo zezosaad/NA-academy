@@ -8,6 +8,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LessonsService } from './lessons.service.js';
@@ -35,15 +36,33 @@ export class LessonsController {
   }
 
   @Get('subjects/:subjectId/lessons')
-  @ApiOperation({ summary: 'List lessons for a subject' })
-  async findBySubject(@Param('subjectId') subjectId: string) {
-    return this.lessonsService.findBySubject(subjectId);
+  @ApiOperation({ summary: 'List lessons for a subject with first-lesson free gating for students' })
+  async findBySubject(
+    @Param('subjectId') subjectId: string,
+    @CurrentUser('role') role: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.lessonsService.findBySubject(
+      subjectId,
+      role === 'student' ? userId : undefined,
+    );
   }
 
   @Get('lessons/:id')
-  @ApiOperation({ summary: 'Get lesson by ID' })
-  async findById(@Param('id') id: string) {
-    return this.lessonsService.findById(id);
+  @ApiOperation({ summary: 'Get lesson by ID with first-lesson free gating for students' })
+  async findById(
+    @Param('id') id: string,
+    @CurrentUser('role') role: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const lesson = await this.lessonsService.findById(
+      id,
+      role === 'student' ? userId : undefined,
+    );
+    if (role === 'student' && lesson.status === 'locked') {
+      throw new ForbiddenException('Lesson is locked. Activate the subject code first.');
+    }
+    return lesson;
   }
 
   @Put('lessons/:id')

@@ -17,6 +17,7 @@ import { UsersService } from '../users/users.service.js';
 import { DevicesService } from '../devices/devices.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { UserDocument, UserStatus, UserRole } from '../users/schemas/user.schema.js';
+import { EducationLevel } from '../common/enums/education-level.enum.js';
 import { JwtPayload } from './strategies/jwt.strategy.js';
 
 @Injectable()
@@ -39,6 +40,7 @@ export class AuthService {
     password: string;
     name: string;
     hardwareId: string;
+    level: EducationLevel;
     role?: UserRole;
   }) {
     // Create user
@@ -47,6 +49,7 @@ export class AuthService {
       password: data.password,
       name: data.name,
       role: data.role,
+      level: data.level,
     });
 
     // Register device
@@ -62,6 +65,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        level: user.level,
       },
     };
   }
@@ -112,6 +116,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        level: user.level,
       },
     };
   }
@@ -233,6 +238,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        level: user.level,
       },
     };
   }

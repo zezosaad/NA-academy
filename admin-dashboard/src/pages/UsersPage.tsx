@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import { Search, RotateCw, Smartphone, Ban, CheckCircle, XCircle } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Search, RotateCw, Smartphone, Ban, CheckCircle, XCircle, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -34,6 +35,7 @@ import type { User, UserStatus } from "@/types"
 import { format } from "date-fns"
 
 export function UsersPage() {
+  const navigate = useNavigate()
   const { showError } = useAppModal()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -179,8 +181,17 @@ export function UsersPage() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user._id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
+                <TableRow
+                  key={user._id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/users/${user._id}`)}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {user.name}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>{roleBadge(user.role)}</TableCell>
                   <TableCell>{statusBadge(user.status)}</TableCell>
@@ -188,7 +199,10 @@ export function UsersPage() {
                     {format(new Date(user.createdAt), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div
+                      className="flex items-center justify-end gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         variant="ghost"
                         size="sm"

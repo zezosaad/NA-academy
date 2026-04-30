@@ -48,9 +48,13 @@ export class SubjectsController {
   }
 
   @Get('subjects/:id')
-  @ApiOperation({ summary: 'Get subject by ID' })
-  async findSubjectById(@Param('id') id: string) {
-    return this.subjectsService.findSubjectById(id);
+  @ApiOperation({ summary: 'Get subject by ID with per-user unlock status' })
+  async findSubjectById(
+    @Param('id') id: string,
+    @CurrentUser('role') role: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.subjectsService.findSubjectByIdForUser(id, role, userId);
   }
 
   @Put('subjects/:id')

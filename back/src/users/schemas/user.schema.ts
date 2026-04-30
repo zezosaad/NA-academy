@@ -1,5 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import {
+  DEFAULT_STUDENT_LEVEL,
+  EducationLevel,
+} from '../../common/enums/education-level.enum.js';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -36,6 +40,14 @@ export class User {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Subject' }], default: [] })
   assignedSubjects!: Types.ObjectId[];
+
+  @Prop({
+    type: String,
+    enum: EducationLevel,
+    default: DEFAULT_STUDENT_LEVEL,
+    index: true,
+  })
+  level!: EducationLevel;
 
   createdAt!: Date;
   updatedAt!: Date;

@@ -21,8 +21,8 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
 
 final todayViewStateProvider =
     AsyncNotifierProvider<TodayViewNotifier, TodayViewState>(
-  TodayViewNotifier.new,
-);
+      TodayViewNotifier.new,
+    );
 
 class HomeRepository {
   final Dio _dio;
@@ -33,9 +33,9 @@ class HomeRepository {
     required Dio dio,
     required SubjectsRepository subjectsRepository,
     required ExamsRepository examsRepository,
-  })  : _dio = dio,
-        _subjectsRepository = subjectsRepository,
-        _examsRepository = examsRepository;
+  }) : _dio = dio,
+       _subjectsRepository = subjectsRepository,
+       _examsRepository = examsRepository;
 
   Future<AnalyticsSnapshot> getAnalytics() async {
     try {
@@ -52,9 +52,7 @@ class HomeRepository {
     }
   }
 
-  Future<TodayViewState> loadTodayViewState({
-    required String userName,
-  }) async {
+  Future<TodayViewState> loadTodayViewState({required String userName}) async {
     final results = await Future.wait([
       _subjectsRepository.listSubjects(),
       _examsRepository.listExams(),
@@ -65,8 +63,7 @@ class HomeRepository {
     final exams = results[1] as List<Exam>;
     final analytics = results[2] as AnalyticsSnapshot;
 
-    final unlockedSubjects =
-        subjects.where((s) => s.isUnlocked).toList();
+    final unlockedSubjects = subjects.where((s) => s.isUnlocked).toList();
 
     final now = DateTime.now();
     final dueTodayExams = exams.where((e) {
@@ -75,8 +72,7 @@ class HomeRepository {
       return dueDate.year == now.year &&
           dueDate.month == now.month &&
           dueDate.day == now.day &&
-          (e.status == ExamStatus.available &&
-              e.attemptsRemaining > 0);
+          e.status == ExamStatus.available;
     }).toList();
 
     ResumableLesson? resumableLesson;
@@ -135,11 +131,10 @@ class TodayViewNotifier extends AsyncNotifier<TodayViewState> {
   @override
   Future<TodayViewState> build() async {
     final authState = ref.watch(authControllerProvider);
-    final userName =
-        authState.valueOrNull != null
-            ? ref.read(authControllerProvider.notifier).currentUser?.name ??
-                'Student'
-            : 'Student';
+    final userName = authState.valueOrNull != null
+        ? ref.read(authControllerProvider.notifier).currentUser?.name ??
+              'Student'
+        : 'Student';
 
     final repo = ref.watch(homeRepositoryProvider);
     return repo.loadTodayViewState(userName: userName);

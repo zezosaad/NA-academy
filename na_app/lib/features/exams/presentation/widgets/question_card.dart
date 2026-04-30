@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
@@ -32,7 +33,10 @@ class QuestionCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'Question ${currentIndex + 1} of $totalCount',
+            'exams.take.questionLabel'.tr(namedArgs: {
+              'current': '${currentIndex + 1}',
+              'total': '$totalCount',
+            }),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
@@ -88,7 +92,10 @@ class _OptionTile extends StatelessWidget {
     return Semantics(
       selected: isSelected,
       button: true,
-      label: 'Option ${option.label}: ${option.text}',
+      label: 'exams.take.optionSemanticLabel'.tr(namedArgs: {
+        'label': option.label,
+        'text': option.text,
+      }),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Material(

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_motion.dart';
+import 'package:na_app/features/home/data/home_repository.dart';
 import 'package:na_app/features/subjects/presentation/controllers/subjects_controller.dart';
 
 class CodeUnlockingPage extends ConsumerStatefulWidget {
@@ -21,15 +23,19 @@ class _CodeUnlockingPageState extends ConsumerState<CodeUnlockingPage> {
   bool _complete = false;
 
   static const _steps = [
-    _StepData(icon: LucideIcons.search, label: 'Verifying code'),
-    _StepData(icon: LucideIcons.link, label: 'Linking to teacher'),
-    _StepData(icon: LucideIcons.download, label: 'Downloading lesson index'),
+    _StepData(icon: LucideIcons.search, labelKey: 'subjects.unlocking.step1'),
+    _StepData(icon: LucideIcons.link, labelKey: 'subjects.unlocking.step2'),
+    _StepData(icon: LucideIcons.download, labelKey: 'subjects.unlocking.step3'),
   ];
 
   @override
   void initState() {
     super.initState();
-    _runSteps();
+    // Defer until after first frame so context has a valid InheritedWidget tree
+    // (MediaQuery is not available during initState).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runSteps();
+    });
   }
 
   Future<void> _runSteps() async {
@@ -56,7 +62,17 @@ class _CodeUnlockingPageState extends ConsumerState<CodeUnlockingPage> {
       await Future.delayed(const Duration(milliseconds: 300));
     }
     if (!mounted) return;
-    ref.invalidate(subjectsListProvider);
+
+    // Force fresh fetches so both the Today page and the Subjects list are
+    // up-to-date before the user can navigate back to them.
+    ref.invalidate(todayViewStateProvider);
+    try {
+      await ref.read(subjectsListProvider.notifier).refresh();
+      await ref.read(subjectsListProvider.future);
+    } catch (_) {
+      // Ignore — the subject detail page will still load via its own provider.
+    }
+    if (!mounted) return;
     context.go('/subjects/${widget.subjectId}');
   }
 
@@ -72,7 +88,9 @@ class _CodeUnlockingPageState extends ConsumerState<CodeUnlockingPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _complete ? 'Subject unlocked!' : 'Unlocking subject…',
+                _complete
+                    ? 'subjects.unlocking.successTitle'.tr()
+                    : 'subjects.unlocking.loadingTitle'.tr(),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 22),
                 textAlign: TextAlign.center,
               ),
@@ -143,7 +161,7 @@ class _StepRow extends StatelessWidget {
           ),
           const SizedBox(width: 14),
           Text(
-            step.label,
+            step.labelKey.tr(),
             style: GoogleFonts.inter(
               fontSize: 15,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
@@ -158,6 +176,6 @@ class _StepRow extends StatelessWidget {
 
 class _StepData {
   final IconData icon;
-  final String label;
-  const _StepData({required this.icon, required this.label});
+  final String labelKey;
+  const _StepData({required this.icon, required this.labelKey});
 }

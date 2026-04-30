@@ -32,12 +32,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
 import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
-import type { Subject, SubjectBundle } from "@/types"
+import type { EducationLevel, Subject, SubjectBundle } from "@/types"
+import { EDUCATION_LEVEL_OPTIONS } from "@/types"
 import { format } from "date-fns"
+
+const levelLabel = (level?: EducationLevel) =>
+  EDUCATION_LEVEL_OPTIONS.find((o) => o.value === level)?.label ?? "—"
 
 export function SubjectsPage() {
   const navigate = useNavigate()
@@ -50,7 +61,12 @@ export function SubjectsPage() {
   // Subject form
   const [subjectDialog, setSubjectDialog] = useState(false)
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
-  const [subjectForm, setSubjectForm] = useState({ title: "", description: "", category: "" })
+  const [subjectForm, setSubjectForm] = useState<{
+    title: string
+    description: string
+    category: string
+    level: EducationLevel | ""
+  }>({ title: "", description: "", category: "", level: "" })
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "subject" | "bundle"; id: string; name: string } | null>(null)
 
@@ -83,21 +99,33 @@ export function SubjectsPage() {
   const openSubjectForm = (subject?: Subject) => {
     if (subject) {
       setEditingSubject(subject)
-      setSubjectForm({ title: subject.title, description: subject.description || "", category: subject.category })
+      setSubjectForm({
+        title: subject.title,
+        description: subject.description || "",
+        category: subject.category,
+        level: subject.level ?? "",
+      })
     } else {
       setEditingSubject(null)
-      setSubjectForm({ title: "", description: "", category: "" })
+      setSubjectForm({ title: "", description: "", category: "", level: "" })
     }
     setSubjectDialog(true)
   }
 
   const saveSubject = async () => {
+    if (!subjectForm.level) return
     setSaving(true)
     try {
+      const payload = {
+        title: subjectForm.title,
+        description: subjectForm.description,
+        category: subjectForm.category,
+        level: subjectForm.level,
+      }
       if (editingSubject) {
-        await api.updateSubject(editingSubject._id, subjectForm)
+        await api.updateSubject(editingSubject._id, payload)
       } else {
-        await api.createSubject(subjectForm)
+        await api.createSubject(payload)
       }
       setSubjectDialog(false)
       fetchData()
@@ -183,6 +211,7 @@ export function SubjectsPage() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Level</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -203,6 +232,13 @@ export function SubjectsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{s.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {s.level ? (
+                          <Badge variant="outline">{levelLabel(s.level)}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not set</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {s.isActive ? (
@@ -314,6 +350,24 @@ export function SubjectsPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label>Level</Label>
+              <Select
+                value={subjectForm.level || undefined}
+                onValueChange={(v) => setSubjectForm((f) => ({ ...f, level: v as EducationLevel }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select educational level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EDUCATION_LEVEL_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Description</Label>
               <Textarea
                 value={subjectForm.description}
@@ -323,7 +377,10 @@ export function SubjectsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSubjectDialog(false)}>Cancel</Button>
-            <Button onClick={saveSubject} disabled={saving || !subjectForm.title || !subjectForm.category}>
+            <Button
+              onClick={saveSubject}
+              disabled={saving || !subjectForm.title || !subjectForm.category || !subjectForm.level}
+            >
               {saving ? <RotateCw className="mr-2 h-4 w-4 animate-spin" /> : null}
               {editingSubject ? "Update" : "Create"}
             </Button>

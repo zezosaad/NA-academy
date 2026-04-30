@@ -4,6 +4,8 @@ part 'exam_models.freezed.dart';
 
 enum ExamStatus { available, completed, locked }
 
+enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts }
+
 enum SessionStatus { inProgress, submitted, timedOut }
 
 enum PassFail { pass, fail, none }
@@ -18,7 +20,9 @@ class Exam with _$Exam {
     @Default(0) int questionCount,
     @Default(0) int attemptsAllowed,
     @Default(0) int attemptsRemaining,
+    @Default(0) int freeAttemptsRemaining,
     DateTime? dueDate,
+    @Default(ExamAccessMode.codeRequired) ExamAccessMode accessMode,
     @Default(ExamStatus.available) ExamStatus status,
     double? lastScore,
   }) = _Exam;
@@ -33,20 +37,41 @@ class Exam with _$Exam {
       title: json['title'] as String? ?? '',
       subjectId: json['subjectId'] as String? ?? '',
       durationMinutes: json['durationMinutes'] as int? ?? 0,
-      questionCount: (json['questions'] as List<dynamic>?)?.length ?? json['questionCount'] as int? ?? 0,
+      questionCount:
+          (json['questions'] as List<dynamic>?)?.length ??
+          json['questionCount'] as int? ??
+          0,
       attemptsAllowed: json['attemptsAllowed'] as int? ?? 0,
       attemptsRemaining: json['attemptsRemaining'] as int? ?? 0,
-      dueDate: json['dueDate'] != null ? DateTime.tryParse(json['dueDate'] as String) : null,
+      freeAttemptsRemaining: json['freeAttemptsRemaining'] as int? ?? 0,
+      dueDate: json['dueDate'] != null
+          ? DateTime.tryParse(json['dueDate'] as String)
+          : null,
+      accessMode: _parseAccessMode(json['accessMode'] as String?),
       status: _parseExamStatus(json['status'] as String?),
       lastScore: (json['lastScore'] as num?)?.toDouble(),
     );
   }
 
+  static ExamAccessMode _parseAccessMode(String? value) => switch (value) {
+    'free_section' => ExamAccessMode.freeSection,
+    'full_exam_free_attempts' => ExamAccessMode.fullExamFreeAttempts,
+    _ => ExamAccessMode.codeRequired,
+  };
+
   static ExamStatus _parseExamStatus(String? value) => switch (value) {
-        'completed' => ExamStatus.completed,
-        'locked' => ExamStatus.locked,
-        _ => ExamStatus.available,
-      };
+    'completed' => ExamStatus.completed,
+    'locked' => ExamStatus.locked,
+    _ => ExamStatus.available,
+  };
+}
+
+extension ExamAccessX on Exam {
+  bool get canStartDirectly =>
+      accessMode == ExamAccessMode.fullExamFreeAttempts &&
+      freeAttemptsRemaining > 0;
+
+  bool get needsCodeEntry => !canStartDirectly;
 }
 
 @freezed
@@ -64,7 +89,8 @@ class ExamQuestion with _$ExamQuestion {
     return _ExamQuestion(
       id: id ?? '',
       text: json['text'] as String? ?? '',
-      options: (json['options'] as List<dynamic>?)
+      options:
+          (json['options'] as List<dynamic>?)
               ?.map((e) => QuestionOption.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -76,10 +102,8 @@ class ExamQuestion with _$ExamQuestion {
 
 @freezed
 class QuestionOption with _$QuestionOption {
-  const factory QuestionOption({
-    required String label,
-    required String text,
-  }) = _QuestionOption;
+  const factory QuestionOption({required String label, required String text}) =
+      _QuestionOption;
 
   factory QuestionOption.fromJson(Map<String, dynamic> json) {
     return _QuestionOption(
@@ -102,14 +126,18 @@ class ExamSession with _$ExamSession {
 
   factory ExamSession.fromJson(Map<String, dynamic> json) {
     final id = json['_id'] as String? ?? json['id'] as String?;
-    final startedAt = DateTime.tryParse(json['startedAt'] as String? ?? '') ?? DateTime.now();
+    final startedAt =
+        DateTime.tryParse(json['startedAt'] as String? ?? '') ?? DateTime.now();
     final timeLimit = json['timeLimitMinutes'] as int? ?? 0;
     final endsAt = startedAt.add(Duration(minutes: timeLimit));
     final answersMap = <String, AnswerValue>{};
     final responses = json['responses'] as List<dynamic>? ?? [];
     for (final r in responses) {
       final rMap = r as Map<String, dynamic>;
-      final qId = (rMap['questionId'] as String?) ?? rMap['questionId']?.toString() ?? '';
+      final qId =
+          (rMap['questionId'] as String?) ??
+          rMap['questionId']?.toString() ??
+          '';
       if (qId.isNotEmpty) {
         answersMap[qId] = AnswerValue.fromJson(rMap);
       }
@@ -125,10 +153,10 @@ class ExamSession with _$ExamSession {
   }
 
   static SessionStatus _parseSessionStatus(String? value) => switch (value) {
-        'completed' => SessionStatus.submitted,
-        'timed_out' => SessionStatus.timedOut,
-        _ => SessionStatus.inProgress,
-      };
+    'completed' => SessionStatus.submitted,
+    'timed_out' => SessionStatus.timedOut,
+    _ => SessionStatus.inProgress,
+  };
 }
 
 @freezed
@@ -148,7 +176,9 @@ class AnswerValue with _$AnswerValue {
       selectedOptions = [raw];
     } else if (raw is List) {
       selectedOptions = raw.map((e) => e.toString()).toList();
-      selectedOption = selectedOptions.isNotEmpty ? selectedOptions.join(',') : '';
+      selectedOption = selectedOptions.isNotEmpty
+          ? selectedOptions.join(',')
+          : '';
     } else {
       selectedOption = '';
       selectedOptions = [];
@@ -173,11 +203,15 @@ class ExamScore with _$ExamScore {
   factory ExamScore.fromJson(Map<String, dynamic> json) {
     return _ExamScore(
       sessionId: (json['sessionId'] as String?) ?? json['_id'] as String? ?? '',
-      score: (json['scorePercentage'] as num?)?.toDouble() ?? (json['score'] as num?)?.toDouble() ?? 0.0,
+      score:
+          (json['scorePercentage'] as num?)?.toDouble() ??
+          (json['score'] as num?)?.toDouble() ??
+          0.0,
       passFail: json['passFail'] != null
           ? _parsePassFail(json['passFail'] as String)
           : PassFail.none,
-      perQuestion: (json['perQuestion'] as List<dynamic>?)
+      perQuestion:
+          (json['perQuestion'] as List<dynamic>?)
               ?.map((e) => QuestionReview.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -185,10 +219,10 @@ class ExamScore with _$ExamScore {
   }
 
   static PassFail _parsePassFail(String value) => switch (value) {
-        'pass' => PassFail.pass,
-        'fail' => PassFail.fail,
-        _ => PassFail.none,
-      };
+    'pass' => PassFail.pass,
+    'fail' => PassFail.fail,
+    _ => PassFail.none,
+  };
 }
 
 @freezed

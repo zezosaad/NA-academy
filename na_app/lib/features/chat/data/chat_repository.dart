@@ -26,9 +26,11 @@ class ChatRepository {
   final ChatSocket _chatSocket;
   String currentUserId = '';
 
-  final _conversationsController = StreamController<List<Conversation>>.broadcast();
+  final _conversationsController =
+      StreamController<List<Conversation>>.broadcast();
   final _messagesController = StreamController<ChatMessage>.broadcast();
   final _typingController = StreamController<TypingEvent>.broadcast();
+  final _errorsController = StreamController<String>.broadcast();
 
   List<Conversation> _conversations = [];
   final List<ChatMessage> _messages = [];
@@ -46,27 +48,37 @@ class ChatRepository {
   StreamSubscription<Map<String, dynamic>>? _conversationReadSub;
   StreamSubscription<Map<String, dynamic>>? _typingSub;
   StreamSubscription<List<Map<String, dynamic>>>? _pendingMessagesSub;
+  StreamSubscription<String>? _chatErrorSub;
 
-  Stream<List<Conversation>> get conversations => _conversationsController.stream;
+  Stream<List<Conversation>> get conversations =>
+      _conversationsController.stream;
   Stream<ChatMessage> get messages => _messagesController.stream;
   Stream<TypingEvent> get typingStream => _typingController.stream;
+  Stream<String> get errors => _errorsController.stream;
   List<PendingMessage> get pendingMessages => List.unmodifiable(_pendingQueue);
 
   ChatRepository({
     required Dio dio,
     required ChatSocket chatSocket,
     required SecureTokenStore tokenStore,
-  })  : _dio = dio,
-        _chatSocket = chatSocket {
+  }) : _dio = dio,
+       _chatSocket = chatSocket {
     _initSocketListeners();
   }
 
   void _initSocketListeners() {
     _newMessageSub = _chatSocket.newMessage.listen(_handleNewMessage);
     _statusUpdateSub = _chatSocket.statusUpdate.listen(_handleStatusUpdate);
-    _conversationReadSub = _chatSocket.conversationRead.listen(_handleConversationRead);
+    _conversationReadSub = _chatSocket.conversationRead.listen(
+      _handleConversationRead,
+    );
     _typingSub = _chatSocket.typingIndicator.listen(_handleTypingIndicator);
-    _pendingMessagesSub = _chatSocket.pendingMessages.listen(_handlePendingMessages);
+    _pendingMessagesSub = _chatSocket.pendingMessages.listen(
+      _handlePendingMessages,
+    );
+    _chatErrorSub = _chatSocket.chatErrors.listen((message) {
+      _errorsController.add(message);
+    });
   }
 
   Future<List<Conversation>> listConversations() async {
@@ -82,6 +94,32 @@ class ChatRepository {
           .toList();
       _conversationsController.add(_conversations);
       return _conversations;
+    } on DioException catch (e) {
+      throw _mapException(e);
+    }
+  }
+
+  Future<List<ChatMessage>> getConversationMessages(
+    String conversationId, {
+    int limit = 100,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        Endpoints.chat.messages(conversationId),
+        queryParameters: {'limit': limit},
+      );
+      final rawList = response.data ?? <dynamic>[];
+      final history = rawList
+          .whereType<Map<String, dynamic>>()
+          .map(ChatMessage.fromJson)
+          .toList()
+        ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+
+      for (final message in history) {
+        _upsertMessage(message);
+      }
+
+      return history;
     } on DioException catch (e) {
       throw _mapException(e);
     }
@@ -128,37 +166,39 @@ class ChatRepository {
     String? text,
     String? imageFileId,
   }) {
-    if (currentUserId.isEmpty) {
-      log('sendMessage called with empty currentUserId — message not sent');
-      return;
-    }
     final messageType = imageFileId != null ? 'image' : 'text';
     final localId = 'pending-${DateTime.now().millisecondsSinceEpoch}';
 
-    final pending = PendingMessage(
-      localId: localId,
-      recipientId: recipientId,
-      text: text,
-      imageFileId: imageFileId,
-      type: messageType == 'image' ? MessageType.image : MessageType.text,
-      status: MessageDeliveryStatus.pending,
-      createdAt: DateTime.now(),
-    );
-    _pendingQueue.add(pending);
+    if (currentUserId.isNotEmpty) {
+      final pending = PendingMessage(
+        localId: localId,
+        recipientId: recipientId,
+        text: text,
+        imageFileId: imageFileId,
+        type: messageType == 'image' ? MessageType.image : MessageType.text,
+        status: MessageDeliveryStatus.pending,
+        createdAt: DateTime.now(),
+      );
+      _pendingQueue.add(pending);
 
-    final provisional = ChatMessage(
-      id: localId,
-      conversationId: '',
-      senderId: currentUserId,
-      recipientId: recipientId,
-      type: messageType == 'image' ? MessageType.image : MessageType.text,
-      text: text,
-      imageFileId: imageFileId,
-      sentAt: DateTime.now(),
-      status: MessageDeliveryStatus.pending,
-    );
-    _messages.add(provisional);
-    _messagesController.add(provisional);
+      final provisional = ChatMessage(
+        id: localId,
+        conversationId: '',
+        senderId: currentUserId,
+        recipientId: recipientId,
+        type: messageType == 'image' ? MessageType.image : MessageType.text,
+        text: text,
+        imageFileId: imageFileId,
+        sentAt: DateTime.now(),
+        status: MessageDeliveryStatus.pending,
+      );
+      _messages.add(provisional);
+      _messagesController.add(provisional);
+    } else {
+      log(
+        'sendMessage called before currentUserId was initialized; sending without provisional local message',
+      );
+    }
 
     _chatSocket.sendMessage(
       recipientId: recipientId,
@@ -209,21 +249,27 @@ class ChatRepository {
         _messages[existingIdx] = merged;
         _messagesController.add(merged);
       } else {
-        _messages.add(message);
-        _messagesController.add(message);
+        _upsertMessage(message);
       }
 
       deliveryAck(messageId: message.id, senderId: message.senderId);
 
-      final pendingIdx = _pendingQueue.indexWhere((m) =>
-          m.localId == clientMessageId && m.status == MessageDeliveryStatus.pending);
+      final pendingIdx = _pendingQueue.indexWhere(
+        (m) =>
+            m.localId == clientMessageId &&
+            m.status == MessageDeliveryStatus.pending,
+      );
       if (pendingIdx >= 0) {
         _pendingQueue.removeAt(pendingIdx);
       }
 
       _safeListConversations();
     } catch (e, st) {
-      log('Failed to parse incoming message (clientMessageId=$clientMessageId): $e', error: e, stackTrace: st);
+      log(
+        'Failed to parse incoming message (clientMessageId=$clientMessageId): $e',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -254,7 +300,9 @@ class ChatRepository {
     if (conversationId != null) {
       for (int i = 0; i < _messages.length; i++) {
         if (_messages[i].conversationId == conversationId) {
-          _messages[i] = _messages[i].copyWith(status: MessageDeliveryStatus.read);
+          _messages[i] = _messages[i].copyWith(
+            status: MessageDeliveryStatus.read,
+          );
           _messagesController.add(_messages[i]);
         }
       }
@@ -296,15 +344,28 @@ class ChatRepository {
     });
   }
 
+  void _upsertMessage(ChatMessage message) {
+    final idx = _messages.indexWhere((m) => m.id == message.id);
+    if (idx >= 0) {
+      _messages[idx] = message;
+      _messagesController.add(message);
+      return;
+    }
+    _messages.add(message);
+    _messagesController.add(message);
+  }
+
   void dispose() {
     _newMessageSub?.cancel();
     _statusUpdateSub?.cancel();
     _conversationReadSub?.cancel();
     _typingSub?.cancel();
     _pendingMessagesSub?.cancel();
+    _chatErrorSub?.cancel();
     _conversationsController.close();
     _messagesController.close();
     _typingController.close();
+    _errorsController.close();
   }
 
   ApiException _mapException(DioException e) {

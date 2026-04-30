@@ -32,9 +32,10 @@ class AppColors {
   static const Color dangerSoft = Color(0xFFFCDADC);
 
   // ─── Dark Theme ───────────────────────────────────────────────────────────
+  // Library at night — warm-tinted ink, never pitch black.
   static const Color darkBgCanvas = Color(0xFF0F1018); // Deep ink night
   static const Color darkBgSurface = Color(0xFF181A26);
-  static const Color darkBgSunken = Color(0xFF080911);
+  static const Color darkBgSunken = Color(0xFF0A0B14); // Brand-tinted well
   static const Color darkBgElevated = Color(0xFF222533);
 
   static const Color darkBorderSubtle = Color(0x1AF8F5EE); // Bone @ 10%
@@ -48,9 +49,12 @@ class AppColors {
   static const Color darkAccentSoft = Color(0xFF2B2E5C);
   static const Color darkAccentDeep = Color(0xFFC3C5F2);
   static const Color darkAccentGlow = Color(0x668B8FE8);
+  // Text/icon color used ON the lifted accent — deep ink for AA contrast.
+  static const Color darkOnAccent = Color(0xFF1B1D29);
 
   static const Color darkSecondary = Color(0xFFFFA88F); // Lifted apricot
   static const Color darkSecondarySoft = Color(0xFF5A2E22);
+  static const Color darkOnSecondary = Color(0xFF1B1D29);
 
   static const Color darkSuccess = Color(0xFF8FDDB8);
   static const Color darkWarning = Color(0xFFEEC282);

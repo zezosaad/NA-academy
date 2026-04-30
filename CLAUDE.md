@@ -1,8 +1,9 @@
 ﻿# NA-Academy Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-24
+Auto-generated from all feature plans. Last updated: 2026-04-30
 
 ## Active Technologies
+- Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`). (004-offline-mode)
 
 - Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3`); backend stays on NestJS 11 / Node 20+ per the constitution. (003-mobile-app-redesign)
 
@@ -22,6 +23,7 @@ tests/
 Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3`); backend stays on NestJS 11 / Node 20+ per the constitution.: Follow standard conventions
 
 ## Recent Changes
+- 004-offline-mode: Added Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`).
 
 - 003-mobile-app-redesign: Added Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3`); backend stays on NestJS 11 / Node 20+ per the constitution.
 

@@ -11,17 +11,25 @@ import { colors, sizes } from '../../../constants/helpers';
 
 export default function ConversationScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
-  const { messages: allMessages, sendMessage, markRead, setTyping, typingUsers, conversations } = useChat();
+  const { messages: allMessages, sendMessage, markRead, setTyping, typingUsers, conversations, fetchMessages } = useChat();
   const { user } = useAuthContext();
   const [text, setText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const historyFetchedRef = useRef(false);
 
   const conversationMessages = allMessages.get(conversationId) || [];
   const conversation = conversations.find((c) => c._id === conversationId);
   const otherParticipantId = conversation?.participants.find((p) => p !== user?.id) || '';
   const otherName = conversation?.otherParticipant?.name || 'User';
   const isOtherTyping = typingUsers.has(otherParticipantId);
+
+  // Fetch message history once when opening the conversation
+  useEffect(() => {
+    if (!conversationId || conversationId === '' || historyFetchedRef.current) return;
+    historyFetchedRef.current = true;
+    fetchMessages(conversationId);
+  }, [conversationId, fetchMessages]);
 
   useEffect(() => {
     if (conversationId && otherParticipantId) {

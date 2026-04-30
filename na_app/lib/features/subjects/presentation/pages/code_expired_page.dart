@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,7 +45,7 @@ class CodeExpiredPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Code expired',
+              'subjects.codeExpired.title'.tr(),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 22),
             ),
             const SizedBox(height: 12),
@@ -52,7 +53,9 @@ class CodeExpiredPage extends StatelessWidget {
             if (expiredAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'This code expired on ${formatDateTime(context, expiredAt!)}',
+                'subjects.codeExpired.detail'.tr(namedArgs: {
+                  'date': formatDateTime(context, expiredAt!),
+                }),
                 style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
               ),
             ],

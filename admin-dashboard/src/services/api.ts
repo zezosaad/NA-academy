@@ -13,6 +13,10 @@ import type {
   MediaAsset,
   SecurityFlag,
   UserStatus,
+  EducationLevel,
+  UserDetail,
+  ChatConversationPreview,
+  ChatMessage,
 } from "@/types"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -150,18 +154,31 @@ class ApiClient {
     })
   }
 
+  async getUserDetail(userId: string): Promise<UserDetail> {
+    return this.request(`/api/v1/users/${userId}`)
+  }
+
+  async updateUserLevel(userId: string, level: EducationLevel): Promise<User> {
+    return this.request(`/api/v1/users/${userId}/level`, {
+      method: "PATCH",
+      body: JSON.stringify({ level }),
+    })
+  }
+
   // ── Subjects ──
   async getSubjects(params: {
     page?: number
     limit?: number
     search?: string
     category?: string
+    level?: EducationLevel
   } = {}): Promise<PaginatedResponse<Subject>> {
     const qs = new URLSearchParams()
     if (params.page) qs.set("page", String(params.page))
     if (params.limit) qs.set("limit", String(params.limit))
     if (params.search) qs.set("search", params.search)
     if (params.category) qs.set("category", params.category)
+    if (params.level) qs.set("level", params.level)
     return this.request(`/api/v1/subjects?${qs}`)
   }
 
@@ -173,6 +190,7 @@ class ApiClient {
     title: string
     description?: string
     category: string
+    level: EducationLevel
   }): Promise<Subject> {
     return this.request("/api/v1/subjects", {
       method: "POST",
@@ -182,7 +200,7 @@ class ApiClient {
 
   async updateSubject(
     id: string,
-    data: { title?: string; description?: string; category?: string }
+    data: { title?: string; description?: string; category?: string; level?: EducationLevel }
   ): Promise<Subject> {
     return this.request(`/api/v1/subjects/${id}`, {
       method: "PUT",
@@ -325,6 +343,7 @@ class ApiClient {
   async createExam(data: {
     title: string
     subjectId: string
+    accessMode?: "code_required" | "free_section" | "full_exam_free_attempts"
     hasFreeSection?: boolean
     freeQuestionCount?: number
     freeAttemptLimit?: number
@@ -379,8 +398,55 @@ class ApiClient {
     })
   }
 
-  async getBatchCodes(batchId: string): Promise<PaginatedResponse<SubjectCode | ExamCode>> {
-    return this.request(`/api/v1/activation-codes/batch/${batchId}`)
+  async getBatchCodes(
+    batchId: string,
+    params: { page?: number; limit?: number } = {}
+  ): Promise<PaginatedResponse<SubjectCode | ExamCode>> {
+    const qs = new URLSearchParams()
+    qs.set("page", String(params.page ?? 1))
+    qs.set("limit", String(params.limit ?? 100))
+    return this.request(`/api/v1/activation-codes/batch/${batchId}?${qs}`)
+  }
+
+  async getCodesByEntity(): Promise<{
+    subjects: Array<{ _id: string; title?: string; category?: string; isActive?: boolean; total: number; available: number; used: number; expired: number }>
+    bundles: Array<{ _id: string; name?: string; isActive?: boolean; total: number; available: number; used: number; expired: number }>
+    exams: Array<{ _id: string; title?: string; isActive?: boolean; total: number; available: number; used: number; expired: number }>
+  }> {
+    return this.request("/api/v1/activation-codes/by-entity")
+  }
+
+  async getCodesForSubject(
+    subjectId: string,
+    params: { page?: number; limit?: number; status?: string } = {}
+  ): Promise<PaginatedResponse<SubjectCode>> {
+    const qs = new URLSearchParams()
+    qs.set("page", String(params.page ?? 1))
+    qs.set("limit", String(params.limit ?? 100))
+    if (params.status) qs.set("status", params.status)
+    return this.request(`/api/v1/activation-codes/subject/${subjectId}?${qs}`)
+  }
+
+  async getCodesForBundle(
+    bundleId: string,
+    params: { page?: number; limit?: number; status?: string } = {}
+  ): Promise<PaginatedResponse<SubjectCode>> {
+    const qs = new URLSearchParams()
+    qs.set("page", String(params.page ?? 1))
+    qs.set("limit", String(params.limit ?? 100))
+    if (params.status) qs.set("status", params.status)
+    return this.request(`/api/v1/activation-codes/bundle/${bundleId}?${qs}`)
+  }
+
+  async getCodesForExam(
+    examId: string,
+    params: { page?: number; limit?: number; status?: string } = {}
+  ): Promise<PaginatedResponse<ExamCode>> {
+    const qs = new URLSearchParams()
+    qs.set("page", String(params.page ?? 1))
+    qs.set("limit", String(params.limit ?? 100))
+    if (params.status) qs.set("status", params.status)
+    return this.request(`/api/v1/activation-codes/exam/${examId}?${qs}`)
   }
 
   async exportBatch(batchId: string, format: "csv" | "xlsx" = "csv"): Promise<Blob> {
@@ -427,6 +493,22 @@ class ApiClient {
       method: "PATCH",
       body: JSON.stringify({ actionTaken }),
     })
+  }
+
+  // ── Chat ──
+  async getChatConversations(): Promise<ChatConversationPreview[]> {
+    const res = await this.request<{ conversations: ChatConversationPreview[] }>("/api/v1/chat/conversations")
+    return (res as unknown as { conversations: ChatConversationPreview[] }).conversations ?? (res as unknown as ChatConversationPreview[])
+  }
+
+  async getChatMessages(conversationId: string, limit = 50, before?: string): Promise<ChatMessage[]> {
+    const qs = new URLSearchParams({ limit: String(limit) })
+    if (before) qs.set("before", before)
+    return this.request(`/api/v1/chat/conversations/${conversationId}/messages?${qs}`)
+  }
+
+  getSocketToken(): string | null {
+    return this.getToken()
   }
 }
 

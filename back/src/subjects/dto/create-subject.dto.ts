@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EducationLevel } from '../../common/enums/education-level.enum.js';
 
 export class CreateSubjectDto {
   @ApiProperty({ example: 'Algebra I' })
@@ -16,4 +17,8 @@ export class CreateSubjectDto {
   @IsString()
   @IsNotEmpty()
   category!: string;
+
+  @ApiProperty({ enum: EducationLevel, example: EducationLevel.SECONDARY_3 })
+  @IsEnum(EducationLevel)
+  level!: EducationLevel;
 }

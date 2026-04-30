@@ -1,17 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/features/chat/data/chat_repository.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
+import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 
 final chatControllerProvider = Provider<ChatController>((ref) {
   final repository = ref.watch(chatRepositoryProvider);
-  return ChatController(repository: repository);
+  final controller = ChatController(repository: repository);
+  final userId = ref.watch(authControllerProvider).valueOrNull == null
+      ? ''
+      : ref.read(authControllerProvider.notifier).currentUser?.id ?? '';
+  if (userId.isNotEmpty) {
+    controller.setCurrentUserId(userId);
+  }
+  return controller;
 });
 
 class ChatController {
   final ChatRepository _repository;
   String _currentUserId = '';
 
-  ChatController({required ChatRepository repository}) : _repository = repository;
+  ChatController({required ChatRepository repository})
+    : _repository = repository;
 
   String get currentUserId => _currentUserId;
 
@@ -24,11 +33,17 @@ class ChatController {
     _repository.sendMessage(recipientId: recipientId, text: text);
   }
 
-  void sendImageMessage({required String recipientId, required String imageFileId}) {
+  void sendImageMessage({
+    required String recipientId,
+    required String imageFileId,
+  }) {
     _repository.sendMessage(recipientId: recipientId, imageFileId: imageFileId);
   }
 
-  void markConversationRead({required String conversationId, required String senderId}) {
+  void markConversationRead({
+    required String conversationId,
+    required String senderId,
+  }) {
     _repository.markRead(conversationId: conversationId, senderId: senderId);
   }
 

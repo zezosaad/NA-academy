@@ -24,7 +24,9 @@ mixin _$Exam {
   int get questionCount => throw _privateConstructorUsedError;
   int get attemptsAllowed => throw _privateConstructorUsedError;
   int get attemptsRemaining => throw _privateConstructorUsedError;
+  int get freeAttemptsRemaining => throw _privateConstructorUsedError;
   DateTime? get dueDate => throw _privateConstructorUsedError;
+  ExamAccessMode get accessMode => throw _privateConstructorUsedError;
   ExamStatus get status => throw _privateConstructorUsedError;
   double? get lastScore => throw _privateConstructorUsedError;
 
@@ -47,7 +49,9 @@ abstract class $ExamCopyWith<$Res> {
     int questionCount,
     int attemptsAllowed,
     int attemptsRemaining,
+    int freeAttemptsRemaining,
     DateTime? dueDate,
+    ExamAccessMode accessMode,
     ExamStatus status,
     double? lastScore,
   });
@@ -75,7 +79,9 @@ class _$ExamCopyWithImpl<$Res, $Val extends Exam>
     Object? questionCount = null,
     Object? attemptsAllowed = null,
     Object? attemptsRemaining = null,
+    Object? freeAttemptsRemaining = null,
     Object? dueDate = freezed,
+    Object? accessMode = null,
     Object? status = null,
     Object? lastScore = freezed,
   }) {
@@ -109,10 +115,18 @@ class _$ExamCopyWithImpl<$Res, $Val extends Exam>
                 ? _value.attemptsRemaining
                 : attemptsRemaining // ignore: cast_nullable_to_non_nullable
                       as int,
+            freeAttemptsRemaining: null == freeAttemptsRemaining
+                ? _value.freeAttemptsRemaining
+                : freeAttemptsRemaining // ignore: cast_nullable_to_non_nullable
+                      as int,
             dueDate: freezed == dueDate
                 ? _value.dueDate
                 : dueDate // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            accessMode: null == accessMode
+                ? _value.accessMode
+                : accessMode // ignore: cast_nullable_to_non_nullable
+                      as ExamAccessMode,
             status: null == status
                 ? _value.status
                 : status // ignore: cast_nullable_to_non_nullable
@@ -143,7 +157,9 @@ abstract class _$$ExamImplCopyWith<$Res> implements $ExamCopyWith<$Res> {
     int questionCount,
     int attemptsAllowed,
     int attemptsRemaining,
+    int freeAttemptsRemaining,
     DateTime? dueDate,
+    ExamAccessMode accessMode,
     ExamStatus status,
     double? lastScore,
   });
@@ -168,7 +184,9 @@ class __$$ExamImplCopyWithImpl<$Res>
     Object? questionCount = null,
     Object? attemptsAllowed = null,
     Object? attemptsRemaining = null,
+    Object? freeAttemptsRemaining = null,
     Object? dueDate = freezed,
+    Object? accessMode = null,
     Object? status = null,
     Object? lastScore = freezed,
   }) {
@@ -202,10 +220,18 @@ class __$$ExamImplCopyWithImpl<$Res>
             ? _value.attemptsRemaining
             : attemptsRemaining // ignore: cast_nullable_to_non_nullable
                   as int,
+        freeAttemptsRemaining: null == freeAttemptsRemaining
+            ? _value.freeAttemptsRemaining
+            : freeAttemptsRemaining // ignore: cast_nullable_to_non_nullable
+                  as int,
         dueDate: freezed == dueDate
             ? _value.dueDate
             : dueDate // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        accessMode: null == accessMode
+            ? _value.accessMode
+            : accessMode // ignore: cast_nullable_to_non_nullable
+                  as ExamAccessMode,
         status: null == status
             ? _value.status
             : status // ignore: cast_nullable_to_non_nullable
@@ -230,7 +256,9 @@ class _$ExamImpl implements _Exam {
     this.questionCount = 0,
     this.attemptsAllowed = 0,
     this.attemptsRemaining = 0,
+    this.freeAttemptsRemaining = 0,
     this.dueDate,
+    this.accessMode = ExamAccessMode.codeRequired,
     this.status = ExamStatus.available,
     this.lastScore,
   });
@@ -254,7 +282,13 @@ class _$ExamImpl implements _Exam {
   @JsonKey()
   final int attemptsRemaining;
   @override
+  @JsonKey()
+  final int freeAttemptsRemaining;
+  @override
   final DateTime? dueDate;
+  @override
+  @JsonKey()
+  final ExamAccessMode accessMode;
   @override
   @JsonKey()
   final ExamStatus status;
@@ -263,7 +297,7 @@ class _$ExamImpl implements _Exam {
 
   @override
   String toString() {
-    return 'Exam(id: $id, title: $title, subjectId: $subjectId, durationMinutes: $durationMinutes, questionCount: $questionCount, attemptsAllowed: $attemptsAllowed, attemptsRemaining: $attemptsRemaining, dueDate: $dueDate, status: $status, lastScore: $lastScore)';
+    return 'Exam(id: $id, title: $title, subjectId: $subjectId, durationMinutes: $durationMinutes, questionCount: $questionCount, attemptsAllowed: $attemptsAllowed, attemptsRemaining: $attemptsRemaining, freeAttemptsRemaining: $freeAttemptsRemaining, dueDate: $dueDate, accessMode: $accessMode, status: $status, lastScore: $lastScore)';
   }
 
   @override
@@ -283,7 +317,11 @@ class _$ExamImpl implements _Exam {
                 other.attemptsAllowed == attemptsAllowed) &&
             (identical(other.attemptsRemaining, attemptsRemaining) ||
                 other.attemptsRemaining == attemptsRemaining) &&
+            (identical(other.freeAttemptsRemaining, freeAttemptsRemaining) ||
+                other.freeAttemptsRemaining == freeAttemptsRemaining) &&
             (identical(other.dueDate, dueDate) || other.dueDate == dueDate) &&
+            (identical(other.accessMode, accessMode) ||
+                other.accessMode == accessMode) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.lastScore, lastScore) ||
                 other.lastScore == lastScore));
@@ -299,7 +337,9 @@ class _$ExamImpl implements _Exam {
     questionCount,
     attemptsAllowed,
     attemptsRemaining,
+    freeAttemptsRemaining,
     dueDate,
+    accessMode,
     status,
     lastScore,
   );
@@ -322,7 +362,9 @@ abstract class _Exam implements Exam {
     final int questionCount,
     final int attemptsAllowed,
     final int attemptsRemaining,
+    final int freeAttemptsRemaining,
     final DateTime? dueDate,
+    final ExamAccessMode accessMode,
     final ExamStatus status,
     final double? lastScore,
   }) = _$ExamImpl;
@@ -342,7 +384,11 @@ abstract class _Exam implements Exam {
   @override
   int get attemptsRemaining;
   @override
+  int get freeAttemptsRemaining;
+  @override
   DateTime? get dueDate;
+  @override
+  ExamAccessMode get accessMode;
   @override
   ExamStatus get status;
   @override

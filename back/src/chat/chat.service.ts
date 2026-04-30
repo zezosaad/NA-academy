@@ -260,6 +260,33 @@ export class ChatService {
       }
     }
 
+    // Always include admins as potential conversation partners for every user
+    // (canChat already allows admin ↔ anyone unconditionally)
+    if (user.role !== 'admin') {
+      const admins = await this.userModel.find({ role: 'admin' }).exec();
+      for (const admin of admins) {
+        const adminIdStr = admin._id.toString();
+        if (seenCounterpartyIds.has(adminIdStr)) continue;
+        seenCounterpartyIds.add(adminIdStr);
+
+        const roomId = this.generateRoomId(userId, adminIdStr);
+        const existingConv = await this.conversationModel.findOne({ roomId }).exec();
+        if (existingConv) continue;
+
+        results.push({
+          id: '',
+          virtual: true,
+          counterpartyId: adminIdStr,
+          counterpartyName: admin.name,
+          counterpartyAvatarUrl: null,
+          subjectId: '',
+          subjectTitle: '',
+          lastMessage: null,
+          unreadCount: 0,
+        });
+      }
+    }
+
     results.sort((a, b) => {
       const aTime = a.lastMessage?.sentAt ?? '0';
       const bTime = b.lastMessage?.sentAt ?? '0';
@@ -358,5 +385,37 @@ export class ChatService {
       })
       .populate('senderId', 'name role email')
       .exec();
+  }
+
+  async getConversationMessages(
+    conversationId: string,
+    requesterId: string,
+    limit = 50,
+    before?: string,
+  ): Promise<MessageDocument[]> {
+    const conv = await this.conversationModel
+      .findOne({
+        _id: new Types.ObjectId(conversationId),
+        participants: new Types.ObjectId(requesterId),
+      })
+      .exec();
+
+    if (!conv) return [];
+
+    const query: Record<string, unknown> = {
+      conversationId: new Types.ObjectId(conversationId),
+    };
+
+    if (before) {
+      query['_id'] = { $lt: new Types.ObjectId(before) };
+    }
+
+    return this.messageModel
+      .find(query)
+      .sort({ _id: -1 })
+      .limit(limit)
+      .populate('senderId', 'name role email')
+      .exec()
+      .then((msgs) => msgs.reverse());
   }
 }

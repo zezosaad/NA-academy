@@ -103,12 +103,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required String name,
     required String email,
     required String password,
+    required EducationLevel level,
   }) async {
     try {
       final result = await _authRepository.register(
         name: name,
         email: email,
         password: password,
+        level: level,
       );
       await _prefsStore.setHasSeenOnboarding(true);
       _currentUser = result.user;

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,8 +13,8 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  ThemeMode _selectedTheme = ThemeMode.system;
   bool _notificationsEnabled = true;
+  bool _localeFollowsSystem = true;
   bool _loading = true;
 
   @override
@@ -24,12 +25,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _loadPrefs() async {
     final prefsStore = ref.read(prefsStoreProvider);
-    final theme = await prefsStore.themeMode;
     final notifs = await prefsStore.notificationsEnabled;
+    final followsSystem = await prefsStore.localeFollowsSystem;
     if (!mounted) return;
     setState(() {
-      _selectedTheme = theme;
       _notificationsEnabled = notifs;
+      _localeFollowsSystem = followsSystem;
       _loading = false;
     });
   }
@@ -37,6 +38,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedMode = ref.watch(themeModeProvider);
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
     final borderColor =
         isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
@@ -47,29 +49,30 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(title: Text('settings.title'.tr())),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text('settings.title'.tr())),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(context, 'Appearance'),
+            _buildSectionHeader(context, 'settings.appearance'.tr()),
             const SizedBox(height: 8),
-            _buildThemeSelector(context, isDark, bgColor, borderColor),
+            _buildThemeSelector(
+                context, isDark, bgColor, borderColor, selectedMode),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Preferences'),
+            _buildSectionHeader(context, 'settings.preferences'.tr()),
             const SizedBox(height: 8),
             _buildNotificationsToggle(
                 context, isDark, bgColor, borderColor, textColor, mutedColor),
             const SizedBox(height: 12),
-            _buildLanguageRow(
-                context, isDark, bgColor, borderColor, textColor, mutedColor),
+            _buildLanguageSelector(
+                context, isDark, bgColor, borderColor, textColor),
           ],
         ),
       ),
@@ -93,44 +96,52 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     bool isDark,
     Color bgColor,
     Color borderColor,
+    ThemeMode selectedMode,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        children: [
-          _themeOption(
-            context: context,
-            icon: LucideIcons.monitor,
-            label: 'System',
-            description: 'Follow device settings',
-            value: ThemeMode.system,
-            isDark: isDark,
-            borderColor: borderColor,
-          ),
-          _themeOption(
-            context: context,
-            icon: LucideIcons.sun,
-            label: 'Light',
-            description: 'Always use light theme',
-            value: ThemeMode.light,
-            isDark: isDark,
-            borderColor: borderColor,
-          ),
-          _themeOption(
-            context: context,
-            icon: LucideIcons.moon,
-            label: 'Dark',
-            description: 'Always use dark theme',
-            value: ThemeMode.dark,
-            isDark: isDark,
-            borderColor: borderColor,
-            isLast: true,
-          ),
-        ],
+    return Material(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          children: [
+            _themeOption(
+              context: context,
+              icon: LucideIcons.monitor,
+              label: 'settings.theme.system'.tr(),
+              description: 'settings.theme.systemDescription'.tr(),
+              value: ThemeMode.system,
+              isDark: isDark,
+              borderColor: borderColor,
+              selectedMode: selectedMode,
+            ),
+            _themeOption(
+              context: context,
+              icon: LucideIcons.sun,
+              label: 'settings.theme.light'.tr(),
+              description: 'settings.theme.lightDescription'.tr(),
+              value: ThemeMode.light,
+              isDark: isDark,
+              borderColor: borderColor,
+              selectedMode: selectedMode,
+            ),
+            _themeOption(
+              context: context,
+              icon: LucideIcons.moon,
+              label: 'settings.theme.dark'.tr(),
+              description: 'settings.theme.darkDescription'.tr(),
+              value: ThemeMode.dark,
+              isDark: isDark,
+              borderColor: borderColor,
+              selectedMode: selectedMode,
+              isLast: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -143,17 +154,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required ThemeMode value,
     required bool isDark,
     required Color borderColor,
+    required ThemeMode selectedMode,
     bool isLast = false,
   }) {
-    final isSelected = _selectedTheme == value;
+    final isSelected = selectedMode == value;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
 
     return InkWell(
       onTap: () => _onThemeChanged(value),
-      borderRadius: BorderRadius.vertical(
-        top: value == ThemeMode.system ? const Radius.circular(18) : Radius.zero,
-        bottom: isLast ? const Radius.circular(18) : Radius.zero,
-      ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -162,7 +170,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               : Border(bottom: BorderSide(color: borderColor)),
         ),
         child: Semantics(
-          label: '$label theme: $description',
+          label: 'settings.theme.semanticLabel'.tr(
+            namedArgs: {'label': label, 'description': description},
+          ),
           selected: isSelected,
           child: Row(
             children: [
@@ -205,9 +215,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _onThemeChanged(ThemeMode mode) async {
-    setState(() => _selectedTheme = mode);
-    final prefsStore = ref.read(prefsStoreProvider);
-    await prefsStore.setThemeMode(mode);
+    await ref.read(themeModeProvider.notifier).setMode(mode);
   }
 
   Widget _buildNotificationsToggle(
@@ -232,7 +240,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           await prefsStore.setNotificationsEnabled(enabled);
         },
         title: Text(
-          'Notifications',
+          'settings.notifications.title'.tr(),
           style: Theme.of(context)
               .textTheme
               .titleMedium
@@ -240,8 +248,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         subtitle: Text(
           _notificationsEnabled
-              ? 'Daily reminders are enabled'
-              : 'Daily reminders are disabled',
+              ? 'settings.notifications.enabled'.tr()
+              : 'settings.notifications.disabled'.tr(),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: mutedColor,
               ),
@@ -266,71 +274,144 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  Widget _buildLanguageRow(
+  Widget _buildLanguageSelector(
     BuildContext context,
     bool isDark,
     Color bgColor,
     Color borderColor,
     Color textColor,
-    Color mutedColor,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            LucideIcons.globe,
-            size: 16,
-            color: textColor,
-          ),
+    return Material(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
         ),
-        title: Text(
-          'Language',
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontSize: 15),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
           children: [
-            Text(
-              'English',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: mutedColor,
-                  ),
+            _languageOption(
+              context: context,
+              icon: LucideIcons.monitor,
+              label: 'settings.language.system'.tr(),
+              description: 'settings.language.systemDescription'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              isSelected: _localeFollowsSystem,
+              onTap: () => _selectLanguageSystem(),
             ),
-            const SizedBox(width: 8),
-            Icon(
-              LucideIcons.chevronRight,
-              size: 16,
-              color: mutedColor,
+            _languageOption(
+              context: context,
+              icon: LucideIcons.languages,
+              label: 'settings.language.english'.tr(),
+              description: 'settings.language.englishDescription'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              isSelected: !_localeFollowsSystem &&
+                  context.locale == const Locale('en'),
+              onTap: () => _selectLanguage(const Locale('en')),
+            ),
+            _languageOption(
+              context: context,
+              icon: LucideIcons.languages,
+              label: 'settings.language.arabic'.tr(),
+              description: 'settings.language.arabicDescription'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              isSelected: !_localeFollowsSystem &&
+                  context.locale == const Locale('ar'),
+              onTap: () => _selectLanguage(const Locale('ar')),
+              isLast: true,
             ),
           ],
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        onTap: () {
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Additional languages coming soon.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
       ),
     );
+  }
+
+  Widget _languageOption({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String description,
+    required bool isDark,
+    required Color borderColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+    bool isLast = false,
+  }) {
+    final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: borderColor)),
+        ),
+        child: Semantics(
+          label: 'settings.language.semanticLabel'.tr(
+            namedArgs: {'label': label, 'description': description},
+          ),
+          selected: isSelected,
+          child: Row(
+            children: [
+              Icon(icon,
+                  size: 18,
+                  color: isSelected
+                      ? accentColor
+                      : (isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontSize: 15),
+                    ),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(LucideIcons.check, size: 18, color: accentColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectLanguageSystem() async {
+    final prefsStore = ref.read(prefsStoreProvider);
+    await prefsStore.setLocaleFollowsSystem(true);
+    if (!mounted) return;
+    setState(() => _localeFollowsSystem = true);
+    await context.resetLocale();
+  }
+
+  Future<void> _selectLanguage(Locale locale) async {
+    final prefsStore = ref.read(prefsStoreProvider);
+    await prefsStore.setLocaleFollowsSystem(false);
+    if (!mounted) return;
+    setState(() => _localeFollowsSystem = false);
+    await context.setLocale(locale);
   }
 }

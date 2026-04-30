@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,12 +39,12 @@ class CodeUsedPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Code already used',
+              'subjects.codeUsed.title'.tr(),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 22),
             ),
             const SizedBox(height: 8),
             Text(
-              'This activation code has already been redeemed.',
+              'subjects.codeUsed.message'.tr(),
               style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -52,7 +53,9 @@ class CodeUsedPage extends StatelessWidget {
             if (consumedAt != null) ...[
               const SizedBox(height: 12),
               Text(
-                'Used on ${formatDateTime(context, consumedAt!)}',
+                'subjects.codeUsed.detail'.tr(namedArgs: {
+                  'date': formatDateTime(context, consumedAt!),
+                }),
                 style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
               ),
             ],

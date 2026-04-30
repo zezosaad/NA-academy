@@ -53,6 +53,57 @@ export class ActivationCodesController {
     return { data, total, page: query.page, limit: query.limit };
   }
 
+  @Get('by-entity')
+  @Roles('admin')
+  @ApiOperation({
+    summary: 'List subjects/bundles/exams with their code counts (per entity)',
+  })
+  async listByEntity() {
+    return this.activationCodesService.listByEntity();
+  }
+
+  @Get('subject/:subjectId')
+  @Roles('admin')
+  @ApiOperation({ summary: 'List codes for a specific subject' })
+  async findCodesBySubject(
+    @Param('subjectId') subjectId: string,
+    @Query() query: ListCodesQueryDto,
+  ) {
+    const { data, total } = await this.activationCodesService.findCodesBySubject(
+      subjectId,
+      query,
+    );
+    return { data, total, page: query.page, limit: query.limit };
+  }
+
+  @Get('bundle/:bundleId')
+  @Roles('admin')
+  @ApiOperation({ summary: 'List codes for a specific bundle' })
+  async findCodesByBundle(
+    @Param('bundleId') bundleId: string,
+    @Query() query: ListCodesQueryDto,
+  ) {
+    const { data, total } = await this.activationCodesService.findCodesByBundle(
+      bundleId,
+      query,
+    );
+    return { data, total, page: query.page, limit: query.limit };
+  }
+
+  @Get('exam/:examId')
+  @Roles('admin')
+  @ApiOperation({ summary: 'List codes for a specific exam' })
+  async findCodesByExam(
+    @Param('examId') examId: string,
+    @Query() query: ListCodesQueryDto,
+  ) {
+    const { data, total } = await this.activationCodesService.findCodesByExam(
+      examId,
+      query,
+    );
+    return { data, total, page: query.page, limit: query.limit };
+  }
+
   @Post('batch/:batchId/export')
   @Roles('admin')
   @HttpCode(HttpStatus.OK)

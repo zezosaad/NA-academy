@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       setState(() => _emailSent = true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.errorMessage ?? 'Something went wrong. Please try again.')),
+        SnackBar(
+          content: Text(
+            result.errorMessage ?? 'auth.forgotPassword.failure'.tr(),
+          ),
+        ),
       );
     }
   }
@@ -68,12 +73,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               const SizedBox(height: 16),
               if (!_emailSent) ...[
                 Text(
-                  'Forgot password?',
+                  'auth.forgotPassword.title'.tr(),
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your email and we\'ll send you a link to reset your password.',
+                  'auth.forgotPassword.subtitle'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -81,14 +86,14 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildLabel(context, 'Email'),
+                _buildLabel(context, 'auth.forgotPassword.emailLabel'.tr()),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
                   decoration: InputDecoration(
-                    hintText: 'you@example.com',
+                    hintText: 'auth.forgotPassword.emailHint'.tr(),
                     prefixIcon: const Icon(LucideIcons.mail, size: 18),
                     filled: true,
                     fillColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
@@ -106,7 +111,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 24),
                 AppButton(
-                  label: 'Send reset link',
+                  label: 'auth.forgotPassword.submit'.tr(),
                   onPressed: _submit,
                   isLoading: _isLoading,
                 ),
@@ -127,12 +132,14 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Check your inbox',
+                  'auth.forgotPassword.successTitle'.tr(),
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'We sent a password reset link to ${_emailController.text.trim()}. It expires in 30 minutes.',
+                  'auth.forgotPassword.successMessage'.tr(
+                    namedArgs: {'email': _emailController.text.trim()},
+                  ),
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -141,12 +148,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 32),
                 AppButton(
-                  label: 'Back to sign in',
+                  label: 'auth.forgotPassword.backToSignIn'.tr(),
                   onPressed: () => context.go('/auth/login'),
                 ),
                 const SizedBox(height: 12),
                 AppButton(
-                  label: 'Resend email',
+                  label: 'auth.forgotPassword.resend'.tr(),
                   type: AppButtonType.ghost,
                   onPressed: () {
                     setState(() {

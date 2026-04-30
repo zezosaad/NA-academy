@@ -1,5 +1,6 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { EducationLevel } from '../../common/enums/education-level.enum.js';
 
 export class RegisterDto {
   @ApiProperty({ example: 'student@example.com' })
@@ -22,4 +23,8 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   hardwareId!: string;
+
+  @ApiProperty({ enum: EducationLevel, example: EducationLevel.SECONDARY_3 })
+  @IsEnum(EducationLevel)
+  level!: EducationLevel;
 }

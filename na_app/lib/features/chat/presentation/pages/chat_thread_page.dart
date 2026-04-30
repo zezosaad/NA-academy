@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_motion.dart';
 import 'package:na_app/core/widgets/max_text_scale.dart';
+import 'package:na_app/core/api/dio_client.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
+import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:na_app/features/chat/data/chat_repository.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
 import 'package:na_app/features/chat/presentation/controllers/chat_controller.dart';
@@ -40,15 +44,24 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   late String _conversationId;
   bool _counterpartyTyping = false;
   bool _isTyping = false;
+  bool _isUploadingImage = false;
+  bool _isLoadingHistory = false;
   Timer? _typingTimer;
   StreamSubscription<ChatMessage>? _messageSub;
   StreamSubscription<TypingEvent>? _typingSub;
+  StreamSubscription<String>? _errorSub;
   String? _accessToken;
 
   @override
   void initState() {
     super.initState();
     _conversationId = widget.conversationId;
+    final currentUserId =
+        ref.read(authControllerProvider.notifier).currentUser?.id ?? '';
+    if (currentUserId.isNotEmpty) {
+      ref.read(chatControllerProvider).setCurrentUserId(currentUserId);
+    }
+    unawaited(ref.read(chatRepositoryProvider).connectSocket());
     _messageSub = ref
         .read(chatRepositoryProvider)
         .messages
@@ -58,13 +71,48 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
         setState(() => _counterpartyTyping = event.isTyping);
       }
     });
+    _errorSub = ref.read(chatRepositoryProvider).errors.listen((message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: AppColors.danger),
+        );
+    });
     ref.read(chatRepositoryProvider).listConversations();
-    _loadToken();
+    _initTokenThenHistory();
   }
 
-  Future<void> _loadToken() async {
+  Future<void> _initTokenThenHistory() async {
     final token = await ref.read(secureTokenStoreProvider).accessToken;
-    if (mounted) setState(() => _accessToken = token);
+    if (!mounted) return;
+    setState(() => _accessToken = token);
+    await _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    if (_conversationId.isEmpty) return;
+    setState(() => _isLoadingHistory = true);
+
+    try {
+      final history = await ref
+          .read(chatRepositoryProvider)
+          .getConversationMessages(_conversationId);
+      if (!mounted) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(history)
+          ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      });
+      _scrollToBottom();
+    } catch (_) {
+      // Keep socket live updates working even if history request fails.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   void _onNewMessage(ChatMessage message) {
@@ -130,6 +178,53 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
     _scrollToBottom();
   }
 
+  String _inferImageMimeType(File file) {
+    final lowerPath = file.path.toLowerCase();
+    if (lowerPath.endsWith('.png')) return 'image/png';
+    if (lowerPath.endsWith('.webp')) return 'image/webp';
+    if (lowerPath.endsWith('.heic')) return 'image/heic';
+    if (lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
+      return 'image/jpeg';
+    }
+    return 'image/jpeg';
+  }
+
+  Future<void> _handleSendImage(File imageFile) async {
+    if (_isUploadingImage) return;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final chatController = ref.read(chatControllerProvider);
+      final mimeType = _inferImageMimeType(imageFile);
+      final imageFileId = await repo.uploadImage(imageFile, mimeType);
+
+      if (imageFileId == null || imageFileId.isEmpty) {
+        throw Exception('Failed to upload image');
+      }
+
+      chatController.sendImageMessage(
+        recipientId: widget.counterpartyId,
+        imageFileId: imageFileId,
+      );
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
   void _handleTypingChanged(String text) {
     final chatController = ref.read(chatControllerProvider);
 
@@ -157,6 +252,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
   void dispose() {
     _messageSub?.cancel();
     _typingSub?.cancel();
+    _errorSub?.cancel();
     _typingTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -178,7 +274,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
               color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
             onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Go back',
+            tooltip: 'chat.thread.goBack'.tr(),
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +304,11 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
         body: Column(
           children: [
             Expanded(
-              child: _messages.isEmpty
+              child: _isLoadingHistory
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    )
+                  : _messages.isEmpty
                   ? _EmptyConversation(
                       counterpartyName: widget.counterpartyName,
                       subjectTitle: widget.subjectTitle,
@@ -226,10 +326,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
                           key: ValueKey(message.id),
                           message: message,
                           currentUserId: currentUserId,
-                          baseUrl: const String.fromEnvironment(
-                            'API_BASE_URL',
-                            defaultValue: 'http://10.0.2.2:3000',
-                          ),
+                          baseUrl: ref.read(dioProvider).options.baseUrl,
                           accessToken: _accessToken,
                         );
                       },
@@ -241,10 +338,12 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
             ),
             Composer(
               onSendText: _handleSendText,
+              onSendImage: _handleSendImage,
               onTextChanged: _handleTypingChanged,
-              enabled: true,
-              hintText:
-                  'Message ${widget.counterpartyName.split(' ').first}...',
+              enabled: !_isUploadingImage,
+              hintText: 'chat.thread.composerHintNamed'.tr(
+                namedArgs: {'name': widget.counterpartyName.split(' ').first},
+              ),
             ),
           ],
         ),
@@ -312,7 +411,7 @@ class _EmptyConversation extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              'Send a message to start the conversation.',
+              'chat.thread.startConversationPrompt'.tr(),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
               ),
