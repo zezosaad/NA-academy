@@ -28,7 +28,12 @@
       "Bash(flutter build *)",
       "Bash(flutter clean *)",
       "Bash(gh pr *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "Bash(git status *)",
+      "Bash(git checkout *)",
+      "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)"
     ]
   }
 }

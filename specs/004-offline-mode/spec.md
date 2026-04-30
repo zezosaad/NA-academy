@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "I want the videos to play offline, but they have to be stored within the app. I also want to be able to open the app without internet access."
 
+## Clarifications
+
+### Session 2026-04-30
+
+- Q: What level of content protection is required for downloaded videos? → A: Consumer-grade only — app-private storage, no OS share/export, encrypt-at-rest with an app-managed key, revoke on entitlement loss. No external license server, no studio-grade DRM (Widevine L1 / FairPlay).
+- Q: How long can a learner stay offline before downloaded videos require re-verification? → A: 14-day offline grace — after 14 days without an online entitlement check, downloaded videos refuse to play until the device reconnects and re-verifies.
+- Q: What network policy applies to starting a download (Wi-Fi only, cellular allowed, prompt, etc.)? → A: Always allow on any network with no setting and no per-download prompt. Downloads run on whatever connection is available at the time.
+- Q: How many devices per account can hold offline downloads at the same time? → A: Single device only — downloads on a new device automatically wipe downloads on the previous device for that learner.
+- Q: How is the deactivated previous device handled on reconnect when offline downloads are moved to a new device? → A: Sync-then-wipe — the deactivated device first uploads any pending offline progress events, then notifies the learner that downloads moved to the new device, then deletes its local offline files. Offline progress is preserved even though files are not.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Watch a downloaded lesson video without internet (Priority: P1)
@@ -63,11 +73,14 @@ A learner browses what they have downloaded, sees how much device storage the ac
 ### Edge Cases
 
 - **Download interrupted by network drop or app close**: The download must resume from where it stopped (or at minimum, restart cleanly) when connectivity returns and the app reopens. A partial file must never be playable as if it were complete.
-- **Subscription / access revoked while offline content exists**: If a learner loses access to a course (subscription ended, enrollment revoked, content removed by admin), downloaded videos for that course must become unplayable on the next time the app verifies online; offline playback alone must not be a permanent unauthenticated bypass. See FR-013.
+- **Subscription / access revoked while offline content exists**: If a learner loses access to a course (subscription ended, enrollment revoked, content removed by admin), downloaded videos for that course must become unplayable on the next time the app verifies online (FR-013). In addition, even without an online check, downloaded videos automatically lock after 14 consecutive days offline (FR-013a), preventing indefinite "download once, never reconnect" abuse.
+- **Device clock tampering to extend offline grace**: Setting the device clock backward must not extend the 14-day offline window. The grace counter is anchored to the last server-confirmed timestamp plus monotonic uptime since then, not to user-settable wall-clock time.
 - **Authentication token expires while offline**: The learner remains in a "signed-in offline" state and can keep using cached content; on reconnection, the app silently refreshes credentials. The learner is not forcibly signed out mid-session for being offline.
 - **Video updated/replaced by content team after a learner downloaded it**: When the app reconnects, the learner is informed the lesson has a newer version and offered to re-download. The old downloaded copy may be played until they choose to update.
 - **Device storage runs out during an active download**: Download stops cleanly, partial file is removed, the learner sees a clear "Not enough space" error.
 - **App reinstalled or device changed**: Offline downloads do not survive an uninstall (they live inside app private storage). The learner must re-download on the new install. This is acceptable.
+- **Learner activates downloads on a second device**: The learner is allowed only one active offline device per account. Activating downloads on a new device invalidates and wipes the previous device's offline files on its next online check, with clear notifications on both sides — not a silent purge. See FR-012a / FR-012b.
+- **Deactivated device reconnects with unsynced offline progress**: The reconnect flow on a deactivated previous device is sync-then-wipe (FR-012d): pending progress is uploaded first, then the learner is notified, then files are deleted. If the progress upload fails, deletion is deferred until the next successful sync — offline progress is never lost because of the device handoff.
 - **Offline-modified progress conflicts with newer online progress**: When syncing, the most recent timestamp wins per lesson; if a learner watched the same lesson on two devices offline, the further-along progress wins.
 - **Exam or quiz attempted offline**: Exams require live submission and are out of scope for offline mode (see Out of Scope). The exam UI shows a clear offline-blocked state.
 
@@ -80,9 +93,11 @@ A learner browses what they have downloaded, sees how much device storage the ac
 - **FR-001**: Learners MUST be able to mark an individual lesson video for download from within that lesson's screen, while online.
 - **FR-002**: Downloaded videos MUST be stored inside the app's private storage area, such that they are not visible to the device's file manager, photo gallery, OS-level "Files" apps, or other applications via system share/intent mechanisms.
 - **FR-003**: Downloaded videos MUST NOT be exportable, copyable to the device gallery, or shareable to other apps from within the academy app.
+- **FR-003a**: Downloaded video files MUST be encrypted at rest using an app-managed key, such that pulling the raw file off-device (e.g., via developer tools, rooted/jailbroken inspection, backup extraction) yields unplayable ciphertext rather than a directly playable media file. No external license server is required for playback; the app itself manages the key.
 - **FR-004**: The app MUST show a clear visual state on each downloadable item: not downloaded, downloading (with progress), downloaded, and download failed.
 - **FR-005**: Downloads MUST be resumable after a network interruption, app restart, or device reboot — partial progress is not discarded silently.
 - **FR-006**: The system MUST prevent a download from starting if the device does not have enough free space, and MUST show the learner a clear reason and recovery suggestion.
+- **FR-006a**: Downloads MUST proceed on whatever network is available (Wi-Fi or cellular) without any network-type setting and without a per-download "you're on cellular" confirmation prompt. The app MUST NOT distinguish between connection types when starting or resuming downloads.
 
 #### Offline playback
 
@@ -96,9 +111,17 @@ A learner browses what they have downloaded, sees how much device storage the ac
 - **FR-011**: Learners who were signed in at the time of going offline MUST remain signed in across cold starts while offline; the app MUST NOT force a sign-out solely because the network is unavailable.
 - **FR-012**: Network-dependent features (live chat, exam submission, fetching not-yet-cached content) MUST display a clear, in-context offline state rather than blocking error dialogs or crashes.
 
+#### Multi-device policy
+
+- **FR-012a**: Each learner account MUST hold offline downloads on **at most one device at a time** ("the active offline device"). When the learner signs in to the academy app on a new device and triggers any download (or, on the back end's next sync, is detected as having downloads on a different device), the previous device's offline downloads MUST be invalidated and removed from local storage on its next online check.
+- **FR-012b**: The transition from one active offline device to another MUST surface a clear, in-app notification on **both** devices: the new device confirms it is now the active offline device, and the previous device informs the learner that their offline downloads were wiped because they activated downloads on another device. This avoids silent data loss.
+- **FR-012c**: Streaming (online) playback, browsing, and signing in MUST remain available on multiple devices simultaneously — the single-device limit applies **only** to offline downloads, not to general account access.
+- **FR-012d**: When a deactivated previous device reconnects, the app MUST follow a strict ordering: (1) upload all locally-buffered offline progress events for that learner to the server; (2) display an in-app notification informing the learner that their offline downloads have moved to the new device; (3) only then delete the local offline files and reclaim storage. If step (1) fails, the local files MUST NOT be deleted on this reconnect cycle — the deletion is retried on the next reconnect after a successful progress sync, so that no learner-favorable progress is ever lost solely because of the device handoff.
+
 #### Access control & content lifecycle
 
 - **FR-013**: When the app reconnects, it MUST verify the learner still has access to each downloaded video. If access has been revoked (course unenrolled, subscription ended, admin removed content), the corresponding offline file MUST be deleted and the lesson MUST revert to a not-available state.
+- **FR-013a**: Each downloaded video MUST track the timestamp of the most recent successful online entitlement verification. If the device has been offline (no successful verification) for **more than 14 consecutive days**, downloaded videos MUST refuse to play and prompt the learner to reconnect to re-verify access. Once the device reconnects and verification succeeds (or fails), the 14-day clock resets (or the file is wiped if access was revoked). The 14-day window applies even if the device clock is tampered with — the system MUST use a tamper-resistant time source (e.g., the most recent server-confirmed timestamp combined with monotonic device uptime since then) rather than relying on user-settable wall-clock time.
 - **FR-014**: When content is updated server-side after a learner downloaded it, the app MUST detect the update on next reconnection and offer the learner to re-download the newer version. The previously downloaded version MAY remain playable until the learner chooses to update or remove it.
 
 #### Sync on reconnect
@@ -118,7 +141,7 @@ A learner browses what they have downloaded, sees how much device storage the ac
 
 ### Key Entities *(include if feature involves data)*
 
-- **Offline Download**: A locally-stored copy of a single lesson video, scoped to one learner on one device. Attributes: linked lesson, linked course, file size, download timestamp, chosen quality, download status (queued/downloading/complete/failed/revoked), source content version identifier.
+- **Offline Download**: A locally-stored copy of a single lesson video, scoped to one learner on one device. Attributes: linked lesson, linked course, file size, download timestamp, chosen quality, download status (queued/downloading/complete/failed/revoked/superseded-by-other-device), last-verified-online timestamp (drives the 14-day grace), source content version identifier.
 - **Offline Library**: The collection of all Offline Downloads on a given device for a given learner. Used to compute total storage, present the manage-downloads view, and drive bulk operations.
 - **Cached Content Snapshot**: The locally-persisted slice of learner-visible data — enrolled courses, lesson lists, lesson text/metadata, learner progress — that allows offline cold-start and offline navigation. Refreshed opportunistically when online.
 - **Pending Sync Event**: A locally-buffered change made offline (watch progress, lesson completion) that will be transmitted on reconnection. Each event has a timestamp and target entity to support last-write-wins-by-progress conflict resolution.
@@ -135,6 +158,7 @@ A learner browses what they have downloaded, sees how much device storage the ac
 - **SC-006**: Within the first 60 days of release, at least 30% of weekly-active learners use offline mode at least once (download or offline playback), validating real demand.
 - **SC-007**: Customer-support tickets that mention "no internet", "buffering", "won't open without wifi", or equivalent drop by at least 50% within 90 days of release.
 - **SC-008**: When access to a course is revoked, downloaded videos for that course become unplayable within 1 reconnection cycle (next time the app comes online and verifies entitlement).
+- **SC-009**: 100% of downloaded videos refuse to play after 14 consecutive days without a successful online entitlement verification, regardless of device-clock manipulation. After a successful re-verification, playback resumes immediately for content the learner is still entitled to.
 
 ## Assumptions
 
@@ -145,7 +169,7 @@ A learner browses what they have downloaded, sees how much device storage the ac
 - Storage limits are governed by the device's available free space and learner-driven cleanup. The app does not impose a hard cap; instead it prevents downloads that would not fit and offers clear management tools.
 - Conflict resolution for progress uses "further-along progress wins" rather than strict last-write-wins, because it is more learner-favorable and consistent with how the platform already treats lesson progress.
 - The existing authentication system (email + password / OAuth as already in the platform) is reused. No new auth flow is introduced for offline mode beyond keeping the learner signed in across offline cold starts.
-- Content protection requirements are "reasonable consumer-grade" — files are stored in app-private storage, are not exposed via OS share/file APIs, and are revoked when entitlement is lost. Studio-grade DRM (Widevine L1, FairPlay) is **not** required in v1; it can be layered on later if the content team requires it.
+- Content protection is **consumer-grade**: files live in app-private storage, are not exposed via OS share/file APIs, are encrypted at rest with an app-managed key, and are revoked when entitlement is lost. Studio-grade DRM (Widevine L1, FairPlay) and external license servers are **not** required in v1; they can be layered on later if the content team adopts contracts that require them.
 
 ## Out of Scope (v1)
 
