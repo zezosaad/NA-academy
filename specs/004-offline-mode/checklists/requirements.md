@@ -31,5 +31,6 @@
 
 ## Notes
 
-- Spec uses informed defaults for v1 scope: deliberate per-video downloads (no auto-prefetch), app-private storage with no studio-grade DRM, exam-taking/live-chat remain online-required. Each is documented in **Assumptions** and **Out of Scope** so they can be revisited in `/speckit.clarify` if the user disagrees.
-- Items marked incomplete require spec updates before `/speckit.clarify` or `/speckit.plan`.
+- Spec uses informed defaults for v1 scope: deliberate per-video downloads (no auto-prefetch), app-private storage with no studio-grade DRM, exam-taking/live-chat remain online-required. Each is documented in **Assumptions** and **Out of Scope**.
+- `/speckit.clarify` session 2026-04-30 confirmed/refined five decisions: consumer-grade encryption-at-rest (no DRM), 14-day offline entitlement grace, no network-type restriction on downloads, single-device-only offline policy, sync-then-wipe handoff between devices.
+- All checklist items pass. Spec is ready for `/speckit.plan`.
