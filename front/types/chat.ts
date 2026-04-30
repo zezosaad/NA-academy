@@ -38,6 +38,9 @@ export interface Conversation {
     email: string;
     role: string;
   };
+  virtual?: boolean;
+  subjectId?: string;
+  subjectTitle?: string;
 }
 
 export interface SendMessagePayload {

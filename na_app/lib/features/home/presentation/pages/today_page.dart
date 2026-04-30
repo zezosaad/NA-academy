@@ -31,7 +31,8 @@ class TodayPage extends ConsumerWidget {
         body: SafeArea(
           child: RefreshIndicator(
             color: AppColors.accent,
-            onRefresh: () => ref.read(todayViewStateProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(todayViewStateProvider.notifier).refresh(),
             child: Stack(
               children: [
                 // Beautiful Background Blobs
@@ -112,7 +113,9 @@ class _TodayContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +221,9 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onExamTap(BuildContext context, Exam exam) {
-    if (exam.status == ExamStatus.available && exam.attemptsRemaining > 0) {
+    if (exam.canStartDirectly) {
+      context.push('/exams/${exam.id}/take');
+    } else if (exam.status == ExamStatus.available) {
       context.push('/exams/${exam.id}/enter-code');
     } else {
       context.push('/exams/${exam.id}');
@@ -226,11 +231,7 @@ class _TodayContent extends ConsumerWidget {
   }
 
   void _onSubjectTap(BuildContext context, Subject subject) {
-    if (subject.isUnlocked) {
-      context.push('/subjects/${subject.id}');
-    } else {
-      context.push('/subjects/enter-code');
-    }
+    context.push('/subjects/${subject.id}');
   }
 }
 
@@ -246,11 +247,13 @@ class _GreetingHeader extends StatelessWidget {
     final greeting = _getGreeting(now.hour);
     final dayName = _getDayName(now.weekday);
     final monthName = _getMonthName(now.month);
-    final dateStr = 'today.dateFormat'.tr(namedArgs: {
-      'day': dayName,
-      'month': monthName,
-      'dayNumber': '${now.day}',
-    });
+    final dateStr = 'today.dateFormat'.tr(
+      namedArgs: {
+        'day': dayName,
+        'month': monthName,
+        'dayNumber': '${now.day}',
+      },
+    );
 
     final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -265,7 +268,9 @@ class _GreetingHeader extends StatelessWidget {
                 Text(
                   dateStr,
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -274,7 +279,9 @@ class _GreetingHeader extends StatelessWidget {
                 Text(
                   '$greeting،\n$userName.',
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
@@ -292,7 +299,7 @@ class _GreetingHeader extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
-                )
+                ),
               ],
             ),
             child: Tooltip(
@@ -302,7 +309,9 @@ class _GreetingHeader extends StatelessWidget {
                 icon: Icon(
                   LucideIcons.settings,
                   size: 24,
-                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -364,14 +373,20 @@ class _StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark 
-            ? [AppColors.darkBgSurface, AppColors.darkBgSurface.withValues(alpha: 0.8)]
-            : [AppColors.bgSurface, AppColors.bgSurface.withValues(alpha: 0.9)],
+          colors: isDark
+              ? [
+                  AppColors.darkBgSurface,
+                  AppColors.darkBgSurface.withValues(alpha: 0.8),
+                ]
+              : [
+                  AppColors.bgSurface,
+                  AppColors.bgSurface.withValues(alpha: 0.9),
+                ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -381,10 +396,11 @@ class _StreakCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? AppColors.darkSecondary : AppColors.secondary).withValues(alpha: 0.1),
+            color: (isDark ? AppColors.darkSecondary : AppColors.secondary)
+                .withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -393,7 +409,9 @@ class _StreakCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft,
+              color: isDark
+                  ? AppColors.darkSecondarySoft
+                  : AppColors.secondarySoft,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -410,7 +428,9 @@ class _StreakCard extends StatelessWidget {
                 Text(
                   'today.streakTitle'.tr(namedArgs: {'count': '$streakDays'}),
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -418,7 +438,9 @@ class _StreakCard extends StatelessWidget {
                 Text(
                   'today.streakSubtitle'.tr(),
                   style: GoogleFonts.cairo(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -441,7 +463,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -460,9 +482,16 @@ class _SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onSeeAll,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                backgroundColor: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                backgroundColor:
+                    (isDark ? AppColors.darkAccent : AppColors.accent)
+                        .withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Text(
                 'today.seeAll'.tr(),

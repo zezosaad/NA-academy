@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -10,7 +10,7 @@ import { Conversation } from '../../../types/chat';
 import { colors, sizes } from '../../../constants/helpers';
 
 export default function ChatListScreen() {
-  const { conversations, messages, isConnected } = useChat();
+  const { conversations, messages, isConnected, isLoadingConversations } = useChat();
   const { user } = useAuthContext();
 
   const getLastMessage = (conv: Conversation) => {
@@ -94,15 +94,19 @@ export default function ChatListScreen() {
 
       <FlatList
         data={conversations}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item._id || item.otherParticipant?._id || Math.random().toString()}
         renderItem={renderConversation}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <EmptyState
-            icon="chatbubbles-outline"
-            title="No chats"
-            subtitle="Your chats will appear here"
-          />
+          isLoadingConversations ? (
+            <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
+          ) : (
+            <EmptyState
+              icon="chatbubbles-outline"
+              title="No chats"
+              subtitle="Your chats will appear here"
+            />
+          )
         }
       />
     </SafeAreaView>

@@ -2,6 +2,7 @@
   "common": {
     "retry": "إعادة المحاولة",
     "cancel": "إلغاء",
+    "remove": "إزالة",
     "ok": "حسناً",
     "save": "حفظ",
     "close": "إغلاق",
@@ -12,7 +13,8 @@
     "error": "حدث خطأ",
     "tryAgain": "حاول مرة أخرى",
     "yes": "نعم",
-    "no": "لا"
+    "no": "لا",
+    "refresh": "تحديث"
   },
   "session": {
     "expired": "انتهت الجلسة — يرجى تسجيل الدخول مرة أخرى"
@@ -195,7 +197,10 @@
       "loadErrorMessage": "تعذّر تحميل الدرس. يرجى المحاولة مرة أخرى.",
       "markCompleteAction": "وضع علامة كمكتمل",
       "completed": "مكتمل",
+      "completedSub": "أحسنت! تم وضع علامة على هذا الدرس كمكتمل.",
       "markCompleteFailure": "فشل وضع علامة كمكتمل. حاول مرة أخرى.",
+      "savedToList": "تم حفظ الدرس في المحفوظات",
+      "removedFromSaved": "تمت إزالة الدرس من المحفوظات",
       "noVideo": "لا يوجد فيديو لهذا الدرس",
       "videoLoadFailure": "فشل تحميل الفيديو",
       "goBackTooltip": "رجوع"
@@ -297,7 +302,10 @@
       "yourAnswer": "إجابتك:",
       "correctAnswer": "الإجابة الصحيحة:",
       "backToExams": "العودة للاختبارات",
-      "backToSubjects": "العودة للمواد الدراسية"
+      "backToSubjects": "العودة للمواد الدراسية",
+      "correct": "صحيحة",
+      "wrong": "خاطئة",
+      "total": "الإجمالي"
     }
   },
   "chat": {
@@ -306,6 +314,7 @@
     "emptyTitle": "لا توجد محادثات بعد",
     "emptyMessage": "أدخل كود المادة لفتح محادثات المعلمين والمجموعات.",
     "emptyAction": "إدخال كود مادة",
+    "emptyMessageNoTeacher": "ستظهر محادثاتك هنا فور استعداد معلمك.",
     "errorTitle": "تعذر تحميل المحادثات",
     "noMessagesYet": "لا توجد رسائل بعد",
     "imageMessagePreview": "📷 صورة",
@@ -324,7 +333,8 @@
       "startConversationPrompt": "أرسل رسالة لبدء المحادثة.",
       "messageDeleted": "تم حذف الرسالة",
       "imageSemantic": "صورة المحادثة",
-      "isTyping": "{name} يكتب"
+      "isTyping": "{name} يكتب",
+      "textCopied": "تم نسخ النص"
     },
     "composer": {
       "hint": "اكتب رسالة…",
@@ -359,6 +369,19 @@
     "defaultName": "طالب علم",
     "studentBadge": "طالب",
     "weeklyActivity": "نشاطك الأسبوعي",
+    "weeklyChart": {
+      "title": "هذا الأسبوع",
+      "semanticsLabel": "مخطط النشاط الأسبوعي",
+      "days": {
+        "mon": "ن",
+        "tue": "ث",
+        "wed": "ر",
+        "thu": "خ",
+        "fri": "ج",
+        "sat": "س",
+        "sun": "ح"
+      }
+    },
     "settingsContent": "الإعدادات والمحتوى",
     "editAction": "تعديل الحساب",
     "logoutAction": "تسجيل الخروج",
@@ -393,6 +416,12 @@
       "certificatesHint": "عرض شهاداتك المكتملة",
       "savedLessons": "الدروس المحفوظة",
       "savedLessonsHint": "الدروس التي قمت بحفظها"
+    },
+    "savedLessonsPage": {
+      "title": "الدروس المحفوظة",
+      "emptyTitle": "لا توجد دروس محفوظة",
+      "emptyMessage": "افتح أي درس واضغط علامة الحفظ ليظهر هنا.",
+      "lessonNumber": "الدرس {n}"
     }
   },
   "education": {

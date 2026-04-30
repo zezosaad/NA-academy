@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import {
   Table,
   TableBody,
@@ -50,20 +49,44 @@ import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
 import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
-import type { Exam, Subject, Question } from "@/types"
+import type { Exam, Subject, Question, QuestionOption, ExamAccessMode } from "@/types"
 import { format } from "date-fns"
 
-const EMPTY_QUESTION: Question = {
+const getOptionLabel = (index: number) => {
+  let value = index
+  let label = ""
+
+  do {
+    label = String.fromCharCode(65 + (value % 26)) + label
+    value = Math.floor(value / 26) - 1
+  } while (value >= 0)
+
+  return label
+}
+
+const relabelOptions = (options: QuestionOption[]) =>
+  options.map((option, index) => ({
+    ...option,
+    label: getOptionLabel(index),
+  }))
+
+const createQuestionOptions = (count = 4): QuestionOption[] =>
+  Array.from({ length: count }, (_, index) => ({
+    label: getOptionLabel(index),
+    text: "",
+  }))
+
+const createEmptyQuestion = (order = 0): Question => ({
   text: "",
-  options: [
-    { label: "A", text: "" },
-    { label: "B", text: "" },
-    { label: "C", text: "" },
-    { label: "D", text: "" },
-  ],
+  options: createQuestionOptions(),
   correctOption: "A",
   timeLimitSeconds: 60,
-  order: 0,
+  order,
+})
+
+const getExamAccessMode = (exam?: Pick<Exam, "accessMode" | "hasFreeSection"> | null): ExamAccessMode => {
+  if (exam?.accessMode) return exam.accessMode
+  return exam?.hasFreeSection ? "free_section" : "code_required"
 }
 
 export function ExamsPage() {
@@ -80,10 +103,11 @@ export function ExamsPage() {
   const [examForm, setExamForm] = useState({
     title: "",
     subjectId: "",
+    accessMode: "code_required" as ExamAccessMode,
     hasFreeSection: false,
     freeQuestionCount: 0,
     freeAttemptLimit: 1,
-    questions: [{ ...EMPTY_QUESTION }] as Question[],
+    questions: [createEmptyQuestion()] as Question[],
   })
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -118,20 +142,25 @@ export function ExamsPage() {
       setExamForm({
         title: exam.title,
         subjectId: typeof exam.subjectId === "string" ? exam.subjectId : exam.subjectId._id,
+        accessMode: getExamAccessMode(exam),
         hasFreeSection: exam.hasFreeSection,
-        freeQuestionCount: exam.freeQuestionCount,
-        freeAttemptLimit: exam.freeAttemptLimit,
-        questions: exam.questions.map((q) => ({ ...q })),
+        freeQuestionCount: exam.freeQuestionCount ?? 0,
+        freeAttemptLimit: exam.freeAttemptLimit ?? 1,
+        questions: exam.questions.map((q) => ({
+          ...q,
+          options: relabelOptions(q.options.map((option) => ({ ...option }))),
+        })),
       })
     } else {
       setEditingExam(null)
       setExamForm({
         title: "",
         subjectId: "",
+        accessMode: "code_required",
         hasFreeSection: false,
         freeQuestionCount: 0,
         freeAttemptLimit: 1,
-        questions: [{ ...EMPTY_QUESTION }],
+        questions: [createEmptyQuestion()],
       })
     }
     setExpandedQ(0)
@@ -153,12 +182,46 @@ export function ExamsPage() {
         showError(`Question ${i + 1} has duplicate option labels. Each option label must be unique.`)
         return
       }
+
+      if (q.options.length < 2) {
+        showError(`Question ${i + 1} must have at least 2 options`)
+        return
+      }
+
+      if (!normalizedLabels.includes(String(q.correctOption || "").trim().toUpperCase())) {
+        showError(`Question ${i + 1} has an invalid correct option`)
+        return
+      }
+    }
+
+    if (examForm.accessMode === "free_section") {
+      if (examForm.freeQuestionCount < 1) {
+        showError("Free section question count must be at least 1")
+        return
+      }
+
+      if (examForm.freeQuestionCount > examForm.questions.length) {
+        showError("Free section question count cannot exceed the total number of questions")
+        return
+      }
+    }
+
+    if (examForm.accessMode !== "code_required" && examForm.freeAttemptLimit < 1) {
+      showError("Free attempt limit must be at least 1")
+      return
     }
 
     setSaving(true)
     try {
       const data = {
-        ...examForm,
+        title: examForm.title,
+        subjectId: examForm.subjectId,
+        accessMode: examForm.accessMode,
+        hasFreeSection: examForm.accessMode === "free_section",
+        freeQuestionCount:
+          examForm.accessMode === "free_section" ? examForm.freeQuestionCount : undefined,
+        freeAttemptLimit:
+          examForm.accessMode === "code_required" ? undefined : examForm.freeAttemptLimit,
         questions: examForm.questions.map((q, i) => ({ ...q, order: i })),
       }
       if (editingExam) {
@@ -205,10 +268,43 @@ export function ExamsPage() {
     }))
   }
 
+  const addOption = (qIdx: number) => {
+    setExamForm((f) => ({
+      ...f,
+      questions: f.questions.map((q, i) => {
+        if (i !== qIdx) return q
+        const options = relabelOptions([...q.options, { label: "", text: "" }])
+        return { ...q, options }
+      }),
+    }))
+  }
+
+  const removeOption = (qIdx: number, oIdx: number) => {
+    setExamForm((f) => ({
+      ...f,
+      questions: f.questions.map((q, i) => {
+        if (i !== qIdx || q.options.length <= 2) return q
+
+        const nextOptions = relabelOptions(q.options.filter((_, index) => index !== oIdx))
+        const previousCorrectIndex = q.options.findIndex((option) => option.label === q.correctOption)
+        const nextCorrectOption =
+          previousCorrectIndex === oIdx
+            ? nextOptions[0]?.label ?? "A"
+            : nextOptions[Math.max(0, previousCorrectIndex - (oIdx < previousCorrectIndex ? 1 : 0))]?.label ?? nextOptions[0]?.label ?? "A"
+
+        return {
+          ...q,
+          options: nextOptions,
+          correctOption: nextCorrectOption,
+        }
+      }),
+    }))
+  }
+
   const addQuestion = () => {
     setExamForm((f) => ({
       ...f,
-      questions: [...f.questions, { ...EMPTY_QUESTION, order: f.questions.length }],
+      questions: [...f.questions, createEmptyQuestion(f.questions.length)],
     }))
     setExpandedQ(examForm.questions.length)
   }
@@ -245,7 +341,7 @@ export function ExamsPage() {
                 <TableHead>Title</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Questions</TableHead>
-                <TableHead>Free Section</TableHead>
+                <TableHead>Access</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -261,12 +357,16 @@ export function ExamsPage() {
                   </TableCell>
                   <TableCell>{e.questions.length}</TableCell>
                   <TableCell>
-                    {e.hasFreeSection ? (
+                    {getExamAccessMode(e) === "free_section" ? (
                       <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                        {e.freeQuestionCount} free
+                        {e.freeQuestionCount} free questions
+                      </Badge>
+                    ) : getExamAccessMode(e) === "full_exam_free_attempts" ? (
+                      <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
+                        {e.freeAttemptLimit} free attempts
                       </Badge>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <Badge variant="outline">Code required</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -332,36 +432,65 @@ export function ExamsPage() {
               </div>
             </div>
 
-            {/* Free section */}
-            <div className="flex items-center gap-4 rounded-md border p-3">
-              <Switch
-                checked={examForm.hasFreeSection}
-                onCheckedChange={(v) => setExamForm((f) => ({ ...f, hasFreeSection: v }))}
-              />
-              <Label>Free Section</Label>
-              {examForm.hasFreeSection && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">Questions:</Label>
-                    <Input
-                      type="number"
-                      className="w-16 h-8"
-                      min={1}
-                      value={examForm.freeQuestionCount}
-                      onChange={(e) => setExamForm((f) => ({ ...f, freeQuestionCount: +e.target.value }))}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">Attempts:</Label>
-                    <Input
-                      type="number"
-                      className="w-16 h-8"
-                      min={1}
-                      value={examForm.freeAttemptLimit}
-                      onChange={(e) => setExamForm((f) => ({ ...f, freeAttemptLimit: +e.target.value }))}
-                    />
-                  </div>
-                </>
+            <div className="rounded-md border p-3 space-y-3">
+              <div className="space-y-2">
+                <Label>Access Mode</Label>
+                <Select
+                  value={examForm.accessMode}
+                  onValueChange={(value: ExamAccessMode) =>
+                    setExamForm((f) => ({
+                      ...f,
+                      accessMode: value,
+                      hasFreeSection: value === "free_section",
+                      freeQuestionCount:
+                        value === "free_section"
+                          ? Math.max(f.freeQuestionCount || 1, 1)
+                          : 0,
+                      freeAttemptLimit:
+                        value === "code_required" ? 1 : Math.max(f.freeAttemptLimit || 1, 1),
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="code_required">Code required</SelectItem>
+                    <SelectItem value="free_section">Free section</SelectItem>
+                    <SelectItem value="full_exam_free_attempts">Full exam free attempts</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {examForm.accessMode === "free_section" && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Free questions:</Label>
+                  <Input
+                    type="number"
+                    className="w-20 h-8"
+                    min={1}
+                    max={examForm.questions.length}
+                    value={examForm.freeQuestionCount}
+                    onChange={(e) =>
+                      setExamForm((f) => ({ ...f, freeQuestionCount: +e.target.value }))
+                    }
+                  />
+                </div>
+              )}
+
+              {examForm.accessMode !== "code_required" && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Free attempts:</Label>
+                  <Input
+                    type="number"
+                    className="w-20 h-8"
+                    min={1}
+                    value={examForm.freeAttemptLimit}
+                    onChange={(e) =>
+                      setExamForm((f) => ({ ...f, freeAttemptLimit: +e.target.value }))
+                    }
+                  />
+                </div>
               )}
             </div>
 
@@ -411,10 +540,23 @@ export function ExamsPage() {
                                 value={o.text}
                                 onChange={(e) => updateOption(qi, oi, e.target.value)}
                               />
+                              {q.options.length > 2 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeOption(qi, oi)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
                             </div>
                           ))}
                         </div>
                         <div className="flex items-center gap-4">
+                          <Button type="button" variant="outline" size="sm" onClick={() => addOption(qi)}>
+                            <Plus className="mr-2 h-3 w-3" /> Add Option
+                          </Button>
                           <div className="flex items-center gap-2">
                             <Label className="text-xs">Correct:</Label>
                             <Select

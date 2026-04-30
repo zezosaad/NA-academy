@@ -4,11 +4,13 @@ import { MediaAsset, MediaAssetSchema } from './schemas/media-asset.schema.js';
 import { MediaService } from './media.service.js';
 import { MediaController } from './media.controller.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
+import { LessonsModule } from '../lessons/lessons.module.js';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: MediaAsset.name, schema: MediaAssetSchema }]),
     ActivationCodesModule,
+    LessonsModule,
   ],
   controllers: [MediaController],
   providers: [MediaService],

@@ -6,11 +6,12 @@ final prefsStoreProvider = Provider<PrefsStore>((ref) {
   return PrefsStore();
 });
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
-  return ThemeModeController(ref.watch(prefsStoreProvider), ThemeMode.light)
-    .._loadFromStore();
-});
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
+  (ref) {
+    return ThemeModeController(ref.watch(prefsStoreProvider), ThemeMode.light)
+      .._loadFromStore();
+  },
+);
 
 class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeModeController(this._store, ThemeMode initial) : super(initial);
@@ -35,6 +36,7 @@ class PrefsStore {
   static const _notificationsEnabledKey = 'notifications_enabled';
   static const _lastKnownUserNameKey = 'last_known_user_name';
   static const _hasSeenOnboardingKey = 'has_seen_onboarding';
+  static const _savedLessonIdsKey = 'saved_lesson_ids';
 
   Future<ThemeMode> get themeMode async {
     final prefs = await SharedPreferences.getInstance();
@@ -94,5 +96,42 @@ class PrefsStore {
   Future<void> setHasSeenOnboarding(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_hasSeenOnboardingKey, value);
+  }
+
+  Future<List<String>> get savedLessonIds async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_savedLessonIdsKey) ?? const <String>[];
+    return ids.where((id) => id.isNotEmpty).toSet().toList();
+  }
+
+  Future<bool> isLessonSaved(String lessonId) async {
+    final ids = await savedLessonIds;
+    return ids.contains(lessonId);
+  }
+
+  Future<bool> toggleSavedLesson(String lessonId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = (prefs.getStringList(_savedLessonIdsKey) ?? const <String>[])
+        .where((id) => id.isNotEmpty)
+        .toList();
+
+    final exists = ids.contains(lessonId);
+    if (exists) {
+      ids.removeWhere((id) => id == lessonId);
+    } else {
+      ids.add(lessonId);
+    }
+
+    await prefs.setStringList(_savedLessonIdsKey, ids.toSet().toList());
+    return !exists;
+  }
+
+  Future<void> removeSavedLesson(String lessonId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = (prefs.getStringList(_savedLessonIdsKey) ?? const <String>[])
+        .where((id) => id.isNotEmpty && id != lessonId)
+        .toSet()
+        .toList();
+    await prefs.setStringList(_savedLessonIdsKey, ids);
   }
 }

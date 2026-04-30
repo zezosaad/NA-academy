@@ -3,6 +3,12 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type ExamDocument = HydratedDocument<Exam>;
 
+export enum ExamAccessMode {
+  CODE_REQUIRED = 'code_required',
+  FREE_SECTION = 'free_section',
+  FULL_EXAM_FREE_ATTEMPTS = 'full_exam_free_attempts',
+}
+
 @Schema()
 export class Question {
   _id!: Types.ObjectId;
@@ -47,6 +53,13 @@ export class Exam {
     validate: [(val: Question[]) => val.length > 0, 'Must contain at least 1 question'],
   })
   questions!: Question[];
+
+  @Prop({
+    enum: ExamAccessMode,
+    default: ExamAccessMode.CODE_REQUIRED,
+    type: String,
+  })
+  accessMode!: ExamAccessMode;
 
   @Prop({ default: false, type: Boolean })
   hasFreeSection!: boolean;

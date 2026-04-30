@@ -82,6 +82,8 @@ class _ChatEndpoints {
   static const String _prefix = '/chat';
 
   String get conversations => '$_prefix/conversations';
+  String messages(String conversationId) =>
+      '$_prefix/conversations/$conversationId/messages';
   String get pending => '$_prefix/pending';
 }
 

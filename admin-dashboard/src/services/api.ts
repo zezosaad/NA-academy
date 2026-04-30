@@ -15,6 +15,8 @@ import type {
   UserStatus,
   EducationLevel,
   UserDetail,
+  ChatConversationPreview,
+  ChatMessage,
 } from "@/types"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -341,6 +343,7 @@ class ApiClient {
   async createExam(data: {
     title: string
     subjectId: string
+    accessMode?: "code_required" | "free_section" | "full_exam_free_attempts"
     hasFreeSection?: boolean
     freeQuestionCount?: number
     freeAttemptLimit?: number
@@ -490,6 +493,22 @@ class ApiClient {
       method: "PATCH",
       body: JSON.stringify({ actionTaken }),
     })
+  }
+
+  // ── Chat ──
+  async getChatConversations(): Promise<ChatConversationPreview[]> {
+    const res = await this.request<{ conversations: ChatConversationPreview[] }>("/api/v1/chat/conversations")
+    return (res as unknown as { conversations: ChatConversationPreview[] }).conversations ?? (res as unknown as ChatConversationPreview[])
+  }
+
+  async getChatMessages(conversationId: string, limit = 50, before?: string): Promise<ChatMessage[]> {
+    const qs = new URLSearchParams({ limit: String(limit) })
+    if (before) qs.set("before", before)
+    return this.request(`/api/v1/chat/conversations/${conversationId}/messages?${qs}`)
+  }
+
+  getSocketToken(): string | null {
+    return this.getToken()
   }
 }
 

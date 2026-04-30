@@ -19,6 +19,7 @@ import { MediaService } from './media.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { AccessCheckHelper } from '../activation-codes/helpers/access-check.helper.js';
+import { LessonsService } from '../lessons/lessons.service.js';
 
 const MAX_CHAT_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ALLOWED_CHAT_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
@@ -30,6 +31,7 @@ export class MediaController {
   constructor(
     private readonly mediaService: MediaService,
     private readonly accessCheckHelper: AccessCheckHelper,
+    private readonly lessonsService: LessonsService,
   ) {}
 
   @Post('media/upload')
@@ -75,9 +77,10 @@ export class MediaController {
       if (asset.chatUpload) {
         // Chat uploads don't require subject-based access checks
       } else if (asset.subjectId) {
-        const hasAccess = await this.accessCheckHelper.hasSubjectAccess(
+        const hasAccess = await this.lessonsService.canAccessMediaContent(
           user.userId,
           asset.subjectId.toString(),
+          asset._id.toString(),
         );
         if (!hasAccess) {
           throw new ForbiddenException('You do not have active code access to this media content');

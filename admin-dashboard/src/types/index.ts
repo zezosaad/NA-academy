@@ -192,6 +192,8 @@ export interface MediaAsset {
 }
 
 // ── Exams ──
+export type ExamAccessMode = "code_required" | "free_section" | "full_exam_free_attempts"
+
 export interface QuestionOption {
   label: string
   text: string
@@ -212,9 +214,11 @@ export interface Exam {
   title: string
   subjectId: string | Subject
   questions: Question[]
+  accessMode?: ExamAccessMode
   hasFreeSection: boolean
   freeQuestionCount: number
   freeAttemptLimit: number
+  freeAttemptsRemaining?: number
   isActive: boolean
   createdBy: string
   createdAt: string
@@ -250,4 +254,39 @@ export interface ExamCode {
   activatedBy?: { name: string; email: string }
   activatedAt?: string
   createdAt: string
+}
+
+// ── Chat ──
+export type ChatMessageStatus = "sent" | "delivered" | "read"
+export type ChatMessageType = "text" | "image"
+
+export interface ChatMessage {
+  _id: string
+  conversationId: string
+  senderId: string | { _id: string; name: string; email: string; role: string }
+  recipientId: string
+  messageType: ChatMessageType
+  text?: string
+  imageFileId?: string
+  status: ChatMessageStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatConversationPreview {
+  id: string
+  virtual: boolean
+  counterpartyId: string
+  counterpartyName: string
+  counterpartyAvatarUrl: string | null
+  subjectId: string
+  subjectTitle: string
+  lastMessage: {
+    text?: string
+    hasImage: boolean
+    sentAt: string
+    senderId: string
+    status: ChatMessageStatus
+  } | null
+  unreadCount: number
 }

@@ -23,10 +23,12 @@ class Subject with _$Subject {
       id: id,
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
-      coverImageUrl: json['coverImage'] as String? ?? json['coverImageUrl'] as String?,
+      coverImageUrl:
+          json['coverImage'] as String? ?? json['coverImageUrl'] as String?,
       lessonCount: json['lessonCount'] as int? ?? 0,
       isUnlocked: json['isUnlocked'] as bool? ?? false,
-      progressPercent: (json['progressPercent'] as num?)?.toDouble() ?? 0.0,
+      progressPercent:
+          ((json['progressPercent'] as num?)?.toDouble() ?? 0.0) * 100,
     );
   }
 }
@@ -47,7 +49,10 @@ class Lesson with _$Lesson {
     int? estimatedMinutes,
   }) = _Lesson;
 
-  factory Lesson.fromJson(Map<String, dynamic> json, {required String subjectId}) {
+  factory Lesson.fromJson(
+    Map<String, dynamic> json, {
+    required String subjectId,
+  }) {
     final id = json['_id'] as String? ?? json['id'] as String?;
     if (id == null || id.isEmpty) {
       throw FormatException('Lesson.fromJson: missing "id" in $json');
@@ -58,7 +63,9 @@ class Lesson with _$Lesson {
       subjectId: subjectId,
       title: json['title'] as String? ?? '',
       order: json['order'] as int? ?? json['index'] as int? ?? 0,
-      status: isCompleted ? LessonStatus.done : _parseStatus(json['status'] as String?),
+      status: isCompleted
+          ? LessonStatus.done
+          : _parseStatus(json['status'] as String?),
       isCompleted: isCompleted,
       description: json['description'] as String?,
       mediaAssetId:
@@ -68,8 +75,8 @@ class Lesson with _$Lesson {
   }
 
   static LessonStatus _parseStatus(String? value) => switch (value) {
-        'done' => LessonStatus.done,
-        'locked' => LessonStatus.locked,
-        _ => LessonStatus.active,
-      };
+    'done' => LessonStatus.done,
+    'locked' => LessonStatus.locked,
+    _ => LessonStatus.active,
+  };
 }

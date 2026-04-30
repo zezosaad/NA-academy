@@ -7,11 +7,13 @@ import {
   IsOptional,
   IsInt,
   Min,
+  IsEnum,
   ValidateNested,
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ExamAccessMode } from '../schemas/exam.schema.js';
 
 export class QuestionOptionDto {
   @ApiProperty({ example: 'A' })
@@ -68,6 +70,14 @@ export class CreateExamDto {
   @IsMongoId()
   @IsNotEmpty()
   subjectId!: string;
+
+  @ApiPropertyOptional({
+    enum: ExamAccessMode,
+    example: ExamAccessMode.CODE_REQUIRED,
+  })
+  @IsOptional()
+  @IsEnum(ExamAccessMode)
+  accessMode?: ExamAccessMode;
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()

@@ -2,6 +2,7 @@
   "common": {
     "retry": "Retry",
     "cancel": "Cancel",
+    "remove": "Remove",
     "ok": "OK",
     "save": "Save",
     "close": "Close",
@@ -12,7 +13,8 @@
     "error": "Something went wrong",
     "tryAgain": "Try again",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "refresh": "Refresh"
   },
   "session": {
     "expired": "Session ended — please sign in again"
@@ -195,7 +197,10 @@
       "loadErrorMessage": "Unable to load lesson. Please try again.",
       "markCompleteAction": "Mark as complete",
       "completed": "Completed",
+      "completedSub": "Great work! This lesson is marked as done.",
       "markCompleteFailure": "Failed to mark complete. Try again.",
+      "savedToList": "Lesson saved",
+      "removedFromSaved": "Lesson removed from saved",
       "noVideo": "No video for this lesson",
       "videoLoadFailure": "Failed to load video",
       "goBackTooltip": "Go back"
@@ -297,7 +302,10 @@
       "yourAnswer": "Your answer:",
       "correctAnswer": "Correct answer:",
       "backToExams": "Back to exams",
-      "backToSubjects": "Back to subjects"
+      "backToSubjects": "Back to subjects",
+      "correct": "Correct",
+      "wrong": "Wrong",
+      "total": "Total"
     }
   },
   "chat": {
@@ -306,6 +314,7 @@
     "emptyTitle": "No conversations yet",
     "emptyMessage": "Enter a subject code to unlock your teacher and group chats.",
     "emptyAction": "Enter subject code",
+    "emptyMessageNoTeacher": "Your conversations will appear here once your teacher is available.",
     "errorTitle": "Couldn't load conversations",
     "noMessagesYet": "No messages yet",
     "imageMessagePreview": "📷 Image",
@@ -324,7 +333,8 @@
       "startConversationPrompt": "Send a message to start the conversation.",
       "messageDeleted": "Message removed",
       "imageSemantic": "Chat image",
-      "isTyping": "{name} is typing"
+      "isTyping": "{name} is typing",
+      "textCopied": "Text copied"
     },
     "composer": {
       "hint": "Type a message…",
@@ -359,6 +369,19 @@
     "defaultName": "Student",
     "studentBadge": "Student",
     "weeklyActivity": "Your weekly activity",
+    "weeklyChart": {
+      "title": "This week",
+      "semanticsLabel": "Weekly activity chart",
+      "days": {
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F",
+        "sat": "S",
+        "sun": "S"
+      }
+    },
     "settingsContent": "Settings & content",
     "editAction": "Edit profile",
     "logoutAction": "Sign out",
@@ -393,6 +416,12 @@
       "certificatesHint": "View your earned certificates",
       "savedLessons": "Saved lessons",
       "savedLessonsHint": "Lessons you've bookmarked"
+    },
+    "savedLessonsPage": {
+      "title": "Saved lessons",
+      "emptyTitle": "No saved lessons yet",
+      "emptyMessage": "Open any lesson and tap the bookmark to find it here.",
+      "lessonNumber": "Lesson {n}"
     }
   },
   "education": {

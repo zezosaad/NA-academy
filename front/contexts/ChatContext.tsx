@@ -1,8 +1,8 @@
 import React, { createContext, useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { Message, Conversation, SendMessagePayload, MessageStatus, ChatMessageType } from '../types/chat';
+import { ChatRestService } from '../services/chat.service';
 
 const FALLBACK_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || FALLBACK_URL;
@@ -13,10 +13,12 @@ interface ChatContextType {
   conversations: Conversation[];
   messages: Map<string, Message[]>;
   typingUsers: Set<string>;
+  isLoadingConversations: boolean;
   sendMessage: (payload: SendMessagePayload) => void;
   markRead: (conversationId: string, senderId: string) => void;
   setTyping: (recipientId: string, isTyping: boolean) => void;
   loadMessages: (conversationId: string, messages: Message[]) => void;
+  fetchMessages: (conversationId: string) => Promise<void>;
   setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
 }
 
@@ -28,6 +30,19 @@ export const ChatProvider = ({ children, token }: { children: React.ReactNode; t
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Map<string, Message[]>>(new Map());
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const loadedConversationsRef = useRef(false);
+
+  // Load conversations from REST API on mount
+  useEffect(() => {
+    if (!token || loadedConversationsRef.current) return;
+    loadedConversationsRef.current = true;
+    setIsLoadingConversations(true);
+    ChatRestService.getConversations()
+      .then((convs) => setConversations(convs))
+      .catch(() => {/* silently ignore — socket will still work */})
+      .finally(() => setIsLoadingConversations(false));
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -136,6 +151,24 @@ export const ChatProvider = ({ children, token }: { children: React.ReactNode; t
     });
   }, []);
 
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    if (!conversationId || conversationId === '') return;
+    try {
+      const history = await ChatRestService.getMessages(conversationId);
+      setMessages((prev) => {
+        const updated = new Map(prev);
+        const existing = prev.get(conversationId) || [];
+        // Merge: history first, then any socket messages not already in history
+        const historyIds = new Set(history.map((m) => m._id));
+        const socketOnly = existing.filter((m) => !historyIds.has(m._id));
+        updated.set(conversationId, [...history, ...socketOnly]);
+        return updated;
+      });
+    } catch {
+      // silently ignore — user will still see socket messages
+    }
+  }, []);
+
   return (
     <ChatContext.Provider
       value={{
@@ -144,10 +177,12 @@ export const ChatProvider = ({ children, token }: { children: React.ReactNode; t
         conversations,
         messages,
         typingUsers,
+        isLoadingConversations,
         sendMessage,
         markRead,
         setTyping,
         loadMessages,
+        fetchMessages,
         setConversations,
       }}
     >

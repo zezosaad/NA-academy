@@ -11,6 +11,7 @@ import { SubjectDetailPage } from "./pages/SubjectDetailPage"
 import { ExamsPage } from "./pages/ExamsPage"
 import { CodesPage } from "./pages/CodesPage"
 import { SecurityPage } from "./pages/SecurityPage"
+import { ChatPage } from "./pages/ChatPage"
 import { isAuthenticated } from "@/lib/auth"
 import { AppModalProvider } from "@/components/AppModalProvider"
 
@@ -52,6 +53,7 @@ function App() {
                     <Route path="/exams" element={<ExamsPage />} />
                     <Route path="/codes" element={<CodesPage />} />
                     <Route path="/security" element={<SecurityPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AdminLayout>

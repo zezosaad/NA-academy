@@ -25,6 +25,7 @@ import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
 import 'package:na_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:na_app/features/profile/presentation/pages/saved_lessons_page.dart';
 import 'package:na_app/features/profile/presentation/pages/settings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -53,10 +54,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashPage(),
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingPage(),
@@ -103,12 +101,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     path: 'enter-code',
                     builder: (context, state) {
                       final extra = state.extra;
-                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+                      final extraMap = extra is Map<String, dynamic>
+                          ? extra
+                          : <String, dynamic>{};
                       final rawTitle = extraMap['subjectTitle'];
-                      final subjectTitle = rawTitle is String ? rawTitle : rawTitle?.toString();
-                      return EnterSubjectCodePage(
-                        subjectTitle: subjectTitle,
-                      );
+                      final subjectTitle = rawTitle is String
+                          ? rawTitle
+                          : rawTitle?.toString();
+                      return EnterSubjectCodePage(subjectTitle: subjectTitle);
                     },
                   ),
                   GoRoute(
@@ -123,8 +123,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         expiredAt: expiredAtRaw is DateTime
                             ? expiredAtRaw
                             : expiredAtRaw is String
-                                ? DateTime.tryParse(expiredAtRaw)
-                                : null,
+                            ? DateTime.tryParse(expiredAtRaw)
+                            : null,
                       );
                     },
                   ),
@@ -140,8 +140,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         consumedAt: consumedAtRaw is DateTime
                             ? consumedAtRaw
                             : consumedAtRaw is String
-                                ? DateTime.tryParse(consumedAtRaw)
-                                : null,
+                            ? DateTime.tryParse(consumedAtRaw)
+                            : null,
                       );
                     },
                   ),
@@ -200,11 +200,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final conversationId = state.pathParameters['id']!;
                       final extra = state.extra;
-                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+                      final extraMap = extra is Map<String, dynamic>
+                          ? extra
+                          : <String, dynamic>{};
                       return ChatThreadPage(
                         conversationId: conversationId,
-                        counterpartyId: extraMap['counterpartyId'] as String? ?? conversationId,
-                        counterpartyName: extraMap['counterpartyName'] as String? ?? 'Tutor',
+                        counterpartyId:
+                            extraMap['counterpartyId'] as String? ??
+                            conversationId,
+                        counterpartyName:
+                            extraMap['counterpartyName'] as String? ?? 'Tutor',
                         subjectTitle: extraMap['subjectTitle'] as String?,
                         isVirtual: extraMap['isVirtual'] as bool? ?? false,
                       );
@@ -213,14 +218,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'virtual/:counterpartyId',
                     builder: (context, state) {
-                      final counterpartyId = state.pathParameters['counterpartyId']!;
+                      final counterpartyId =
+                          state.pathParameters['counterpartyId']!;
                       final extra = state.extra;
-                      final extraMap = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
-                      assert(counterpartyId.isNotEmpty, 'counterpartyId must not be empty for virtual conversation');
+                      final extraMap = extra is Map<String, dynamic>
+                          ? extra
+                          : <String, dynamic>{};
+                      assert(
+                        counterpartyId.isNotEmpty,
+                        'counterpartyId must not be empty for virtual conversation',
+                      );
                       return ChatThreadPage(
                         conversationId: '',
                         counterpartyId: counterpartyId,
-                        counterpartyName: extraMap['counterpartyName'] as String? ?? 'Tutor',
+                        counterpartyName:
+                            extraMap['counterpartyName'] as String? ?? 'Tutor',
                         subjectTitle: extraMap['subjectTitle'] as String?,
                         isVirtual: true,
                       );
@@ -236,6 +248,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/profile',
                 builder: (context, state) => const ProfilePage(),
                 routes: [
+                  GoRoute(
+                    path: 'saved-lessons',
+                    builder: (context, state) => const SavedLessonsPage(),
+                  ),
                   GoRoute(
                     path: 'settings',
                     builder: (context, state) => const SettingsPage(),
@@ -264,7 +280,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/exams/:id/result',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
-          final score = extra['score'] as ExamScore? ?? ExamScore(sessionId: '', score: 0);
+          final score =
+              extra['score'] as ExamScore? ??
+              ExamScore(sessionId: '', score: 0);
           final timedOut = extra['timedOut'] as bool? ?? false;
           return ExamResultPage(score: score, timedOut: timedOut);
         },

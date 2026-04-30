@@ -1,5 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ChatService } from './chat.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -22,6 +22,20 @@ export class ChatController {
   ): Promise<ConversationListResponseDto> {
     const conversations = await this.chatService.listConversations(userId);
     return { conversations };
+  }
+
+  @Get('conversations/:conversationId/messages')
+  @Roles('student', 'teacher', 'admin')
+  @ApiOperation({ summary: 'Get message history for a conversation' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'before', required: false, type: String })
+  async getConversationMessages(
+    @Param('conversationId') conversationId: string,
+    @CurrentUser('userId') userId: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('before') before?: string,
+  ) {
+    return this.chatService.getConversationMessages(conversationId, userId, limit, before);
   }
 
   @Get('pending')

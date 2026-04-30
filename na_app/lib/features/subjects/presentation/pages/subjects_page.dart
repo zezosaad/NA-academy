@@ -22,65 +22,71 @@ class SubjectsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
       body: SafeArea(
-          child: RefreshIndicator(
-            color: AppColors.accent,
-            onRefresh: () => ref.read(subjectsListProvider.notifier).refresh(),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: FadeInDown(
-                    duration: const Duration(milliseconds: 500),
-                    child: _buildHeader(context, isDark),
+        child: RefreshIndicator(
+          color: AppColors.accent,
+          onRefresh: () => ref.read(subjectsListProvider.notifier).refresh(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              SliverToBoxAdapter(
+                child: FadeInDown(
+                  duration: const Duration(milliseconds: 500),
+                  child: _buildHeader(context, isDark),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverToBoxAdapter(
+                child: FadeInUp(
+                  delay: const Duration(milliseconds: 100),
+                  duration: const Duration(milliseconds: 500),
+                  child: _buildCodeEntryCard(context, isDark),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              subjectsAsync.when(
+                loading: () => const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.accent),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                SliverToBoxAdapter(
-                  child: FadeInUp(
-                    delay: const Duration(milliseconds: 100),
-                    duration: const Duration(milliseconds: 500),
-                    child: _buildCodeEntryCard(context, isDark),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                subjectsAsync.when(
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                  ),
-                  error: (e, _) => SliverFillRemaining(
-                    child: FadeIn(
-                      child: EmptyState(
-                        icon: LucideIcons.circleAlert,
-                        title: 'subjects.errorTitle'.tr(),
-                        message: 'subjects.errorMessage'.tr(),
-                        actionLabel: 'common.retry'.tr(),
-                        onAction: () { ref.invalidate(subjectsListProvider); },
-                      ),
+                error: (e, _) => SliverFillRemaining(
+                  child: FadeIn(
+                    child: EmptyState(
+                      icon: LucideIcons.circleAlert,
+                      title: 'subjects.errorTitle'.tr(),
+                      message: 'subjects.errorMessage'.tr(),
+                      actionLabel: 'common.retry'.tr(),
+                      onAction: () {
+                        ref.invalidate(subjectsListProvider);
+                      },
                     ),
                   ),
-                  data: (subjects) {
-                    if (subjects.isEmpty) {
-                      return SliverFillRemaining(
-                        child: FadeIn(
-                          child: EmptyState(
-                            icon: LucideIcons.bookOpen,
-                            title: 'subjects.emptyTitle'.tr(),
-                            message: 'subjects.emptyMessage'.tr(),
-                            actionLabel: 'subjects.enterCodeAction'.tr(),
-                            onAction: () => context.go('/subjects/enter-code'),
-                          ),
-                        ),
-                      );
-                    }
-                    return _buildGrid(context, subjects);
-                  },
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            ),
+                data: (subjects) {
+                  if (subjects.isEmpty) {
+                    return SliverFillRemaining(
+                      child: FadeIn(
+                        child: EmptyState(
+                          icon: LucideIcons.bookOpen,
+                          title: 'subjects.emptyTitle'.tr(),
+                          message: 'subjects.emptyMessage'.tr(),
+                          actionLabel: 'subjects.enterCodeAction'.tr(),
+                          onAction: () => context.go('/subjects/enter-code'),
+                        ),
+                      ),
+                    );
+                  }
+                  return _buildGrid(context, subjects);
+                },
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
@@ -100,7 +106,8 @@ class SubjectsPage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
+              color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                  .withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -123,19 +130,25 @@ class SubjectsPage extends ConsumerWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.15),
-                (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.05),
+                (isDark ? AppColors.darkAccent : AppColors.accent).withValues(
+                  alpha: 0.15,
+                ),
+                (isDark ? AppColors.darkAccent : AppColors.accent).withValues(
+                  alpha: 0.05,
+                ),
               ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.3),
+              color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                  .withValues(alpha: 0.3),
             ),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.05),
+                color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                    .withValues(alpha: 0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -147,12 +160,13 @@ class SubjectsPage extends ConsumerWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.2),
+                  color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                      .withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  LucideIcons.keyRound, 
-                  color: isDark ? AppColors.darkAccent : AppColors.accent, 
+                  LucideIcons.keyRound,
+                  color: isDark ? AppColors.darkAccent : AppColors.accent,
                   size: 24,
                 ),
               ),
@@ -166,7 +180,9 @@ class SubjectsPage extends ConsumerWidget {
                       style: GoogleFonts.cairo(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -175,7 +191,9 @@ class SubjectsPage extends ConsumerWidget {
                       style: GoogleFonts.cairo(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -183,7 +201,7 @@ class SubjectsPage extends ConsumerWidget {
               ),
               Icon(
                 LucideIcons.chevronLeft, // Left arrow for RTL
-                color: isDark ? AppColors.darkAccent : AppColors.accent, 
+                color: isDark ? AppColors.darkAccent : AppColors.accent,
                 size: 24,
               ),
             ],
@@ -203,26 +221,17 @@ class SubjectsPage extends ConsumerWidget {
           mainAxisSpacing: 16,
           mainAxisExtent: 220, // Slightly taller for the new design
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final subject = subjects[index];
-            return FadeInUp(
-              delay: Duration(milliseconds: 200 + (index * 50)),
-              duration: const Duration(milliseconds: 500),
-              child: SubjectCard(
-                subject: subject,
-                onTap: () {
-                  if (subject.isUnlocked) {
-                    context.push('/subjects/${subject.id}');
-                  } else {
-                    context.push('/subjects/enter-code');
-                  }
-                },
-              ),
-            );
-          },
-          childCount: subjects.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final subject = subjects[index];
+          return FadeInUp(
+            delay: Duration(milliseconds: 200 + (index * 50)),
+            duration: const Duration(milliseconds: 500),
+            child: SubjectCard(
+              subject: subject,
+              onTap: () => context.push('/subjects/${subject.id}'),
+            ),
+          );
+        }, childCount: subjects.length),
       ),
     );
   }

@@ -21,6 +21,7 @@ import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
 import { SaveAnswerDto } from './dto/save-answer.dto.js';
 import { ActivationCodesService } from '../activation-codes/activation-codes.service.js';
+import { ExamAccessMode } from './schemas/exam.schema.js';
 
 @ApiTags('Exams')
 @ApiBearerAuth()
@@ -59,9 +60,12 @@ export class ExamsController {
   ) {
     const includeAnswers = ['admin', 'teacher'].includes(role);
     const exam = await this.examsService.findExamById(id, includeAnswers);
+    const accessMode =
+      exam.accessMode ??
+      (exam.hasFreeSection ? ExamAccessMode.FREE_SECTION : ExamAccessMode.CODE_REQUIRED);
 
     if (role === 'student' && isFree === 'true') {
-      if (exam.hasFreeSection && exam.freeQuestionCount) {
+      if (accessMode === ExamAccessMode.FREE_SECTION && exam.freeQuestionCount) {
         exam.questions = exam.questions.slice(0, exam.freeQuestionCount);
       } else {
         throw new ForbiddenException('This exam does not offer a free section');
@@ -81,14 +85,30 @@ export class ExamsController {
     @Query('isFree') isFree?: string,
   ) {
     const userId = user.userId as string;
-    const isFreeAttempt = isFree === 'true';
+    const exam = await this.examsService.findExamById(id, false);
+    const requestedFreeSection = isFree === 'true';
+    const accessMode =
+      exam.accessMode ??
+      (exam.hasFreeSection ? ExamAccessMode.FREE_SECTION : ExamAccessMode.CODE_REQUIRED);
+    let isFreeAttempt = false;
 
-    if (isFreeAttempt) {
-      const check = await this.examsService.canAccessFreeSection(id, userId);
+    if (requestedFreeSection) {
+      const check = await this.examsService.canAccessFreeAttempt(id, userId);
       if (!check.allowed) {
         throw new ForbiddenException('Free attempts exhausted or not available for this exam');
       }
-    } else {
+      if (accessMode !== ExamAccessMode.FREE_SECTION) {
+        throw new ForbiddenException('This exam does not offer a free section');
+      }
+      isFreeAttempt = true;
+    } else if (accessMode === ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS) {
+      const check = await this.examsService.canAccessFreeAttempt(id, userId);
+      if (check.allowed) {
+        isFreeAttempt = true;
+      }
+    }
+
+    if (!isFreeAttempt) {
       const hasAccess = await this.activationCodesService.hasExamAccess(
         userId,
         id,
@@ -102,8 +122,7 @@ export class ExamsController {
     }
 
     const session = await this.examsService.startExam(id, userId, isFreeAttempt);
-    const exam = await this.examsService.findExamById(id, false);
-    if (isFreeAttempt && exam?.hasFreeSection && exam?.freeQuestionCount) {
+    if (isFreeAttempt && accessMode === ExamAccessMode.FREE_SECTION && exam?.freeQuestionCount) {
       exam.questions = exam.questions.slice(0, exam.freeQuestionCount);
     }
 

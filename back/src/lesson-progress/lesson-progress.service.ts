@@ -11,7 +11,7 @@ import {
   LessonProgressDocument,
 } from './schemas/lesson-progress.schema.js';
 import { Lesson, LessonDocument } from '../lessons/schemas/lesson.schema.js';
-import { SubjectsService } from '../subjects/subjects.service.js';
+import { LessonsService } from '../lessons/lessons.service.js';
 import { UpdateProgressDto } from './dto/update-progress.dto.js';
 
 export const LESSON_COMPLETION_THRESHOLD = 0.9;
@@ -29,18 +29,18 @@ export class LessonProgressService {
     private readonly progressModel: Model<LessonProgressDocument>,
     @InjectModel(Lesson.name)
     private readonly lessonModel: Model<LessonDocument>,
-    private readonly subjectsService: SubjectsService,
+    private readonly lessonsService: LessonsService,
   ) {}
 
-  private async assertUnlocked(
-    subjectId: string,
+  private async assertAccessible(
+    lesson: Pick<Lesson, '_id' | 'subjectId'>,
     role: string,
     userId: string,
   ): Promise<void> {
     if (role !== 'student') return;
-    const unlocked = await this.subjectsService.getUnlockedSubjectIds(userId);
-    if (!unlocked.has(subjectId)) {
-      throw new ForbiddenException('Subject is locked. Activate a code first.');
+    const canAccess = await this.lessonsService.canAccessLessonContent(userId, lesson);
+    if (!canAccess) {
+      throw new ForbiddenException('Lesson is locked. Activate the subject code first.');
     }
   }
 
@@ -59,7 +59,7 @@ export class LessonProgressService {
       throw new NotFoundException('Lesson not found');
     }
 
-    await this.assertUnlocked(lesson.subjectId.toString(), role, userId);
+    await this.assertAccessible(lesson, role, userId);
 
     const existing = await this.progressModel
       .findOne({
@@ -124,7 +124,7 @@ export class LessonProgressService {
       throw new NotFoundException('Lesson not found');
     }
 
-    await this.assertUnlocked(lesson.subjectId.toString(), role, userId);
+    await this.assertAccessible(lesson, role, userId);
 
     const now = new Date();
     await this.progressModel

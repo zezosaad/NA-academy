@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/api/dio_client.dart';
+import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/empty_state.dart';
@@ -25,25 +26,47 @@ class LessonDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lessonAsync = ref.watch(lessonDetailProvider(lessonId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => context.pop(),
-          tooltip: 'subjects.lesson.goBackTooltip'.tr(),
-        ),
-        title: lessonAsync.maybeWhen(
-          data: (lesson) => Text(
-            lesson.title,
-            style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w600),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: Material(
+              color: (isDark ? AppColors.darkBgSurface : AppColors.bgSurface)
+                  .withOpacity(0.92),
+              borderRadius: BorderRadius.circular(50),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(50),
+                onTap: () => context.pop(),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    LucideIcons.chevronLeft,
+                    size: 20,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
           ),
-          orElse: () => const SizedBox.shrink(),
         ),
       ),
       body: lessonAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.accent),
+        loading: () => Center(
+          child: CircularProgressIndicator(
+            color: AppColors.accent,
+            strokeWidth: 2,
+          ),
         ),
         error: (e, _) {
           debugPrint('[LessonDetail] load error: $e');
@@ -73,11 +96,21 @@ class _LessonContent extends ConsumerStatefulWidget {
 class _LessonContentState extends ConsumerState<_LessonContent> {
   bool _isCompleted = false;
   bool _markingManually = false;
+  bool _isSaved = false;
 
   @override
   void initState() {
     super.initState();
     _isCompleted = widget.lesson.isCompleted;
+    _loadSavedStatus();
+  }
+
+  Future<void> _loadSavedStatus() async {
+    final isSaved = await ref
+        .read(prefsStoreProvider)
+        .isLessonSaved(widget.lesson.id);
+    if (!mounted) return;
+    setState(() => _isSaved = isSaved);
   }
 
   void _onCompletionChanged(bool isCompleted) {
@@ -104,17 +137,40 @@ class _LessonContentState extends ConsumerState<_LessonContent> {
     }
   }
 
+  Future<void> _toggleSavedLesson() async {
+    final nowSaved = await ref
+        .read(prefsStoreProvider)
+        .toggleSavedLesson(widget.lesson.id);
+    if (!mounted) return;
+
+    setState(() => _isSaved = nowSaved);
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            nowSaved
+                ? 'subjects.lesson.savedToList'.tr()
+                : 'subjects.lesson.removedFromSaved'.tr(),
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lesson = widget.lesson;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasVideo =
         lesson.mediaAssetId != null && lesson.mediaAssetId!.isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Video / Placeholder ────────────────────────────────────────────
           if (hasVideo)
             _LessonVideo(
               mediaId: lesson.mediaAssetId!,
@@ -123,99 +179,286 @@ class _LessonContentState extends ConsumerState<_LessonContent> {
               onCompletionChanged: _onCompletionChanged,
             )
           else
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppColors.bgSunken,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    LucideIcons.videoOff,
-                    color: AppColors.textMuted,
-                    size: 32,
+            _NoVideoPlaceholder(isDark: isDark),
+
+          // ── Content ───────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Kicker: LESSON N · X MIN
+                Row(
+                  children: [
+                    Expanded(
+                      child: _LessonKicker(lesson: lesson, isDark: isDark),
+                    ),
+                    IconButton(
+                      tooltip: 'profile.menu.savedLessons'.tr(),
+                      onPressed: _toggleSavedLesson,
+                      icon: Icon(
+                        _isSaved
+                            ? LucideIcons.bookmarkCheck
+                            : LucideIcons.bookmark,
+                        color: _isSaved
+                            ? (isDark ? AppColors.darkAccent : AppColors.accent)
+                            : (isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Title in Fraunces
+                Text(
+                  lesson.title,
+                  style: GoogleFonts.fraunces(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                    letterSpacing: -0.015,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 8),
+                ),
+
+                // Description
+                if (lesson.description != null &&
+                    lesson.description!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
                   Text(
-                    'subjects.lesson.noVideo'.tr(),
+                    lesson.description!,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppColors.textMuted,
+                      fontSize: 15,
+                      height: 1.65,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
-              ),
-            ),
-          const SizedBox(height: 20),
-          Text(
-            lesson.title,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontSize: 22),
-          ),
-          if (lesson.description != null && lesson.description!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              lesson.description!,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                height: 1.5,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-          if (!hasVideo) ...[
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: (_isCompleted || _markingManually)
-                    ? null
-                    : _markCompleteManually,
-                icon: _markingManually
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Icon(
-                        _isCompleted
-                            ? LucideIcons.circleCheck
-                            : LucideIcons.check,
-                      ),
-                label: Text(_isCompleted
-                    ? 'subjects.lesson.completed'.tr()
-                    : 'subjects.lesson.markCompleteAction'.tr()),
-              ),
-            ),
-          ] else if (_isCompleted) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(
-                  LucideIcons.circleCheck,
-                  size: 18,
-                  color: AppColors.accent,
+
+                const SizedBox(height: 32),
+
+                // Divider
+                Divider(
+                  color: isDark
+                      ? AppColors.darkBorderSubtle
+                      : AppColors.borderSubtle,
+                  height: 1,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'subjects.lesson.completed'.tr(),
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accent,
+
+                const SizedBox(height: 28),
+
+                // Completion section
+                if (_isCompleted)
+                  _CompletedBadge(isDark: isDark)
+                else if (!hasVideo)
+                  _MarkCompleteButton(
+                    isLoading: _markingManually,
+                    onTap: _markCompleteManually,
+                    isDark: isDark,
                   ),
-                ),
               ],
             ),
-          ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Kicker ──────────────────────────────────────────────────────────────────
+
+class _LessonKicker extends StatelessWidget {
+  final Lesson lesson;
+  final bool isDark;
+
+  const _LessonKicker({required this.lesson, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>['LESSON ${lesson.order}'];
+    if (lesson.estimatedMinutes != null && lesson.estimatedMinutes! > 0) {
+      parts.add('${lesson.estimatedMinutes} MIN');
+    }
+
+    return Row(
+      children: [
+        Text(
+          parts.join(' · '),
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.08,
+            color: AppColors.accent,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── No-video placeholder ────────────────────────────────────────────────────
+
+class _NoVideoPlaceholder extends StatelessWidget {
+  final bool isDark;
+
+  const _NoVideoPlaceholder({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 240,
+      width: double.infinity,
+      color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.darkBgSurface : AppColors.bgSurface)
+                  .withOpacity(0.6),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              LucideIcons.videoOff,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'subjects.lesson.noVideo'.tr(),
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Completed badge ─────────────────────────────────────────────────────────
+
+class _CompletedBadge extends StatelessWidget {
+  final bool isDark;
+
+  const _CompletedBadge({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withOpacity(isDark ? 0.12 : 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accent.withOpacity(0.18), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              LucideIcons.circleCheck,
+              size: 16,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'subjects.lesson.completed'.tr(),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
+              ),
+              Text(
+                'subjects.lesson.completedSub'.tr(),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Mark complete button ────────────────────────────────────────────────────
+
+class _MarkCompleteButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _MarkCompleteButton({
+    required this.isLoading,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Material(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: isLoading ? null : onTap,
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.check,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'subjects.lesson.markCompleteAction'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -359,10 +602,7 @@ class _LessonVideoState extends ConsumerState<_LessonVideo> {
       );
       chewie.addListener(_onChewieChange);
       controller.addListener(_onVideoTick);
-      _heartbeat = Timer.periodic(
-        _heartbeatInterval,
-        (_) => _reportProgress(),
-      );
+      _heartbeat = Timer.periodic(_heartbeatInterval, (_) => _reportProgress());
       setState(() {
         _videoController = controller;
         _chewieController = chewie;
@@ -383,7 +623,9 @@ class _LessonVideoState extends ConsumerState<_LessonVideo> {
       final durationSec = c.value.duration.inSeconds;
       if (durationSec > 0 && positionSec > 0) {
         unawaited(
-          ref.read(lessonProgressRepositoryProvider).updateProgress(
+          ref
+              .read(lessonProgressRepositoryProvider)
+              .updateProgress(
                 widget.lessonId,
                 watchedSeconds: positionSec,
                 durationSeconds: durationSec,
@@ -403,34 +645,48 @@ class _LessonVideoState extends ConsumerState<_LessonVideo> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: AppColors.bgSunken,
-          borderRadius: BorderRadius.circular(14),
-        ),
+        height: 240,
+        width: double.infinity,
+        color: AppColors.bgSunken,
         alignment: Alignment.center,
-        child: Text(
-          'subjects.lesson.videoLoadFailure'.tr(),
-          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textMuted),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              LucideIcons.triangleAlert,
+              color: AppColors.textMuted,
+              size: 24,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'subjects.lesson.videoLoadFailure'.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
         ),
       );
     }
+
     if (_chewieController == null || _videoController == null) {
       return Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: AppColors.bgSunken,
-          borderRadius: BorderRadius.circular(14),
-        ),
+        height: 240,
+        width: double.infinity,
+        color: Colors.black,
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(color: AppColors.accent),
+        child: const CircularProgressIndicator(
+          color: AppColors.accent,
+          strokeWidth: 2,
+        ),
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 220,
-        width: double.infinity,
+
+    return SizedBox(
+      height: 240,
+      width: double.infinity,
+      child: ColoredBox(
         color: Colors.black,
         child: Chewie(controller: _chewieController!),
       ),

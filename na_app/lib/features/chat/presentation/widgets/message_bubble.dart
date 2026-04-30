@@ -1,9 +1,23 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
+
+String _normalizeApiBaseForMedia(String? rawBase) {
+  final trimmed = (rawBase ?? '').trim();
+  final fallback = 'http://192.168.1.5:3000/api/v1';
+  final value = trimmed.isEmpty ? fallback : trimmed;
+  final withoutTrailingSlash = value.replaceFirst(RegExp(r'/+$'), '');
+
+  if (withoutTrailingSlash.endsWith('/api/v1')) return withoutTrailingSlash;
+  if (withoutTrailingSlash.endsWith('/api')) {
+    return '$withoutTrailingSlash/v1';
+  }
+  return '$withoutTrailingSlash/api/v1';
+}
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -41,61 +55,89 @@ class MessageBubble extends StatelessWidget {
       child: Align(
         alignment: _isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Column(
-          crossAxisAlignment: _isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: _isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
-            Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.72,
-              ),
-              decoration: BoxDecoration(
-                color: _isMe
-                    ? (isDark ? AppColors.darkAccentSoft : AppColors.accent)
-                    : (isDark ? AppColors.darkBgElevated : AppColors.bgElevated),
-                borderRadius: _isMe
-                    ? const BorderRadius.only(
-                        topLeft: Radius.circular(AppShapes.cardRadius),
-                        topRight: Radius.circular(AppShapes.cardRadius),
-                        bottomLeft: Radius.circular(AppShapes.cardRadius),
-                        bottomRight: Radius.zero,
-                      )
-                    : const BorderRadius.only(
-                        topLeft: Radius.circular(AppShapes.cardRadius),
-                        topRight: Radius.circular(AppShapes.cardRadius),
-                        bottomLeft: Radius.zero,
-                        bottomRight: Radius.circular(AppShapes.cardRadius),
+            GestureDetector(
+              onLongPress: message.text != null && message.text!.isNotEmpty
+                  ? () {
+                      Clipboard.setData(ClipboardData(text: message.text!));
+                      ScaffoldMessenger.of(context)
+                        ..clearSnackBars()
+                        ..showSnackBar(
+                          SnackBar(
+                            content: Text('chat.thread.textCopied'.tr()),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                    }
+                  : null,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.72,
+                ),
+                decoration: BoxDecoration(
+                  color: _isMe
+                      ? (isDark ? AppColors.darkAccentSoft : AppColors.accent)
+                      : (isDark
+                            ? AppColors.darkBgElevated
+                            : AppColors.bgElevated),
+                  borderRadius: _isMe
+                      ? const BorderRadius.only(
+                          topLeft: Radius.circular(AppShapes.cardRadius),
+                          topRight: Radius.circular(AppShapes.cardRadius),
+                          bottomLeft: Radius.circular(AppShapes.cardRadius),
+                          bottomRight: Radius.zero,
+                        )
+                      : const BorderRadius.only(
+                          topLeft: Radius.circular(AppShapes.cardRadius),
+                          topRight: Radius.circular(AppShapes.cardRadius),
+                          bottomLeft: Radius.zero,
+                          bottomRight: Radius.circular(AppShapes.cardRadius),
+                        ),
+                  border: _isMe
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? AppColors.darkBorderSubtle
+                              : AppColors.borderSubtle,
+                          width: 0.5,
+                        ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (message.type == MessageType.image &&
+                        message.imageFileId != null)
+                      _ImageBubble(
+                        imageFileId: message.imageFileId!,
+                        onTap: onTapImage,
+                        baseUrl: baseUrl,
+                        isMe: _isMe,
+                        accessToken: accessToken,
                       ),
-                border: _isMe
-                    ? null
-                    : Border.all(
-                        color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-                        width: 0.5,
-                      ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (message.type == MessageType.image && message.imageFileId != null)
-                    _ImageBubble(
-                      imageFileId: message.imageFileId!,
-                      onTap: onTapImage,
-                      baseUrl: baseUrl,
-                      isMe: _isMe,
-                      accessToken: accessToken,
-                    ),
-                  if (message.text != null && message.text!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      child: Text(
-                        message.text!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: _isMe
-                              ? Colors.white
-                              : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
-                          height: 1.4,
+                    if (message.text != null && message.text!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        child: Text(
+                          message.text!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: _isMe
+                                ? Colors.white
+                                : (isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary),
+                            height: 1.4,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 2),
@@ -105,17 +147,15 @@ class MessageBubble extends StatelessWidget {
                 Text(
                   _formatTime(message.sentAt),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.textMuted,
                     fontSize: 11,
                   ),
                 ),
                 if (_isMe) ...[
                   const SizedBox(width: 4),
-                  Icon(
-                    _statusIcon,
-                    size: 14,
-                    color: _statusColor(context),
-                  ),
+                  Icon(_statusIcon, size: 14, color: _statusColor(context)),
                 ],
               ],
             ),
@@ -126,20 +166,22 @@ class MessageBubble extends StatelessWidget {
   }
 
   IconData get _statusIcon => switch (message.status) {
-        MessageDeliveryStatus.pending => Icons.schedule,
-        MessageDeliveryStatus.sent => Icons.check,
-        MessageDeliveryStatus.delivered => Icons.done_all,
-        MessageDeliveryStatus.read => Icons.done_all,
-        MessageDeliveryStatus.failed => Icons.error_outline,
-        MessageDeliveryStatus.deleted => Icons.block,
-      };
+    MessageDeliveryStatus.pending => Icons.schedule,
+    MessageDeliveryStatus.sent => Icons.check,
+    MessageDeliveryStatus.delivered => Icons.done_all,
+    MessageDeliveryStatus.read => Icons.done_all,
+    MessageDeliveryStatus.failed => Icons.error_outline,
+    MessageDeliveryStatus.deleted => Icons.block,
+  };
 
   Color _statusColor(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return switch (message.status) {
-      MessageDeliveryStatus.read => isDark ? AppColors.darkAccent : AppColors.accent,
-      MessageDeliveryStatus.failed => isDark ? AppColors.darkDanger : AppColors.danger,
+      MessageDeliveryStatus.read =>
+        isDark ? AppColors.darkAccent : AppColors.accent,
+      MessageDeliveryStatus.failed =>
+        isDark ? AppColors.darkDanger : AppColors.danger,
       _ => isDark ? AppColors.darkTextMuted : AppColors.textMuted,
     };
   }
@@ -168,7 +210,8 @@ class _ImageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = '${baseUrl ?? 'http://10.0.2.2:3000'}/media/$imageFileId/stream';
+    final apiBase = _normalizeApiBaseForMedia(baseUrl);
+    final imageUrl = '$apiBase/media/$imageFileId/stream';
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -183,14 +226,19 @@ class _ImageBubble extends StatelessWidget {
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(AppShapes.cardRadius),
           topRight: const Radius.circular(AppShapes.cardRadius),
-          bottomLeft: isMe ? const Radius.circular(AppShapes.cardRadius) : Radius.zero,
-          bottomRight: isMe ? Radius.zero : const Radius.circular(AppShapes.cardRadius),
+          bottomLeft: isMe
+              ? const Radius.circular(AppShapes.cardRadius)
+              : Radius.zero,
+          bottomRight: isMe
+              ? Radius.zero
+              : const Radius.circular(AppShapes.cardRadius),
         ),
         child: GestureDetector(
           onTap: onTap,
           child: CachedNetworkImage(
             imageUrl: imageUrl,
             httpHeaders: headers,
+            cacheKey: accessToken != null ? '${imageFileId}_auth' : imageFileId,
             width: 220,
             height: 180,
             fit: BoxFit.cover,

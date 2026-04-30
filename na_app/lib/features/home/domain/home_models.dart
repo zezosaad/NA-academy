@@ -20,6 +20,15 @@ List<int> _coerceIntList(dynamic v) {
   return result.isEmpty ? List.filled(7, 0) : result;
 }
 
+dynamic _pickFirst(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    if (json.containsKey(key) && json[key] != null) {
+      return json[key];
+    }
+  }
+  return null;
+}
+
 @freezed
 class AnalyticsSnapshot with _$AnalyticsSnapshot {
   const factory AnalyticsSnapshot({
@@ -30,11 +39,23 @@ class AnalyticsSnapshot with _$AnalyticsSnapshot {
   }) = _AnalyticsSnapshot;
 
   factory AnalyticsSnapshot.fromJson(Map<String, dynamic> json) {
+    final payload = (json['data'] is Map<String, dynamic>)
+        ? json['data'] as Map<String, dynamic>
+        : json;
+
     return _AnalyticsSnapshot(
-      streakDays: _coerceInt(json['streak'] ?? json['streakDays']),
-      lessonsCompleted: _coerceInt(json['lessonsCompleted']),
-      examsTaken: _coerceInt(json['examsTaken']),
-      weeklyActivity: _coerceIntList(json['weeklyActivity']),
+      streakDays: _coerceInt(
+        _pickFirst(payload, ['streakDays', 'streak', 'currentStreakDays']),
+      ),
+      lessonsCompleted: _coerceInt(
+        _pickFirst(payload, ['lessonsCompleted', 'completedLessons']),
+      ),
+      examsTaken: _coerceInt(
+        _pickFirst(payload, ['examsTaken', 'totalExamsTaken']),
+      ),
+      weeklyActivity: _coerceIntList(
+        _pickFirst(payload, ['weeklyActivity', 'weekly', 'activityByDay']),
+      ),
     );
   }
 }

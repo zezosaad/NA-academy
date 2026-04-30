@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LessonsService } from './lessons.service.js';
-import { SubjectsService } from '../subjects/subjects.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { CreateLessonDto } from './dto/create-lesson.dto.js';
@@ -22,22 +21,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto.js';
 @ApiBearerAuth()
 @Controller()
 export class LessonsController {
-  constructor(
-    private readonly lessonsService: LessonsService,
-    private readonly subjectsService: SubjectsService,
-  ) {}
-
-  private async assertStudentUnlocked(
-    subjectId: string,
-    role: string,
-    userId: string,
-  ) {
-    if (role !== 'student') return;
-    const unlockedIds = await this.subjectsService.getUnlockedSubjectIds(userId);
-    if (!unlockedIds.has(subjectId)) {
-      throw new ForbiddenException('Subject is locked. Activate a code first.');
-    }
-  }
+  constructor(private readonly lessonsService: LessonsService) {}
 
   @Post('subjects/:subjectId/lessons')
   @Roles('admin', 'teacher')
@@ -52,13 +36,12 @@ export class LessonsController {
   }
 
   @Get('subjects/:subjectId/lessons')
-  @ApiOperation({ summary: 'List lessons for a subject (requires unlock for students)' })
+  @ApiOperation({ summary: 'List lessons for a subject with first-lesson free gating for students' })
   async findBySubject(
     @Param('subjectId') subjectId: string,
     @CurrentUser('role') role: string,
     @CurrentUser('userId') userId: string,
   ) {
-    await this.assertStudentUnlocked(subjectId, role, userId);
     return this.lessonsService.findBySubject(
       subjectId,
       role === 'student' ? userId : undefined,
@@ -66,7 +49,7 @@ export class LessonsController {
   }
 
   @Get('lessons/:id')
-  @ApiOperation({ summary: 'Get lesson by ID (requires unlock for students)' })
+  @ApiOperation({ summary: 'Get lesson by ID with first-lesson free gating for students' })
   async findById(
     @Param('id') id: string,
     @CurrentUser('role') role: string,
@@ -76,7 +59,9 @@ export class LessonsController {
       id,
       role === 'student' ? userId : undefined,
     );
-    await this.assertStudentUnlocked(lesson.subjectId.toString(), role, userId);
+    if (role === 'student' && lesson.status === 'locked') {
+      throw new ForbiddenException('Lesson is locked. Activate the subject code first.');
+    }
     return lesson;
   }
 

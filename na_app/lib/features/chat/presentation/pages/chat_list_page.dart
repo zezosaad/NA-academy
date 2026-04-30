@@ -15,15 +15,17 @@ import 'package:na_app/features/chat/presentation/controllers/chat_controller.da
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:animate_do/animate_do.dart';
 
-final chatListProvider = AsyncNotifierProvider<ChatListNotifier, List<Conversation>>(
-  ChatListNotifier.new,
-);
+final chatListProvider =
+    AsyncNotifierProvider<ChatListNotifier, List<Conversation>>(
+      ChatListNotifier.new,
+    );
 
 class ChatListNotifier extends AsyncNotifier<List<Conversation>> {
   @override
   Future<List<Conversation>> build() async {
     final repo = ref.watch(chatRepositoryProvider);
-    final userId = ref.read(authControllerProvider.notifier).currentUser?.id ?? '';
+    final userId =
+        ref.read(authControllerProvider.notifier).currentUser?.id ?? '';
     ref.read(chatControllerProvider).setCurrentUserId(userId);
     ref.onDispose(() {
       repo.disconnectSocket();
@@ -63,17 +65,18 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeInDown(
-                duration: const Duration(milliseconds: 500),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FadeInDown(
+              duration: const Duration(milliseconds: 500),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -81,7 +84,9 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                             style: GoogleFonts.cairo(
                               fontSize: 32,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -90,107 +95,132 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                             style: GoogleFonts.cairo(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark ? AppColors.darkAccent : AppColors.accent)
+                                .withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        LucideIcons.messageSquareText,
+                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: conversationsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.accent),
+                ),
+                error: (e, st) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        LucideIcons.circleAlert,
+                        size: 48,
+                        color: AppColors.danger,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'chat.errorTitle'.tr(),
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
                         ),
-                        child: Icon(
-                          LucideIcons.messageSquareText,
-                          color: isDark ? AppColors.darkAccent : AppColors.accent,
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            ref.read(chatListProvider.notifier).refresh(),
+                        child: Text(
+                          'common.retry'.tr(),
+                          style: GoogleFonts.cairo(),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: conversationsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                  error: (e, st) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.circleAlert, size: 48, color: AppColors.danger),
-                        const SizedBox(height: 16),
-                        Text(
-                          'chat.errorTitle'.tr(),
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => ref.read(chatListProvider.notifier).refresh(),
-                          child: Text('common.retry'.tr(), style: GoogleFonts.cairo()),
-                        ),
-                      ],
-                    ),
-                  ),
-                  data: (conversations) {
-                    if (conversations.isEmpty) {
-                      return FadeIn(
-                        child: EmptyState(
-                          icon: LucideIcons.messageCircle,
-                          title: 'chat.emptyTitle'.tr(),
-                          message: 'chat.emptyMessage'.tr(),
-                          actionLabel: 'chat.emptyAction'.tr(),
-                          onAction: () => context.go('/subjects/enter-code'),
-                        ),
-                      );
-                    }
-                    return RefreshIndicator(
-                      color: AppColors.accent,
-                      onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: conversations.length,
-                        itemBuilder: (context, index) {
-                          final conv = conversations[index];
-                          return FadeInUp(
-                            delay: Duration(milliseconds: 100 + (index * 50)),
-                            duration: const Duration(milliseconds: 500),
-                            child: _ConversationRow(
-                              conversation: conv,
-                              onTap: () => _openConversation(conv),
-                              isDark: isDark,
-                            ),
-                          );
-                        },
+                data: (conversations) {
+                  if (conversations.isEmpty) {
+                    return FadeIn(
+                      child: EmptyState(
+                        icon: LucideIcons.messageCircle,
+                        title: 'chat.emptyTitle'.tr(),
+                        message: 'chat.emptyMessageNoTeacher'.tr(),
+                        actionLabel: 'common.refresh'.tr(),
+                        onAction: () =>
+                            ref.read(chatListProvider.notifier).refresh(),
                       ),
                     );
-                  },
-                ),
+                  }
+                  return RefreshIndicator(
+                    color: AppColors.accent,
+                    onRefresh: () =>
+                        ref.read(chatListProvider.notifier).refresh(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: conversations.length,
+                      itemBuilder: (context, index) {
+                        final conv = conversations[index];
+                        return FadeInUp(
+                          delay: Duration(milliseconds: 100 + (index * 50)),
+                          duration: const Duration(milliseconds: 500),
+                          child: _ConversationRow(
+                            conversation: conv,
+                            onTap: () => _openConversation(conv),
+                            isDark: isDark,
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
   void _openConversation(Conversation conv) {
     if (conv.virtual) {
-      context.go('/chat/virtual/${conv.counterpartyId}', extra: {
-        'counterpartyName': conv.counterpartyName,
-        'subjectId': conv.subjectId,
-        'subjectTitle': conv.subjectTitle,
-      });
+      context.go(
+        '/chat/virtual/${conv.counterpartyId}',
+        extra: {
+          'counterpartyName': conv.counterpartyName,
+          'subjectId': conv.subjectId,
+          'subjectTitle': conv.subjectTitle,
+        },
+      );
     } else {
-      context.go('/chat/${conv.id}', extra: {
-        'counterpartyId': conv.counterpartyId,
-        'counterpartyName': conv.counterpartyName,
-        'subjectId': conv.subjectId,
-        'subjectTitle': conv.subjectTitle,
-      });
+      context.go(
+        '/chat/${conv.id}',
+        extra: {
+          'counterpartyId': conv.counterpartyId,
+          'counterpartyName': conv.counterpartyName,
+          'subjectId': conv.subjectId,
+          'subjectTitle': conv.subjectTitle,
+        },
+      );
     }
   }
 }
@@ -228,9 +258,11 @@ class _ConversationRow extends StatelessWidget {
             color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: hasUnread 
-                ? accentColor.withValues(alpha: 0.3) 
-                : (isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle),
+              color: hasUnread
+                  ? accentColor.withValues(alpha: 0.3)
+                  : (isDark
+                        ? AppColors.darkBorderSubtle
+                        : AppColors.borderSubtle),
               width: hasUnread ? 1.5 : 1.0,
             ),
             boxShadow: [
@@ -238,7 +270,7 @@ class _ConversationRow extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: Row(
@@ -257,8 +289,12 @@ class _ConversationRow extends StatelessWidget {
                             conversation.counterpartyName,
                             style: GoogleFonts.cairo(
                               fontSize: 16,
-                              fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w700,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                              fontWeight: hasUnread
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -284,10 +320,16 @@ class _ConversationRow extends StatelessWidget {
                                 : ''),
                         style: GoogleFonts.cairo(
                           fontSize: 13,
-                          fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight: hasUnread
+                              ? FontWeight.w700
+                              : FontWeight.w600,
                           color: hasUnread
-                              ? (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary)
-                              : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                              ? (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary)
+                              : (isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.textSecondary),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -300,7 +342,9 @@ class _ConversationRow extends StatelessWidget {
                       style: GoogleFonts.cairo(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -309,7 +353,10 @@ class _ConversationRow extends StatelessWidget {
               if (hasUnread)
                 Container(
                   margin: const EdgeInsetsDirectional.only(start: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: accentColor,
                     borderRadius: BorderRadius.circular(999),
@@ -318,7 +365,7 @@ class _ConversationRow extends StatelessWidget {
                         color: accentColor.withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
-                      )
+                      ),
                     ],
                   ),
                   child: Text(
@@ -343,12 +390,16 @@ class _Avatar extends StatelessWidget {
   final bool isDark;
   final bool hasUnread;
 
-  const _Avatar({required this.initials, required this.isDark, required this.hasUnread});
+  const _Avatar({
+    required this.initials,
+    required this.isDark,
+    required this.hasUnread,
+  });
 
   @override
   Widget build(BuildContext context) {
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
-    
+
     return Container(
       width: 56,
       height: 56,
@@ -362,9 +413,7 @@ class _Avatar extends StatelessWidget {
           end: Alignment.bottomLeft,
         ),
         shape: BoxShape.circle,
-        border: hasUnread 
-          ? Border.all(color: accentColor, width: 2)
-          : null,
+        border: hasUnread ? Border.all(color: accentColor, width: 2) : null,
       ),
       alignment: Alignment.center,
       child: Text(

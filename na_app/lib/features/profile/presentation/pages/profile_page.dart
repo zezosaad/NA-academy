@@ -41,10 +41,11 @@ class ProfilePage extends ConsumerWidget {
                 userAsync.when(
                   data: (user) => _buildProfileCard(context, user, isDark),
                   loading: () => const Center(
-                      child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(color: AppColors.accent),
-                  )),
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    ),
+                  ),
                   error: (e, _) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       ErrorToast.show(context, e);
@@ -54,15 +55,22 @@ class ProfilePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 analyticsAsync.when(
-                  data: (analytics) => _buildStatTiles(context, analytics, isDark),
+                  data: (analytics) =>
+                      _buildStatTiles(context, analytics, isDark),
                   loading: () => const SizedBox(
                     height: 100,
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    ),
                   ),
                   error: (e, st) => _buildStatTiles(context, null, isDark),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionTitle(context, 'profile.weeklyActivity'.tr(), isDark),
+                _buildSectionTitle(
+                  context,
+                  'profile.weeklyActivity'.tr(),
+                  isDark,
+                ),
                 const SizedBox(height: 16),
                 analyticsAsync.when(
                   data: (analytics) => WeeklyChart(
@@ -71,15 +79,19 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   loading: () => const SizedBox(
                     height: 140,
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    ),
                   ),
-                  error: (e, st) => WeeklyChart(
-                    values: [],
-                    highlightIndex: _todayIndex(),
-                  ),
+                  error: (e, st) =>
+                      WeeklyChart(values: [], highlightIndex: _todayIndex()),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionTitle(context, 'profile.settingsContent'.tr(), isDark),
+                _buildSectionTitle(
+                  context,
+                  'profile.settingsContent'.tr(),
+                  isDark,
+                ),
                 const SizedBox(height: 16),
                 _buildSettingsList(context, isDark),
                 const SizedBox(height: 48),
@@ -113,7 +125,9 @@ class ProfilePage extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, WidgetRef ref, bool isDark) {
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor = isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
 
     return FadeInDown(
       duration: const Duration(milliseconds: 500),
@@ -145,7 +159,7 @@ class ProfilePage extends ConsumerWidget {
                       color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: const Icon(LucideIcons.settings, size: 20),
@@ -159,11 +173,15 @@ class ProfilePage extends ConsumerWidget {
 
   Widget _buildProfileCard(BuildContext context, dynamic user, bool isDark) {
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor = isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
     final accentSoft = isDark ? AppColors.darkAccentSoft : AppColors.accentSoft;
 
-    final name = user != null ? user.name as String : 'profile.defaultName'.tr();
+    final name = user != null
+        ? user.name as String
+        : 'profile.defaultName'.tr();
     final email = user != null ? user.email as String : '';
     final EducationLevel? level = user is User ? user.level : null;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
@@ -181,7 +199,7 @@ class ProfilePage extends ConsumerWidget {
               color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 20,
               offset: const Offset(0, 10),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -201,7 +219,7 @@ class ProfilePage extends ConsumerWidget {
                     color: accentColor.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
-                  )
+                  ),
                 ],
               ),
               alignment: Alignment.center,
@@ -224,7 +242,9 @@ class ProfilePage extends ConsumerWidget {
                     style: GoogleFonts.cairo(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
                   if (email.isNotEmpty) ...[
@@ -234,7 +254,9 @@ class ProfilePage extends ConsumerWidget {
                       style: GoogleFonts.cairo(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -244,7 +266,10 @@ class ProfilePage extends ConsumerWidget {
                     runSpacing: 6,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: accentSoft,
                           borderRadius: BorderRadius.circular(999),
@@ -260,9 +285,14 @@ class ProfilePage extends ConsumerWidget {
                       ),
                       if (level != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: (isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft),
+                            color: (isDark
+                                ? AppColors.darkSecondarySoft
+                                : AppColors.secondarySoft),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -271,14 +301,18 @@ class ProfilePage extends ConsumerWidget {
                               Icon(
                                 LucideIcons.graduationCap,
                                 size: 12,
-                                color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                                color: isDark
+                                    ? AppColors.darkSecondary
+                                    : AppColors.secondary,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 level.displayLabel,
                                 style: GoogleFonts.cairo(
                                   fontSize: 12,
-                                  color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                                  color: isDark
+                                      ? AppColors.darkSecondary
+                                      : AppColors.secondary,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -297,9 +331,15 @@ class ProfilePage extends ConsumerWidget {
   }
 
   Widget _buildStatTiles(BuildContext context, dynamic analytics, bool isDark) {
-    final secondaryColor = isDark ? AppColors.darkSecondary : AppColors.secondary;
-    final secondarySoft = isDark ? AppColors.darkSecondarySoft : AppColors.secondarySoft;
-    final accentColor = isDark ? AppColors.darkAccentDeep : AppColors.accentDeep;
+    final secondaryColor = isDark
+        ? AppColors.darkSecondary
+        : AppColors.secondary;
+    final secondarySoft = isDark
+        ? AppColors.darkSecondarySoft
+        : AppColors.secondarySoft;
+    final accentColor = isDark
+        ? AppColors.darkAccentDeep
+        : AppColors.accentDeep;
     final accentSoft = isDark ? AppColors.darkAccentSoft : AppColors.accentSoft;
 
     final streak = analytics != null ? analytics.streakDays as int : 0;
@@ -352,21 +392,21 @@ class ProfilePage extends ConsumerWidget {
 
   Widget _buildSettingsList(BuildContext context, bool isDark) {
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor = isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
-    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
     final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
     final sunkenColor = isDark ? AppColors.darkBgSunken : AppColors.bgSunken;
 
     final items = [
       (
-        icon: LucideIcons.trophy,
-        label: 'profile.menu.certificates'.tr(),
-        hint: 'profile.menu.certificatesHint'.tr(),
-      ),
-      (
         icon: LucideIcons.bookmark,
         label: 'profile.menu.savedLessons'.tr(),
         hint: 'profile.menu.savedLessonsHint'.tr(),
+        onTap: () => context.push('/profile/saved-lessons'),
       ),
     ];
 
@@ -382,13 +422,18 @@ class ProfilePage extends ConsumerWidget {
           children: List.generate(items.length, (index) {
             final item = items[index];
             return InkWell(
-              onTap: () {}, // Future implementation
+              onTap: item.onTap,
               borderRadius: BorderRadius.vertical(
                 top: index == 0 ? const Radius.circular(24) : Radius.zero,
-                bottom: index == items.length - 1 ? const Radius.circular(24) : Radius.zero,
+                bottom: index == items.length - 1
+                    ? const Radius.circular(24)
+                    : Radius.zero,
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   border: index < items.length - 1
                       ? Border(bottom: BorderSide(color: borderColor))
@@ -451,8 +496,12 @@ class ProfilePage extends ConsumerWidget {
             final confirmed = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                backgroundColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                backgroundColor: isDark
+                    ? AppColors.darkBgSurface
+                    : AppColors.bgSurface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 title: Text(
                   'profile.logoutConfirmTitle'.tr(),
                   style: GoogleFonts.cairo(fontWeight: FontWeight.w900),
@@ -464,13 +513,19 @@ class ProfilePage extends ConsumerWidget {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(false),
-                    child: Text('profile.logoutConfirmCancel'.tr(), style: GoogleFonts.cairo(fontWeight: FontWeight.w700)),
+                    child: Text(
+                      'profile.logoutConfirmCancel'.tr(),
+                      style: GoogleFonts.cairo(fontWeight: FontWeight.w700),
+                    ),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
                     child: Text(
                       'profile.logoutConfirmYes'.tr(),
-                      style: GoogleFonts.cairo(color: dangerColor, fontWeight: FontWeight.w900),
+                      style: GoogleFonts.cairo(
+                        color: dangerColor,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ],
@@ -495,7 +550,9 @@ class ProfilePage extends ConsumerWidget {
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
             backgroundColor: dangerColor.withValues(alpha: 0.1),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
       ),
@@ -558,7 +615,9 @@ class _ModernStatTile extends StatelessWidget {
             style: GoogleFonts.cairo(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
             ),
           ),
           Text(

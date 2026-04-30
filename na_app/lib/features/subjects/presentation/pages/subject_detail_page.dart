@@ -34,7 +34,20 @@ class SubjectDetailPage extends ConsumerWidget {
         }
       },
       child: detailAsync.when(
-          loading: () => Scaffold(
+        loading: () => Scaffold(
+          backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: const _BackButton(),
+          ),
+          body: const Center(
+            child: CircularProgressIndicator(color: AppColors.accent),
+          ),
+        ),
+        error: (e, _) {
+          debugPrint('[SubjectDetail] load error: $e');
+          return Scaffold(
             backgroundColor: isDark
                 ? AppColors.darkBgCanvas
                 : AppColors.bgCanvas,
@@ -43,34 +56,17 @@ class SubjectDetailPage extends ConsumerWidget {
               elevation: 0,
               leading: const _BackButton(),
             ),
-            body: const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
+            body: EmptyState(
+              icon: LucideIcons.circleAlert,
+              title: 'subjects.detail.loadErrorTitle'.tr(),
+              message: 'subjects.detail.loadErrorMessage'.tr(),
+              actionLabel: 'common.retry'.tr(),
+              onAction: () => ref.invalidate(subjectDetailProvider(subjectId)),
             ),
-          ),
-          error: (e, _) {
-            debugPrint('[SubjectDetail] load error: $e');
-            return Scaffold(
-              backgroundColor: isDark
-                  ? AppColors.darkBgCanvas
-                  : AppColors.bgCanvas,
-              appBar: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: const _BackButton(),
-              ),
-              body: EmptyState(
-                icon: LucideIcons.circleAlert,
-                title: 'subjects.detail.loadErrorTitle'.tr(),
-                message: 'subjects.detail.loadErrorMessage'.tr(),
-                actionLabel: 'common.retry'.tr(),
-                onAction: () =>
-                    ref.invalidate(subjectDetailProvider(subjectId)),
-              ),
-            );
-          },
-          data: (data) =>
-              _Content(subject: data.subject, lessons: data.lessons),
-        ),
+          );
+        },
+        data: (data) => _Content(subject: data.subject, lessons: data.lessons),
+      ),
     );
   }
 }
@@ -212,12 +208,12 @@ class _Content extends StatelessWidget {
           Row(
             children: [
               ProgressRing(
-                value: subject.progressPercent * 100,
+                value: subject.progressPercent,
                 size: 80,
                 stroke: 7,
                 color: color,
                 child: Text(
-                  '${(subject.progressPercent * 100).round()}%',
+                  '${subject.progressPercent.round()}%',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -242,9 +238,9 @@ class _Content extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        'subjects.lessonsCount'.tr(namedArgs: {
-                          'count': '${subject.lessonCount}',
-                        }),
+                        'subjects.lessonsCount'.tr(
+                          namedArgs: {'count': '${subject.lessonCount}'},
+                        ),
                         style: GoogleFonts.cairo(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -414,20 +410,22 @@ class _Content extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: lessons.length,
-        separatorBuilder: (_, _) => Divider(
-          height: 1,
-          color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-          indent: 20,
-          endIndent: 20,
-        ),
-        itemBuilder: (context, index) {
-          final lesson = lessons[index];
-          return _LessonRow(lesson: lesson, isDark: isDark);
-        },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < lessons.length; index++) ...[
+            _LessonRow(lesson: lessons[index], isDark: isDark),
+            if (index != lessons.length - 1)
+              Divider(
+                height: 1,
+                color: isDark
+                    ? AppColors.darkBorderSubtle
+                    : AppColors.borderSubtle,
+                indent: 20,
+                endIndent: 20,
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -474,12 +472,12 @@ class _LessonRow extends StatelessWidget {
               );
             },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
               alignment: Alignment.center,
               child: DefaultTextStyle(
@@ -490,13 +488,16 @@ class _LessonRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 6),
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     lesson.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.cairo(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -511,9 +512,9 @@ class _LessonRow extends StatelessWidget {
                   ),
                   if (lesson.estimatedMinutes != null)
                     Text(
-                      'subjects.minutesCount'.tr(namedArgs: {
-                        'count': '${lesson.estimatedMinutes}',
-                      }),
+                      'subjects.minutesCount'.tr(
+                        namedArgs: {'count': '${lesson.estimatedMinutes}'},
+                      ),
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -527,10 +528,7 @@ class _LessonRow extends StatelessWidget {
             ),
             if (lesson.status == LessonStatus.active)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color:
                       (isDark ? AppColors.darkSecondary : AppColors.secondary)
@@ -557,7 +555,7 @@ class _LessonRow extends StatelessWidget {
                   color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                 ),
               ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 2),
             if (lesson.status != LessonStatus.locked)
               Icon(
                 LucideIcons
