@@ -42,4 +42,10 @@ export default () => ({
       rejectUnauthorized: process.env.MAIL_TLS_REJECT_UNAUTHORIZED !== 'false',
     },
   },
+
+  firebase: {
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    serviceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || '',
+    serviceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '',
+  },
 });

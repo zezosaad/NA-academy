@@ -1,15 +1,20 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/theme/app_theme.dart';
 import 'package:na_app/core/router/app_router.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/api/dio_client.dart';
+import 'package:na_app/core/notifications/firebase_bootstrap.dart';
+import 'package:na_app/core/notifications/push_message_handler.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await initializeNotifications();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   final prefs = PrefsStore();
   final initialThemeMode = await prefs.themeMode;
 

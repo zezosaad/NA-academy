@@ -444,5 +444,15 @@
       "secondary3": "Level 3",
       "secondary4": "Level 4"
     }
+  },
+  "notifications": {
+    "inbox_title": "Notifications",
+    "empty_state": "No notifications yet",
+    "mark_all_read": "Mark all as read",
+    "now": "Just now",
+    "mins_ago": "{} min ago",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "permission_denied_explainer": "Notifications are disabled. Enable them in your device settings to receive push alerts."
   }
 }
