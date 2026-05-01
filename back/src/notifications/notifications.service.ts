@@ -70,7 +70,7 @@ export class NotificationsService {
 
     // 2. RBAC: teacher can only send to 'subject'
     if (senderRole === UserRole.TEACHER && dto.audience.kind !== 'subject') {
-      throw new ForbiddenException('Teachers may only send to a subject audience');
+      throw new ForbiddenException('audience-forbidden');
     }
 
     // 3. Resolve audience

@@ -96,3 +96,15 @@ export interface NotificationListQueryDto {
   before?: string
   limit?: number
 }
+
+export interface AudienceSubjectOption {
+  id: string
+  title: string
+}
+
+export interface AudienceUserOption {
+  id: string
+  name: string
+  email: string
+  role: 'student' | 'teacher' | 'admin'
+}

@@ -52,6 +52,14 @@ export class UsersController {
     return { data, total, page: query.page, limit: query.limit };
   }
 
+  @Get('search')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Search users by name or email prefix (admin only)' })
+  async searchUsers(@Query('q') q: string, @Query('limit') limit?: string) {
+    const parsedLimit = Math.min(Math.max(parseInt(limit ?? '20', 10) || 20, 1), 20);
+    return this.usersService.searchUsers(q ?? '', parsedLimit);
+  }
+
   @Get(':id')
   @Roles('admin')
   @ApiOperation({

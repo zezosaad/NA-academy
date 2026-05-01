@@ -12,7 +12,7 @@ export function NotificationsSendPage() {
           Send Notification
         </h1>
         <p className="mt-1 text-sm text-stone-500">
-          Compose and broadcast a push notification to all active students.
+          Compose and send a push notification to all users, a specific user list, or a subject audience.
         </p>
       </div>
 

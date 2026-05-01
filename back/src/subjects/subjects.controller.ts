@@ -47,6 +47,13 @@ export class SubjectsController {
     return { data, total, page: query.page, limit: query.limit };
   }
 
+  @Get('subjects/me/teaching')
+  @Roles('teacher', 'admin')
+  @ApiOperation({ summary: 'List teaching subjects for the current teacher' })
+  async findTeachingSubjects(@CurrentUser('userId') userId: string) {
+    return this.subjectsService.findTeachingSubjects(userId);
+  }
+
   @Get('subjects/:id')
   @ApiOperation({ summary: 'Get subject by ID with per-user unlock status' })
   async findSubjectById(
