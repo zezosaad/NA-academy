@@ -11,10 +11,7 @@ import {
   SubjectCodeDocument,
   CodeStatus as SubjectCodeStatus,
 } from '../activation-codes/schemas/subject-code.schema.js';
-import {
-  ExamCode,
-  ExamCodeDocument,
-} from '../activation-codes/schemas/exam-code.schema.js';
+import { ExamCode, ExamCodeDocument } from '../activation-codes/schemas/exam-code.schema.js';
 import { WatchTime, WatchTimeDocument } from '../analytics/schemas/watch-time.schema.js';
 import { ExamSession, ExamSessionDocument } from '../exams/schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreDocument } from '../exams/schemas/exam-score.schema.js';
@@ -269,9 +266,7 @@ export class UsersService {
             level: c.subjectId.level,
           }
         : null,
-      bundle: c.bundleId
-        ? { id: c.bundleId._id, name: c.bundleId.name }
-        : null,
+      bundle: c.bundleId ? { id: c.bundleId._id, name: c.bundleId.name } : null,
     }));
 
     const examActivations = examCodes.map((c: any) => ({
@@ -287,9 +282,7 @@ export class UsersService {
     }));
 
     const examAttempts = examSessions.map((s: any) => {
-      const score = examScores.find(
-        (sc: any) => sc.sessionId?.toString() === s._id.toString(),
-      );
+      const score = examScores.find((sc: any) => sc.sessionId?.toString() === s._id.toString());
       return {
         sessionId: s._id,
         examTitle: s.examId?.title || null,
@@ -304,8 +297,7 @@ export class UsersService {
       };
     });
 
-    const totalWatchSeconds =
-      totalWatchSecondsAgg.length > 0 ? totalWatchSecondsAgg[0].total : 0;
+    const totalWatchSeconds = totalWatchSecondsAgg.length > 0 ? totalWatchSecondsAgg[0].total : 0;
 
     return {
       profile: {

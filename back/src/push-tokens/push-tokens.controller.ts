@@ -55,7 +55,7 @@ export class PushTokensController {
 
   private toResponse(doc: any) {
     return {
-      id: (doc._id as any).toString(),
+      id: doc._id.toString(),
       platform: doc.platform,
       appVersion: doc.appVersion,
       deviceId: doc.deviceId?.toString(),

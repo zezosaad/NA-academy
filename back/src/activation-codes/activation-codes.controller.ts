@@ -69,38 +69,23 @@ export class ActivationCodesController {
     @Param('subjectId') subjectId: string,
     @Query() query: ListCodesQueryDto,
   ) {
-    const { data, total } = await this.activationCodesService.findCodesBySubject(
-      subjectId,
-      query,
-    );
+    const { data, total } = await this.activationCodesService.findCodesBySubject(subjectId, query);
     return { data, total, page: query.page, limit: query.limit };
   }
 
   @Get('bundle/:bundleId')
   @Roles('admin')
   @ApiOperation({ summary: 'List codes for a specific bundle' })
-  async findCodesByBundle(
-    @Param('bundleId') bundleId: string,
-    @Query() query: ListCodesQueryDto,
-  ) {
-    const { data, total } = await this.activationCodesService.findCodesByBundle(
-      bundleId,
-      query,
-    );
+  async findCodesByBundle(@Param('bundleId') bundleId: string, @Query() query: ListCodesQueryDto) {
+    const { data, total } = await this.activationCodesService.findCodesByBundle(bundleId, query);
     return { data, total, page: query.page, limit: query.limit };
   }
 
   @Get('exam/:examId')
   @Roles('admin')
   @ApiOperation({ summary: 'List codes for a specific exam' })
-  async findCodesByExam(
-    @Param('examId') examId: string,
-    @Query() query: ListCodesQueryDto,
-  ) {
-    const { data, total } = await this.activationCodesService.findCodesByExam(
-      examId,
-      query,
-    );
+  async findCodesByExam(@Param('examId') examId: string, @Query() query: ListCodesQueryDto) {
+    const { data, total } = await this.activationCodesService.findCodesByExam(examId, query);
     return { data, total, page: query.page, limit: query.limit };
   }
 

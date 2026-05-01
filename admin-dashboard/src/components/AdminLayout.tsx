@@ -8,6 +8,7 @@ import {
   KeyRound,
   ShieldAlert,
   MessageCircle,
+  Bell,
   LogOut,
   Menu,
   X,
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { label: "Activation Codes", href: "/codes", icon: KeyRound },
   { label: "Security", href: "/security", icon: ShieldAlert },
   { label: "Chat", href: "/chat", icon: MessageCircle },
+  { label: "Notifications", href: "/notifications", icon: Bell },
 ]
 
 interface AdminLayoutProps {

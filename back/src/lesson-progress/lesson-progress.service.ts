@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  LessonProgress,
-  LessonProgressDocument,
-} from './schemas/lesson-progress.schema.js';
+import { LessonProgress, LessonProgressDocument } from './schemas/lesson-progress.schema.js';
 import { Lesson, LessonDocument } from '../lessons/schemas/lesson.schema.js';
 import { LessonsService } from '../lessons/lessons.service.js';
 import { UpdateProgressDto } from './dto/update-progress.dto.js';
@@ -70,8 +67,7 @@ export class LessonProgressService {
       .exec();
 
     const wasCompleted = existing?.isCompleted ?? false;
-    const ratio =
-      dto.durationSeconds > 0 ? dto.watchedSeconds / dto.durationSeconds : 0;
+    const ratio = dto.durationSeconds > 0 ? dto.watchedSeconds / dto.durationSeconds : 0;
     const justCompleted = !wasCompleted && ratio >= LESSON_COMPLETION_THRESHOLD;
 
     const set: Record<string, unknown> = {
@@ -104,9 +100,9 @@ export class LessonProgressService {
       .exec();
 
     return {
-      isCompleted: updated!.isCompleted,
-      watchedSeconds: updated!.watchedSeconds,
-      durationSeconds: updated!.durationSeconds,
+      isCompleted: updated.isCompleted,
+      watchedSeconds: updated.watchedSeconds,
+      durationSeconds: updated.durationSeconds,
     };
   }
 
@@ -154,10 +150,7 @@ export class LessonProgressService {
     return { isCompleted: true };
   }
 
-  async getSubjectProgress(
-    userId: string,
-    subjectId: string,
-  ): Promise<SubjectProgressSummary> {
+  async getSubjectProgress(userId: string, subjectId: string): Promise<SubjectProgressSummary> {
     if (!Types.ObjectId.isValid(subjectId)) {
       return { completed: 0, total: 0, percent: 0 };
     }
@@ -165,9 +158,7 @@ export class LessonProgressService {
     const userObjectId = new Types.ObjectId(userId);
 
     const [total, completed] = await Promise.all([
-      this.lessonModel
-        .countDocuments({ subjectId: subjectObjectId, isActive: true })
-        .exec(),
+      this.lessonModel.countDocuments({ subjectId: subjectObjectId, isActive: true }).exec(),
       this.progressModel
         .countDocuments({
           userId: userObjectId,
@@ -244,10 +235,7 @@ export class LessonProgressService {
     return result;
   }
 
-  async getCompletedLessonIds(
-    userId: string,
-    subjectId: string,
-  ): Promise<Set<string>> {
+  async getCompletedLessonIds(userId: string, subjectId: string): Promise<Set<string>> {
     if (!Types.ObjectId.isValid(subjectId)) return new Set();
     const rows = await this.progressModel
       .find({

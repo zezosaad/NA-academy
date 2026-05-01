@@ -5,7 +5,10 @@ import { WatchTime, WatchTimeDocument } from './schemas/watch-time.schema.js';
 import { TrackWatchTimeDto } from './dto/analytics.dto.js';
 import { MediaService } from '../media/media.service.js';
 import { AccessCheckHelper } from '../activation-codes/helpers/access-check.helper.js';
-import { LessonProgress, LessonProgressDocument } from '../lesson-progress/schemas/lesson-progress.schema.js';
+import {
+  LessonProgress,
+  LessonProgressDocument,
+} from '../lesson-progress/schemas/lesson-progress.schema.js';
 import { ExamScore, ExamScoreDocument } from '../exams/schemas/exam-score.schema.js';
 
 @Injectable()

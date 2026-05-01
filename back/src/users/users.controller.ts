@@ -54,7 +54,9 @@ export class UsersController {
 
   @Get(':id')
   @Roles('admin')
-  @ApiOperation({ summary: 'Get full user detail with activations, activity, and security flags (admin only)' })
+  @ApiOperation({
+    summary: 'Get full user detail with activations, activity, and security flags (admin only)',
+  })
   async findOne(@Param('id') id: string) {
     return this.usersService.findUserDetail(id);
   }

@@ -403,20 +403,20 @@ export class ExamsService {
           freeAttemptsRemaining:
             accessMode === ExamAccessMode.CODE_REQUIRED || exam.freeAttemptLimit === undefined
               ? 0
-            : Math.max(0, exam.freeAttemptLimit - completedFreeAttempts),
+              : Math.max(0, exam.freeAttemptLimit - completedFreeAttempts),
           lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
           status:
             completedAttempts > 0
               ? 'completed'
               : hasStartedSession
                 ? 'available'
-                  : accessMode !== ExamAccessMode.CODE_REQUIRED &&
-                      exam.freeAttemptLimit !== undefined &&
+                : accessMode !== ExamAccessMode.CODE_REQUIRED &&
+                    exam.freeAttemptLimit !== undefined &&
                     exam.freeAttemptLimit - completedFreeAttempts > 0
-                    ? 'available'
-                    : availableCodes > 0
                   ? 'available'
-                  : 'locked',
+                  : availableCodes > 0
+                    ? 'available'
+                    : 'locked',
         };
       });
       return { data, total };

@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  LessonProgress,
-  LessonProgressSchema,
-} from './schemas/lesson-progress.schema.js';
+import { LessonProgress, LessonProgressSchema } from './schemas/lesson-progress.schema.js';
 import { Lesson, LessonSchema } from '../lessons/schemas/lesson.schema.js';
 import { LessonsModule } from '../lessons/lessons.module.js';
 import { LessonProgressService } from './lesson-progress.service.js';
