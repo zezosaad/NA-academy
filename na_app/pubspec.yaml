@@ -61,8 +61,15 @@ dev_dependencies:
   freezed: ^2.5.8
   json_serializable: ^6.9.4
   drift_dev: ^2.18.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.jpeg
 
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/
     - assets/translations/

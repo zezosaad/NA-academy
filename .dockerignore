@@ -1,0 +1,46 @@
+# VCS
+.git
+.gitignore
+.github
+
+# IDE / tooling
+.vscode
+.idea
+.windsurf
+.opencode
+.claude
+.agents
+.specify
+
+# Docs / planning (not needed in image)
+*.md
+specs
+DESIGN.json
+
+# Lockfiles outside back/ and admin-dashboard/
+package-lock.json
+test-fetch.js
+skills-lock.json
+
+# Out-of-scope projects for this image
+na_app
+front
+
+# Build artifacts and deps (rebuilt inside the image)
+**/node_modules
+**/dist
+**/.next
+**/build
+**/coverage
+
+# Environment files (must be supplied at runtime)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+# Logs / OS / editor noise
+**/*.log
+**/.DS_Store
+**/Thumbs.db

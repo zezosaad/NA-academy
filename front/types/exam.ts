@@ -8,16 +8,20 @@ export interface Question {
   text: string;
   options: QuestionOption[];
   correctOption?: string;
-  timeLimitSeconds: number;
+  timeLimitSeconds?: number;
   imageRef?: string;
   order: number;
 }
+
+export type ExamTimingMode = 'per_question' | 'whole_exam';
 
 export interface Exam {
   _id: string;
   title: string;
   subjectId: string;
   questions: Question[];
+  timingMode?: ExamTimingMode;
+  examTimeLimitMinutes?: number;
   hasFreeSection: boolean;
   freeQuestionCount?: number;
   freeAttemptLimit?: number;

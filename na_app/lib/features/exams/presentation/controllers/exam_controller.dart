@@ -17,11 +17,11 @@ class ExamSessionNotifier extends Notifier<AsyncValue<ExamSession?>> {
   @override
   AsyncValue<ExamSession?> build() => const AsyncData(null);
 
-  Future<void> startSession(String examId, {bool isFree = false}) async {
+  Future<void> startSession(String examId) async {
     state = const AsyncLoading();
     try {
       final repo = ref.read(examsRepositoryProvider);
-      final result = await repo.getExamAndStart(examId, isFree: isFree);
+      final result = await repo.getExamAndStart(examId);
       state = AsyncData(result.session);
     } catch (e, st) {
       state = AsyncError(e, st);

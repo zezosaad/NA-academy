@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    image: na-academy-backend:latest
+    container_name: na-academy-backend
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://mongodb:27017/na_academy
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      EXAM_HMAC_SECRET: ${EXAM_HMAC_SECRET}
+      MAX_VIDEO_SIZE_MB: ${MAX_VIDEO_SIZE_MB:-2048}
+      MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB:-20}
+      ACTIVATION_RATE_LIMIT: ${ACTIVATION_RATE_LIMIT:-5}
+      ACTIVATION_RATE_WINDOW_MINUTES: ${ACTIVATION_RATE_WINDOW_MINUTES:-15}
+      GRIDFS_VIDEO_CHUNK_SIZE: ${GRIDFS_VIDEO_CHUNK_SIZE:-1048576}
+      GRIDFS_CHAT_CHUNK_SIZE: ${GRIDFS_CHAT_CHUNK_SIZE:-261120}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-}
+      MAIL_USER: ${MAIL_USER:-}
+      MAIL_PASS: ${MAIL_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin-dashboard
+      dockerfile: Dockerfile
+    image: na-academy-admin:latest
+    container_name: na-academy-admin
+    ports:
+      - "${ADMIN_PORT:-80}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    container_name: na-academy-mongodb
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

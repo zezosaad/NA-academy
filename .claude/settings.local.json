@@ -33,7 +33,25 @@
       "Bash(git status *)",
       "Bash(git checkout *)",
       "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
-      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)"
+      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)",
+      "Bash(make --version)",
+      "Bash(winget install *)",
+      "Bash(export PATH=\"$PATH:/c/Program Files \\(x86\\)/GnuWin32/bin\")",
+      "PowerShell(Test-Path *)",
+      "PowerShell($makeBin = \"C:\\\\Program Files \\(x86\\)\\\\GnuWin32\\\\bin\"; $userPath = [Environment]::GetEnvironmentVariable\\(\"Path\", \"User\"\\); if \\($userPath -split \";\" -contains $makeBin\\) { Write-Output \"Already on user PATH\" } else { $newPath = if \\($userPath\\) { \"$userPath;$makeBin\" } else { $makeBin }; [Environment]::SetEnvironmentVariable\\(\"Path\", $newPath, \"User\"\\); Write-Output \"Added to user PATH\" }; $env:Path += \";$makeBin\"; & \"$makeBin\\\\make.exe\" --version | Select-Object -First 1)",
+      "Bash(npm install *)",
+      "Bash(npm --prefix back ci --dry-run)",
+      "Bash(docker compose *)",
+      "Bash(git stash *)",
+      "Bash(curl -s -o /dev/null -w \"GET /         => %{http_code}\\\\n\" http://localhost/)",
+      "Bash(curl -s -o /dev/null -w \"GET /api/docs => %{http_code}\\\\n\" http://localhost/api/docs)",
+      "Bash(curl -s http://localhost/)",
+      "Bash(docker rmi *)",
+      "Bash(docker rm *)",
+      "Bash(docker network *)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(netstat -ano)",
+      "Bash(gh repo *)"
     ]
   }
 }

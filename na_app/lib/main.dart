@@ -15,9 +15,10 @@ Future<void> main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      supportedLocales: const [Locale('ar'), Locale('en')],
       path: 'assets/translations',
-      fallbackLocale: const Locale('en'),
+      startLocale: const Locale('ar'),
+      fallbackLocale: const Locale('ar'),
       useOnlyLangCode: true,
       child: ProviderScope(
         overrides: [

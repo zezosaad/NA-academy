@@ -33,14 +33,10 @@ class ExamsRepository {
     }
   }
 
-  Future<ExamStartResult> getExamAndStart(
-    String examId, {
-    bool isFree = false,
-  }) async {
+  Future<ExamStartResult> getExamAndStart(String examId) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         Endpoints.exams.start(examId),
-        queryParameters: isFree ? {'isFree': 'true'} : null,
       );
       final data = response.data;
       if (data == null) {

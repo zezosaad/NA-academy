@@ -105,6 +105,16 @@ class _Content extends StatelessWidget {
 
   const _Content({required this.subject, required this.lessons});
 
+  Lesson? _firstPlayableLesson(List<Lesson> lessons) {
+    for (final lesson in lessons) {
+      if (lesson.status == LessonStatus.active) return lesson;
+    }
+    for (final lesson in lessons) {
+      if (lesson.status == LessonStatus.done) return lesson;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -134,15 +144,13 @@ class _Content extends StatelessWidget {
             children: [
               FadeInUp(
                 duration: const Duration(milliseconds: 500),
-                child: _buildHero(context, isDark),
+                child: _buildHero(
+                  context,
+                  isDark,
+                  _firstPlayableLesson(lessons),
+                ),
               ),
-              const SizedBox(height: 24),
-              FadeInUp(
-                delay: const Duration(milliseconds: 100),
-                duration: const Duration(milliseconds: 500),
-                child: _buildStats(context, isDark, lessons),
-              ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               FadeInUp(
                 delay: const Duration(milliseconds: 200),
                 duration: const Duration(milliseconds: 500),
@@ -170,7 +178,7 @@ class _Content extends StatelessWidget {
     );
   }
 
-  Widget _buildHero(BuildContext context, bool isDark) {
+  Widget _buildHero(BuildContext context, bool isDark, Lesson? firstLesson) {
     final activeColor = subject.progressPercent > 0
         ? AppColors.accent
         : AppColors.secondary;
@@ -200,7 +208,7 @@ class _Content extends StatelessWidget {
             left: -30,
             top: -30,
             child: Icon(
-              LucideIcons.bookOpen,
+              LucideIcons.play,
               size: 140,
               color: color.withValues(alpha: 0.05),
             ),
@@ -263,6 +271,31 @@ class _Content extends StatelessWidget {
                           height: 1.4,
                         ),
                       ),
+                    if (firstLesson != null) ...[
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        height: 46,
+                        child: FilledButton.icon(
+                          onPressed: () => context.push(
+                            '/subjects/${firstLesson.subjectId}/lessons/${firstLesson.id}',
+                          ),
+                          icon: const Icon(LucideIcons.play, size: 18),
+                          label: Text('subjects.detail.watchAction'.tr()),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: color,
+                            foregroundColor: isDark
+                                ? AppColors.darkOnAccent
+                                : AppColors.bgSurface,
+                            textStyle: GoogleFonts.cairo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -270,97 +303,6 @@ class _Content extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStats(BuildContext context, bool isDark, List<Lesson> lessons) {
-    var done = 0;
-    var active = 0;
-    var locked = 0;
-    for (final l in lessons) {
-      switch (l.status) {
-        case LessonStatus.done:
-          done++;
-        case LessonStatus.active:
-          active++;
-        case LessonStatus.locked:
-          locked++;
-      }
-    }
-
-    final stats = [
-      {
-        'n': '$done',
-        'l': 'subjects.detail.statsCompleted'.tr(),
-        'icon': LucideIcons.check,
-        'color': AppColors.success,
-      },
-      {
-        'n': '$active',
-        'l': 'subjects.detail.statsInProgress'.tr(),
-        'icon': LucideIcons.clock,
-        'color': AppColors.warning,
-      },
-      {
-        'n': '$locked',
-        'l': 'subjects.detail.statsRemaining'.tr(),
-        'icon': LucideIcons.lock,
-        'color': AppColors.textMuted,
-      },
-    ];
-
-    return Row(
-      children: stats.map((s) {
-        final color = s['color'] as Color;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsetsDirectional.only(end: s == stats.last ? 0 : 12),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkBorderSubtle
-                    : AppColors.borderSubtle,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Icon(s['icon'] as IconData, color: color, size: 24),
-                const SizedBox(height: 8),
-                Text(
-                  s['n'] as String,
-                  style: GoogleFonts.cairo(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  s['l'] as String,
-                  style: GoogleFonts.cairo(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -414,7 +356,11 @@ class _Content extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var index = 0; index < lessons.length; index++) ...[
-            _LessonRow(lesson: lessons[index], isDark: isDark),
+            _LessonRow(
+              lesson: lessons[index],
+              subjectTitle: subject.title,
+              isDark: isDark,
+            ),
             if (index != lessons.length - 1)
               Divider(
                 height: 1,
@@ -433,9 +379,14 @@ class _Content extends StatelessWidget {
 
 class _LessonRow extends StatelessWidget {
   final Lesson lesson;
+  final String subjectTitle;
   final bool isDark;
 
-  const _LessonRow({required this.lesson, required this.isDark});
+  const _LessonRow({
+    required this.lesson,
+    required this.subjectTitle,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -465,7 +416,15 @@ class _LessonRow extends StatelessWidget {
 
     return InkWell(
       onTap: lesson.status == LessonStatus.locked
-          ? null
+          ? () {
+              context.push(
+                '/subjects/enter-code',
+                extra: {
+                  'subjectTitle': subjectTitle,
+                  'lockedLessonTitle': lesson.title,
+                },
+              );
+            }
           : () {
               context.push(
                 '/subjects/${lesson.subjectId}/lessons/${lesson.id}',
@@ -528,7 +487,7 @@ class _LessonRow extends StatelessWidget {
             ),
             if (lesson.status == LessonStatus.active)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color:
                       (isDark ? AppColors.darkSecondary : AppColors.secondary)
@@ -536,7 +495,7 @@ class _LessonRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'subjects.detail.continueAction'.tr(),
+                  'subjects.detail.watchAction'.tr(),
                   style: GoogleFonts.cairo(
                     color: isDark
                         ? AppColors.darkSecondary

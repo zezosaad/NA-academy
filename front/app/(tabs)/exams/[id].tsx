@@ -23,6 +23,7 @@ export default function ExamScreen() {
   const [submitting, setSubmitting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const qTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const usesPerQuestionTiming = exam?.timingMode !== 'whole_exam';
 
   const questions = exam?.questions || [];
   const currentQuestion = questions[currentQuestionIndex];
@@ -39,8 +40,10 @@ export default function ExamScreen() {
       if (data.session.timeLimitMinutes) {
         setTimeLeft(data.session.timeLimitMinutes * 60);
       }
-      if (data.exam.questions[0]) {
+      if (data.exam.timingMode !== 'whole_exam' && data.exam.questions[0]?.timeLimitSeconds) {
         setQuestionTimeLeft(data.exam.questions[0].timeLimitSeconds);
+      } else {
+        setQuestionTimeLeft(0);
       }
     } catch (error: any) {
       const msg = error.response?.data?.message || 'Failed to start exam';
@@ -74,8 +77,8 @@ export default function ExamScreen() {
 
   // Per-question timer
   useEffect(() => {
-    if (!examStarted || !currentQuestion) return;
-    setQuestionTimeLeft(currentQuestion.timeLimitSeconds);
+    if (!examStarted || !currentQuestion || !usesPerQuestionTiming) return;
+    setQuestionTimeLeft(currentQuestion.timeLimitSeconds ?? 0);
     qTimerRef.current = setInterval(() => {
       setQuestionTimeLeft((prev) => {
         if (prev <= 1) {
@@ -86,7 +89,7 @@ export default function ExamScreen() {
       });
     }, 1000);
     return () => { if (qTimerRef.current) clearInterval(qTimerRef.current); };
-  }, [currentQuestionIndex, examStarted]);
+  }, [currentQuestionIndex, examStarted, usesPerQuestionTiming]);
 
   const handleSelectOption = (label: string) => {
     if (!currentQuestion) return;
@@ -214,12 +217,13 @@ export default function ExamScreen() {
         <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} />
       </View>
 
-      {/* Question timer */}
-      <View style={styles.questionTimerRow}>
-        <Text style={[styles.questionTimerText, questionTimeLeft < 10 && styles.timerDanger]}>
-          ⏱ {formatTimer(questionTimeLeft)}
-        </Text>
-      </View>
+      {usesPerQuestionTiming && (
+        <View style={styles.questionTimerRow}>
+          <Text style={[styles.questionTimerText, questionTimeLeft < 10 && styles.timerDanger]}>
+            ⏱ {formatTimer(questionTimeLeft)}
+          </Text>
+        </View>
+      )}
 
       {/* Question */}
       <ScrollView style={styles.questionScroll}>

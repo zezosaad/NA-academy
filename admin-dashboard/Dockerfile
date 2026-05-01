@@ -1,42 +1,29 @@
 # syntax=docker/dockerfile:1.7
 #
-# Standalone NestJS backend image.
-# Build context expected: the back/ directory (see docker-compose at the repo root).
+# Standalone admin dashboard image.
+# Build context expected: the admin-dashboard/ directory.
 
 ARG NODE_VERSION=20-alpine
 
 # ──────────────────────────────────────────────────────────────────────
-# Stage 1: build
+# Stage 1: build the Vite SPA
 # ──────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION} AS builder
-WORKDIR /usr/src/app
+WORKDIR /admin
 
 COPY package.json package-lock.json ./
 RUN npm install --no-audit --no-fund
 
-COPY tsconfig*.json nest-cli.json ./
-COPY src/ ./src/
+COPY . .
 RUN npm run build
 
-# Strip dev deps from the resolved tree so we can copy them straight to runtime.
-RUN npm prune --omit=dev && npm cache clean --force
-
 # ──────────────────────────────────────────────────────────────────────
-# Stage 2: runtime
+# Stage 2: serve static assets with nginx, proxy /api and /socket.io
 # ──────────────────────────────────────────────────────────────────────
-FROM node:${NODE_VERSION} AS runtime
-WORKDIR /usr/src/app
+FROM nginx:1.27-alpine AS runtime
 
-ENV NODE_ENV=production \
-    PORT=3000
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=builder /admin/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Run as the unprivileged node user that the official image ships with.
-COPY --chown=node:node --from=builder /usr/src/app/dist          ./dist
-COPY --chown=node:node --from=builder /usr/src/app/node_modules  ./node_modules
-COPY --chown=node:node --from=builder /usr/src/app/package.json  ./package.json
-
-USER node
-
-EXPOSE 3000
-
-CMD ["node", "dist/main.js"]
+EXPOSE 80

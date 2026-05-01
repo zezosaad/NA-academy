@@ -19,7 +19,7 @@ import type {
   ChatMessage,
 } from "@/types"
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+const API_URL = import.meta.env.VITE_API_URL ?? ""
 
 class ApiClient {
   private baseUrl: string
@@ -344,6 +344,8 @@ class ApiClient {
     title: string
     subjectId: string
     accessMode?: "code_required" | "free_section" | "full_exam_free_attempts"
+    timingMode?: "per_question" | "whole_exam"
+    examTimeLimitMinutes?: number
     hasFreeSection?: boolean
     freeQuestionCount?: number
     freeAttemptLimit?: number
@@ -351,7 +353,7 @@ class ApiClient {
       text: string
       options: { label: string; text: string }[]
       correctOption: string
-      timeLimitSeconds: number
+      timeLimitSeconds?: number
       imageRef?: string
       order: number
     }[]

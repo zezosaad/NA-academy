@@ -39,7 +39,7 @@ class LessonDetailPage extends ConsumerWidget {
           child: Center(
             child: Material(
               color: (isDark ? AppColors.darkBgSurface : AppColors.bgSurface)
-                  .withOpacity(0.92),
+                  .withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(50),
               child: InkWell(
                 borderRadius: BorderRadius.circular(50),
@@ -164,140 +164,530 @@ class _LessonContentState extends ConsumerState<_LessonContent> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasVideo =
         lesson.mediaAssetId != null && lesson.mediaAssetId!.isNotEmpty;
+    final subjectDetailAsync = ref.watch(
+      subjectDetailProvider(lesson.subjectId),
+    );
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Video / Placeholder ────────────────────────────────────────────
-          if (hasVideo)
-            _LessonVideo(
-              mediaId: lesson.mediaAssetId!,
-              lessonId: lesson.id,
-              subjectId: lesson.subjectId,
-              onCompletionChanged: _onCompletionChanged,
-            )
-          else
-            _NoVideoPlaceholder(isDark: isDark),
+    return Column(
+      children: [
+        // ── Video / Placeholder (fixed at top) ────────────────────────────
+        if (hasVideo)
+          _LessonVideo(
+            mediaId: lesson.mediaAssetId!,
+            lessonId: lesson.id,
+            subjectId: lesson.subjectId,
+            onCompletionChanged: _onCompletionChanged,
+          )
+        else
+          _NoVideoPlaceholder(isDark: isDark),
 
-          // ── Content ───────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+        // ── Scrollable content below video ────────────────────────────────
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kicker: LESSON N · X MIN
-                Row(
-                  children: [
-                    Expanded(
-                      child: _LessonKicker(lesson: lesson, isDark: isDark),
-                    ),
-                    IconButton(
-                      tooltip: 'profile.menu.savedLessons'.tr(),
-                      onPressed: _toggleSavedLesson,
-                      icon: Icon(
-                        _isSaved
-                            ? LucideIcons.bookmarkCheck
-                            : LucideIcons.bookmark,
-                        color: _isSaved
-                            ? (isDark ? AppColors.darkAccent : AppColors.accent)
-                            : (isDark
-                                  ? AppColors.darkTextMuted
-                                  : AppColors.textMuted),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Title in Fraunces
-                Text(
-                  lesson.title,
-                  style: GoogleFonts.fraunces(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w500,
-                    height: 1.2,
-                    letterSpacing: -0.015,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.textPrimary,
-                  ),
-                ),
-
-                // Description
-                if (lesson.description != null &&
-                    lesson.description!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    lesson.description!,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      height: 1.65,
+                // ── Title ─────────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                  child: Text(
+                    lesson.title,
+                    style: GoogleFonts.cairo(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
                       color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.textSecondary,
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
-                ],
+                ),
 
-                const SizedBox(height: 32),
+                // ── Action bar ─────────────────────────────────────────────
+                _LessonActionBar(
+                  isDark: isDark,
+                  isSaved: _isSaved,
+                  isCompleted: _isCompleted,
+                  isMarkingManually: _markingManually,
+                  hasVideo: hasVideo,
+                  onSave: _toggleSavedLesson,
+                  onMarkComplete: _markCompleteManually,
+                  context: context,
+                ),
 
-                // Divider
+                // ── Divider ────────────────────────────────────────────────
                 Divider(
+                  height: 1,
                   color: isDark
                       ? AppColors.darkBorderSubtle
                       : AppColors.borderSubtle,
-                  height: 1,
                 ),
 
-                const SizedBox(height: 28),
-
-                // Completion section
-                if (_isCompleted)
-                  _CompletedBadge(isDark: isDark)
-                else if (!hasVideo)
-                  _MarkCompleteButton(
-                    isLoading: _markingManually,
-                    onTap: _markCompleteManually,
+                // ── Playlist ───────────────────────────────────────────────
+                subjectDetailAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.only(top: 32),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.accent,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                  error: (_, _) => const SizedBox.shrink(),
+                  data: (data) => _LessonPlaylist(
+                    lessons: data.lessons,
+                    subjectTitle: data.subject.title,
+                    currentLessonId: lesson.id,
                     isDark: isDark,
                   ),
+                ),
+
+                const SizedBox(height: 32),
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Action bar ──────────────────────────────────────────────────────────────
+
+class _LessonActionBar extends StatelessWidget {
+  final bool isDark;
+  final bool isSaved;
+  final bool isCompleted;
+  final bool isMarkingManually;
+  final bool hasVideo;
+  final VoidCallback onSave;
+  final VoidCallback onMarkComplete;
+  final BuildContext context;
+
+  const _LessonActionBar({
+    required this.isDark,
+    required this.isSaved,
+    required this.isCompleted,
+    required this.isMarkingManually,
+    required this.hasVideo,
+    required this.onSave,
+    required this.onMarkComplete,
+    required this.context,
+  });
+
+  void _showComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('قريباً', style: GoogleFonts.cairo(fontSize: 14)),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isDark ? AppColors.darkAccent : AppColors.accent;
+    final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          // Like
+          _ActionButton(
+            icon: LucideIcons.thumbsUp,
+            label: 'إعجاب',
+            color: muted,
+            isDark: isDark,
+            onTap: _showComingSoon,
+          ),
+          // Dislike
+          _ActionButton(
+            icon: LucideIcons.thumbsDown,
+            label: 'لا أحبه',
+            color: muted,
+            isDark: isDark,
+            onTap: _showComingSoon,
+          ),
+          // Summary
+          _ActionButton(
+            icon: LucideIcons.fileText,
+            label: 'الملخص',
+            color: muted,
+            isDark: isDark,
+            onTap: _showComingSoon,
+          ),
+          // Share
+          _ActionButton(
+            icon: LucideIcons.share2,
+            label: 'مشاركة',
+            color: muted,
+            isDark: isDark,
+            onTap: _showComingSoon,
+          ),
+          // Save
+          _ActionButton(
+            icon: isSaved ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
+            label: isSaved ? 'محفوظ' : 'حفظ',
+            color: isSaved ? accent : muted,
+            isDark: isDark,
+            onTap: onSave,
+          ),
+          // Mark complete (only when no video and not completed)
+          if (!hasVideo && !isCompleted)
+            _ActionButton(
+              icon: isMarkingManually
+                  ? LucideIcons.loader
+                  : LucideIcons.circleCheck,
+              label: 'إتمام',
+              color: accent,
+              isDark: isDark,
+              onTap: isMarkingManually ? () {} : onMarkComplete,
+            ),
+          // Completed badge (compact)
+          if (isCompleted)
+            _ActionButton(
+              icon: LucideIcons.circleCheck,
+              label: 'مكتمل',
+              color: accent,
+              isDark: isDark,
+              onTap: null,
+            ),
         ],
       ),
     );
   }
 }
 
-// ─── Kicker ──────────────────────────────────────────────────────────────────
-
-class _LessonKicker extends StatelessWidget {
-  final Lesson lesson;
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
   final bool isDark;
+  final VoidCallback? onTap;
 
-  const _LessonKicker({required this.lesson, required this.isDark});
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final parts = <String>['LESSON ${lesson.order}'];
-    if (lesson.estimatedMinutes != null && lesson.estimatedMinutes! > 0) {
-      parts.add('${lesson.estimatedMinutes} MIN');
-    }
-
-    return Row(
-      children: [
-        Text(
-          parts.join(' · '),
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.08,
-            color: AppColors.accent,
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.cairo(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Lesson playlist ─────────────────────────────────────────────────────────
+
+class _LessonPlaylist extends StatelessWidget {
+  final List<Lesson> lessons;
+  final String subjectTitle;
+  final String currentLessonId;
+  final bool isDark;
+
+  const _LessonPlaylist({
+    required this.lessons,
+    required this.subjectTitle,
+    required this.currentLessonId,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (lessons.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'subjects.lesson.playlistTitle'.tr(),
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            ),
+          ),
+        ),
+        for (var index = 0; index < lessons.length; index++)
+          _PlaylistLessonRow(
+            lesson: lessons[index],
+            subjectTitle: subjectTitle,
+            isCurrent: lessons[index].id == currentLessonId,
+            isFirst: index == 0,
+            isLast: index == lessons.length - 1,
+            isDark: isDark,
+          ),
       ],
+    );
+  }
+}
+
+class _PlaylistLessonRow extends StatelessWidget {
+  final Lesson lesson;
+  final String subjectTitle;
+  final bool isCurrent;
+  final bool isFirst;
+  final bool isLast;
+  final bool isDark;
+
+  const _PlaylistLessonRow({
+    required this.lesson,
+    required this.subjectTitle,
+    required this.isCurrent,
+    required this.isFirst,
+    required this.isLast,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = lesson.status == LessonStatus.locked;
+    final accent = isDark ? AppColors.darkAccent : AppColors.accent;
+    final muted = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
+    final secondaryText = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.textSecondary;
+    final hasVideo =
+        lesson.mediaAssetId != null && lesson.mediaAssetId!.isNotEmpty;
+
+    return InkWell(
+      onTap: isLocked
+          ? () => context.push(
+              '/subjects/enter-code',
+              extra: {
+                'subjectTitle': subjectTitle,
+                'lockedLessonTitle': lesson.title,
+              },
+            )
+          : isCurrent
+          ? null
+          : () => context.go(
+              '/subjects/${lesson.subjectId}/lessons/${lesson.id}',
+            ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Timeline column ──────────────────────────────────────────
+            SizedBox(
+              width: 28,
+              height: 64,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Top connector
+                  if (!isFirst)
+                    Positioned(
+                      top: 0,
+                      child: Container(
+                        width: 1.5,
+                        height: 22,
+                        color: isDark
+                            ? AppColors.darkBorderStrong
+                            : AppColors.borderStrong,
+                      ),
+                    ),
+                  // Bottom connector
+                  if (!isLast)
+                    Positioned(
+                      bottom: 0,
+                      child: Container(
+                        width: 1.5,
+                        height: 22,
+                        color: isDark
+                            ? AppColors.darkBorderStrong
+                            : AppColors.borderStrong,
+                      ),
+                    ),
+                  // Circle dot
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? accent
+                          : isLocked
+                          ? (isDark
+                                ? AppColors.darkBgSunken
+                                : AppColors.bgSunken)
+                          : lesson.isCompleted
+                          ? accent.withValues(alpha: 0.15)
+                          : (isDark
+                                ? AppColors.darkBgElevated
+                                : AppColors.bgSunken),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        width: 1.5,
+                        color: isCurrent
+                            ? accent
+                            : lesson.isCompleted
+                            ? accent.withValues(alpha: 0.5)
+                            : isDark
+                            ? AppColors.darkBorderStrong
+                            : AppColors.borderStrong,
+                      ),
+                    ),
+                    child: isCurrent
+                        ? Icon(
+                            LucideIcons.play,
+                            size: 10,
+                            color: isDark
+                                ? AppColors.darkOnAccent
+                                : Colors.white,
+                          )
+                        : lesson.isCompleted
+                        ? Icon(LucideIcons.check, size: 11, color: accent)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // ── Thumbnail ────────────────────────────────────────────────
+            Container(
+              width: 72,
+              height: 54,
+              decoration: BoxDecoration(
+                color: hasVideo
+                    ? (isDark
+                          ? const Color(0xFF1C1C2E)
+                          : const Color(0xFF2A2A3E))
+                    : (isDark ? AppColors.darkBgSunken : AppColors.bgSunken),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isCurrent
+                      ? accent.withValues(alpha: 0.5)
+                      : isDark
+                      ? AppColors.darkBorderSubtle
+                      : AppColors.borderSubtle,
+                  width: isCurrent ? 1.5 : 1,
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    isLocked
+                        ? LucideIcons.lock
+                        : hasVideo
+                        ? LucideIcons.play
+                        : LucideIcons.bookOpen,
+                    color: isLocked
+                        ? muted
+                        : hasVideo
+                        ? (isCurrent
+                              ? accent
+                              : Colors.white.withValues(alpha: 0.7))
+                        : accent,
+                    size: 20,
+                  ),
+                  if (hasVideo && !isLocked && isCurrent)
+                    Positioned(
+                      bottom: 4,
+                      right: 4,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // ── Text info ────────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${lesson.order}. ${lesson.title}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      height: 1.3,
+                      fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w700,
+                      color: isLocked ? muted : textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isCurrent
+                        ? 'subjects.lesson.currentLesson'.tr()
+                        : isLocked
+                        ? 'subjects.enterCode.lockedLessonSubtitle'.tr(
+                            namedArgs: {'lesson': lesson.title},
+                          )
+                        : lesson.estimatedMinutes != null
+                        ? '${lesson.estimatedMinutes} دقيقة'
+                        : 'subjects.detail.watchAction'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isCurrent
+                          ? accent
+                          : isLocked
+                          ? muted
+                          : secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Chevron ──────────────────────────────────────────────────
+            if (!isLocked && !isCurrent)
+              Icon(LucideIcons.chevronLeft, size: 16, color: muted),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -323,7 +713,7 @@ class _NoVideoPlaceholder extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               color: (isDark ? AppColors.darkBgSurface : AppColors.bgSurface)
-                  .withOpacity(0.6),
+                  .withValues(alpha: 0.6),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -347,122 +737,6 @@ class _NoVideoPlaceholder extends StatelessWidget {
 }
 
 // ─── Completed badge ─────────────────────────────────────────────────────────
-
-class _CompletedBadge extends StatelessWidget {
-  final bool isDark;
-
-  const _CompletedBadge({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(isDark ? 0.12 : 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.accent.withOpacity(0.18), width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              LucideIcons.circleCheck,
-              size: 16,
-              color: AppColors.accent,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'subjects.lesson.completed'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.accent,
-                ),
-              ),
-              Text(
-                'subjects.lesson.completedSub'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Mark complete button ────────────────────────────────────────────────────
-
-class _MarkCompleteButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _MarkCompleteButton({
-    required this.isLoading,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: Material(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: isLoading ? null : onTap,
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        LucideIcons.check,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'subjects.lesson.markCompleteAction'.tr(),
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _LessonVideo extends ConsumerStatefulWidget {
   final String mediaId;

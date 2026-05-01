@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +8,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/widgets/button.dart';
-import 'package:na_app/core/widgets/code_input.dart';
 import 'package:na_app/features/exams/data/exams_repository.dart';
 import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/subjects/domain/activation_result.dart';
@@ -23,9 +23,16 @@ class EnterExamCodePage extends ConsumerStatefulWidget {
 }
 
 class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
+  final _controller = TextEditingController();
   String _code = '';
   bool _isLoading = false;
   ApiException? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,11 +125,65 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
                 FadeInUp(
                   delay: const Duration(milliseconds: 300),
                   duration: const Duration(milliseconds: 500),
-                  child: CodeInputField(
-                    length: 6,
-                    onChanged: (code) => setState(() => _code = code),
-                    onCompleted: null,
+                  child: TextField(
+                    controller: _controller,
                     enabled: !_isLoading,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    textCapitalization: TextCapitalization.characters,
+                    onChanged: (value) {
+                      setState(() {
+                        _code = value.trim().toUpperCase();
+                        _error = null;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'exams.enterCode.codeHint'.tr(),
+                      counterText: '',
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkBgSurface
+                          : AppColors.bgSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkBorderSubtle
+                              : AppColors.borderSubtle,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkBorderSubtle
+                              : AppColors.borderSubtle,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkAccent
+                              : AppColors.accent,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                    ),
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'[a-zA-Z0-9]'),
+                      ),
+                    ],
                   ),
                 ),
                 if (_error != null) ...[
@@ -249,7 +310,7 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
 
     try {
       final subjectsRepo = ref.read(subjectsRepositoryProvider);
-      final result = await subjectsRepo.activateCode(_code.toUpperCase());
+      final result = await subjectsRepo.activateCode(_code);
 
       if (result is ActivationSuccess) {
         if (result.codeType == 'exam') {

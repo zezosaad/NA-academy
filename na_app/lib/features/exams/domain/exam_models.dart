@@ -4,7 +4,9 @@ part 'exam_models.freezed.dart';
 
 enum ExamStatus { available, completed, locked }
 
-enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts }
+enum ExamAccessMode { codeRequired, fullExamFreeAttempts }
+
+enum ExamTimingMode { perQuestion, wholeExam }
 
 enum SessionStatus { inProgress, submitted, timedOut }
 
@@ -32,15 +34,28 @@ class Exam with _$Exam {
     if (id == null || id.isEmpty) {
       throw FormatException('Exam.fromJson: missing "id" in $json');
     }
+    final timingMode = _parseTimingMode(json['timingMode'] as String?);
+    final questions =
+        (json['questions'] as List<dynamic>?)
+            ?.map((e) => ExamQuestion.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final examTimeLimitMinutes = json['examTimeLimitMinutes'] as int?;
+    final computedDurationMinutes = _resolveDurationMinutes(
+      rawDurationMinutes: json['durationMinutes'] as int?,
+      timingMode: timingMode,
+      examTimeLimitMinutes: examTimeLimitMinutes,
+      questions: questions,
+    );
+
     return _Exam(
       id: id,
       title: json['title'] as String? ?? '',
       subjectId: json['subjectId'] as String? ?? '',
-      durationMinutes: json['durationMinutes'] as int? ?? 0,
-      questionCount:
-          (json['questions'] as List<dynamic>?)?.length ??
-          json['questionCount'] as int? ??
-          0,
+      durationMinutes: computedDurationMinutes,
+      questionCount: questions.isNotEmpty
+          ? questions.length
+          : json['questionCount'] as int? ?? 0,
       attemptsAllowed: json['attemptsAllowed'] as int? ?? 0,
       attemptsRemaining: json['attemptsRemaining'] as int? ?? 0,
       freeAttemptsRemaining: json['freeAttemptsRemaining'] as int? ?? 0,
@@ -54,7 +69,6 @@ class Exam with _$Exam {
   }
 
   static ExamAccessMode _parseAccessMode(String? value) => switch (value) {
-    'free_section' => ExamAccessMode.freeSection,
     'full_exam_free_attempts' => ExamAccessMode.fullExamFreeAttempts,
     _ => ExamAccessMode.codeRequired,
   };
@@ -64,6 +78,33 @@ class Exam with _$Exam {
     'locked' => ExamStatus.locked,
     _ => ExamStatus.available,
   };
+
+  static ExamTimingMode _parseTimingMode(String? value) => switch (value) {
+    'whole_exam' => ExamTimingMode.wholeExam,
+    _ => ExamTimingMode.perQuestion,
+  };
+
+  static int _resolveDurationMinutes({
+    required int? rawDurationMinutes,
+    required ExamTimingMode timingMode,
+    required int? examTimeLimitMinutes,
+    required List<ExamQuestion> questions,
+  }) {
+    if (rawDurationMinutes != null && rawDurationMinutes > 0) {
+      return rawDurationMinutes;
+    }
+
+    if (timingMode == ExamTimingMode.wholeExam) {
+      return examTimeLimitMinutes ?? 0;
+    }
+
+    final totalSeconds = questions.fold<int>(
+      0,
+      (sum, q) => sum + q.timeLimitSeconds,
+    );
+    if (totalSeconds <= 0) return 0;
+    return (totalSeconds / 60).ceil();
+  }
 }
 
 extension ExamAccessX on Exam {
@@ -94,7 +135,7 @@ class ExamQuestion with _$ExamQuestion {
               ?.map((e) => QuestionOption.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      timeLimitSeconds: json['timeLimitSeconds'] as int? ?? 60,
+      timeLimitSeconds: json['timeLimitSeconds'] as int? ?? 0,
       order: json['order'] as int? ?? 0,
     );
   }

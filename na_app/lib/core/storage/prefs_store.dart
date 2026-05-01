@@ -60,7 +60,7 @@ class PrefsStore {
 
   Future<bool> get localeFollowsSystem async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_localeFollowsSystemKey) ?? true;
+    return prefs.getBool(_localeFollowsSystemKey) ?? false;
   }
 
   Future<void> setLocaleFollowsSystem(bool value) async {

@@ -1,6 +1,6 @@
 {
-    "name": "na_app",
-    "short_name": "na_app",
+    "name": "NA academy",
+    "short_name": "NA academy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
