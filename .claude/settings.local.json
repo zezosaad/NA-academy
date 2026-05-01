@@ -33,7 +33,17 @@
       "Bash(git status *)",
       "Bash(git checkout *)",
       "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
-      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)"
+      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)",
+      "Bash(make --version)",
+      "PowerShell(Test-Path *)",
+      "Bash(npm --prefix back ci --dry-run)",
+      "Bash(docker compose *)",
+      "Bash(curl -s -o /dev/null -w \"GET /         => %{http_code}\\\\n\" http://localhost/)",
+      "Bash(curl -s -o /dev/null -w \"GET /api/docs => %{http_code}\\\\n\" http://localhost/api/docs)",
+      "Bash(curl -s http://localhost/)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(netstat -ano)",
+      "Bash(gh repo *)"
     ]
   }
 }

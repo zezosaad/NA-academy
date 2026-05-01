@@ -108,7 +108,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       final subjectTitle = rawTitle is String
                           ? rawTitle
                           : rawTitle?.toString();
-                      return EnterSubjectCodePage(subjectTitle: subjectTitle);
+                      final rawLessonTitle = extraMap['lockedLessonTitle'];
+                      final lockedLessonTitle = rawLessonTitle is String
+                          ? rawLessonTitle
+                          : rawLessonTitle?.toString();
+                      return EnterSubjectCodePage(
+                        subjectTitle: subjectTitle,
+                        lockedLessonTitle: lockedLessonTitle,
+                      );
                     },
                   ),
                   GoRoute(

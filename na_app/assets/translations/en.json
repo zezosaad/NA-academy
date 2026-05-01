@@ -190,6 +190,7 @@
       "statsInProgress": "In progress",
       "statsRemaining": "Remaining",
       "continueAction": "Continue",
+      "watchAction": "Watch",
       "lockedTooltip": "Finish the previous lessons first"
     },
     "lesson": {
@@ -203,7 +204,18 @@
       "removedFromSaved": "Lesson removed from saved",
       "noVideo": "No video for this lesson",
       "videoLoadFailure": "Failed to load video",
-      "goBackTooltip": "Go back"
+      "playlistTitle": "Lessons",
+      "currentLesson": "Now playing",
+      "goBackTooltip": "Go back",
+      "comingSoon": "Coming soon",
+      "like": "Like",
+      "dislike": "Dislike",
+      "summary": "Summary",
+      "share": "Share",
+      "saved": "Saved",
+      "save": "Save",
+      "markCompleteActionShort": "Complete",
+      "minutes": "{count} minutes"
     },
     "card": {
       "semanticLabel": "{title}, {count} lessons",
@@ -213,6 +225,7 @@
       "title": "Enter subject code",
       "subtitleNamed": "Enter the {length}-character code to unlock \"{name}\".",
       "subtitleGeneric": "Enter the {length}-character code your instructor gave you to unlock a new subject.",
+      "lockedLessonSubtitle": "To unlock \"{lesson}\", you need to enter the subject code.",
       "codeHint": "Enter {length}-character code",
       "submit": "Unlock subject",
       "helpText": "Codes are provided by your instructor or school administration.",
@@ -262,6 +275,7 @@
       "title": "Enter exam code",
       "heading": "Enter your exam code",
       "helpText": "Type or paste the 6-character code from your instructor",
+      "codeHint": "Enter exam code",
       "submit": "Unlock and start exam",
       "errorInvalid": "Invalid code. Please check and try again.",
       "errorRateLimited": "Too many attempts. Please wait and try again.",
@@ -426,9 +440,9 @@
   },
   "education": {
     "level": {
-      "secondary2": "Secondary — Year 2",
-      "secondary3": "Secondary — Year 3",
-      "secondary4": "Secondary — Year 4"
+      "secondary2": "Level 2",
+      "secondary3": "Level 3",
+      "secondary4": "Level 4"
     }
   }
 }

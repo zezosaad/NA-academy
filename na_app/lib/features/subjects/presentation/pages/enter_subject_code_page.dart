@@ -13,8 +13,9 @@ import 'package:animate_do/animate_do.dart';
 
 class EnterSubjectCodePage extends ConsumerStatefulWidget {
   final String? subjectTitle;
+  final String? lockedLessonTitle;
 
-  const EnterSubjectCodePage({super.key, this.subjectTitle});
+  const EnterSubjectCodePage({super.key, this.subjectTitle, this.lockedLessonTitle});
 
   @override
   ConsumerState<EnterSubjectCodePage> createState() =>
@@ -166,7 +167,11 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                   delay: const Duration(milliseconds: 100),
                   duration: const Duration(milliseconds: 500),
                   child: Text(
-                    widget.subjectTitle != null
+                    widget.lockedLessonTitle != null
+                        ? 'subjects.enterCode.lockedLessonSubtitle'.tr(namedArgs: {
+                            'lesson': widget.lockedLessonTitle!,
+                          })
+                        : widget.subjectTitle != null
                         ? 'subjects.enterCode.subtitleNamed'.tr(namedArgs: {
                             'length': '$_subjectCodeLength',
                             'name': widget.subjectTitle!,

@@ -6,6 +6,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.11.3
+  flutter: ">=3.24.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -42,6 +43,12 @@ dependencies:
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
 
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  cryptography: ^2.7.0
+  connectivity_plus: ^6.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -53,8 +60,16 @@ dev_dependencies:
   riverpod_generator: ^2.6.3
   freezed: ^2.5.8
   json_serializable: ^6.9.4
+  drift_dev: ^2.18.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.jpeg
 
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/
     - assets/translations/

@@ -538,7 +538,7 @@ export function CodesPage() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {exp!.data.map((c, i) => (
+                              {exp!.data.map((c) => (
                                 <TableRow key={c._id}>
                                   <TableCell>
                                     <button

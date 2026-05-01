@@ -12,7 +12,7 @@ import { api } from "@/services/api"
 import type { ChatConversationPreview, ChatMessage } from "@/types"
 import { format, isToday, isYesterday } from "date-fns"
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+const API_URL = import.meta.env.VITE_API_URL ?? ""
 
 function normalizeApiBaseForMedia(rawBase: string): string {
   const trimmed = rawBase.trim().replace(/\/+$/, "")

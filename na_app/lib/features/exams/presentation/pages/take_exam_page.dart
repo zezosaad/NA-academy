@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +36,13 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
   List<ExamQuestion> _questions = [];
   ExamSession? _session;
   String? _saveError;
+  int _questionTimeLeftSeconds = 0;
+  Timer? _questionTimer;
+
+  bool get _usesPerQuestionTiming {
+    if (_questions.isEmpty) return false;
+    return _questions.any((q) => q.timeLimitSeconds > 0);
+  }
 
   @override
   void initState() {
@@ -44,6 +53,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
 
   @override
   void dispose() {
+    _questionTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -80,6 +90,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           _localAnswers[entry.key] = entry.value.selectedOption;
         }
       });
+      _restartQuestionTimer();
     } catch (_) {}
   }
 
@@ -95,6 +106,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
           _localAnswers[entry.key] = entry.value.selectedOption;
         }
       });
+      _restartQuestionTimer();
     } catch (e) {
       setState(() {
         _isStarting = false;
@@ -125,7 +137,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                 style: GoogleFonts.cairo(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -162,7 +176,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                   style: GoogleFonts.cairo(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -171,7 +187,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                   style: GoogleFonts.cairo(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -204,85 +222,96 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     final isLastQuestion = _currentIndex == _questions.length - 1;
 
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) async {
-          if (didPop) return;
-          final shouldLeave = await _showLeaveDialog(context);
-          if (shouldLeave == true && context.mounted) {
-            context.go('/exams');
-          }
-        },
-        child: Scaffold(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldLeave = await _showLeaveDialog(context);
+        if (shouldLeave == true && context.mounted) {
+          context.go('/exams');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
+        appBar: AppBar(
           backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-          appBar: AppBar(
-            backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(LucideIcons.x),
-              tooltip: 'exams.take.closeTooltip'.tr(),
-              onPressed: () async {
-                final shouldLeave = await _showLeaveDialog(context);
-                if (shouldLeave == true && context.mounted) {
-                  context.go('/exams');
-                }
-              },
-            ),
-            title: _session!.endsAt.isAfter(DateTime.now())
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: ExamTimer(
-                      endsAt: _session!.endsAt, 
-                      onExpire: _autoSubmit,
-                    ),
-                  )
-                : null,
-            centerTitle: true,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(LucideIcons.x),
+            tooltip: 'exams.take.closeTooltip'.tr(),
+            onPressed: () async {
+              final shouldLeave = await _showLeaveDialog(context);
+              if (shouldLeave == true && context.mounted) {
+                context.go('/exams');
+              }
+            },
           ),
-          body: Column(
-            children: [
-              _buildProgressBar(context, progress, isDark),
-              if (_saveError != null)
-                FadeInDown(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _saveError!,
-                        style: GoogleFonts.cairo(
-                          color: AppColors.danger,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
+          title: _session!.endsAt.isAfter(DateTime.now())
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: ExamTimer(
+                    endsAt: _session!.endsAt,
+                    onExpire: _autoSubmit,
+                  ),
+                )
+              : null,
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            _buildProgressBar(context, progress, isDark),
+            if (_usesPerQuestionTiming) _buildQuestionTimerBanner(isDark),
+            if (_saveError != null)
+              FadeInDown(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _saveError!,
+                      style: GoogleFonts.cairo(
+                        color: AppColors.danger,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: QuestionCard(
-                    question: question,
-                    currentIndex: _currentIndex,
-                    totalCount: _questions.length,
-                    selectedAnswer: _localAnswers[question.id],
-                    onAnswerSelected: _onAnswerSelected,
                   ),
                 ),
               ),
-              _buildBottomBar(context, isLastQuestion, isDark),
-            ],
-          ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: QuestionCard(
+                  question: question,
+                  currentIndex: _currentIndex,
+                  totalCount: _questions.length,
+                  selectedAnswer: _localAnswers[question.id],
+                  onAnswerSelected: _onAnswerSelected,
+                ),
+              ),
+            ),
+            _buildBottomBar(context, isLastQuestion, isDark),
+          ],
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildProgressBar(BuildContext context, double progress, bool isDark) {
@@ -294,14 +323,18 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'exams.take.questionLabel'.tr(namedArgs: {
-                  'current': '${_currentIndex + 1}',
-                  'total': '${_questions.length}',
-                }),
+                'exams.take.questionLabel'.tr(
+                  namedArgs: {
+                    'current': '${_currentIndex + 1}',
+                    'total': '${_questions.length}',
+                  },
+                ),
                 style: GoogleFonts.cairo(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.textSecondary,
                 ),
               ),
               Text(
@@ -319,7 +352,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+              backgroundColor: isDark
+                  ? AppColors.darkBgSunken
+                  : AppColors.bgSunken,
               color: isDark ? AppColors.darkAccent : AppColors.accent,
               minHeight: 8,
             ),
@@ -327,6 +362,98 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         ],
       ),
     );
+  }
+
+  Widget _buildQuestionTimerBanner(bool isDark) {
+    final isCritical = _questionTimeLeftSeconds <= 10;
+    final timerColor = isCritical
+        ? (isDark ? AppColors.darkDanger : AppColors.danger)
+        : (isDark ? AppColors.darkWarning : AppColors.warning);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: timerColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '⏱ ${_formatSeconds(_questionTimeLeftSeconds)}',
+            style: GoogleFonts.cairo(
+              color: timerColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _restartQuestionTimer() {
+    _questionTimer?.cancel();
+
+    if (!_usesPerQuestionTiming || _questions.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _questionTimeLeftSeconds = 0;
+        });
+      }
+      return;
+    }
+
+    final initialSeconds = _questions[_currentIndex].timeLimitSeconds;
+    if (initialSeconds <= 0) {
+      if (mounted) {
+        setState(() {
+          _questionTimeLeftSeconds = 0;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _questionTimeLeftSeconds = initialSeconds;
+      });
+    }
+
+    _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _isSubmitting || !_usesPerQuestionTiming) {
+        timer.cancel();
+        return;
+      }
+
+      final nextValue = _questionTimeLeftSeconds - 1;
+      if (nextValue <= 0) {
+        timer.cancel();
+        setState(() {
+          _questionTimeLeftSeconds = 0;
+        });
+
+        final isLastQuestion = _currentIndex >= _questions.length - 1;
+        if (isLastQuestion) {
+          _autoSubmit();
+        } else {
+          _nextQuestion();
+        }
+        return;
+      }
+
+      setState(() {
+        _questionTimeLeftSeconds = nextValue;
+      });
+    });
+  }
+
+  String _formatSeconds(int totalSeconds) {
+    final safeSeconds = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = safeSeconds ~/ 60;
+    final seconds = safeSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Widget _buildBottomBar(
@@ -353,7 +480,10 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
                   child: AppButton(
                     label: 'exams.take.previous'.tr(),
                     type: AppButtonType.ghost,
-                    onPressed: () => setState(() => _currentIndex--),
+                    onPressed: () {
+                      setState(() => _currentIndex--);
+                      _restartQuestionTimer();
+                    },
                   ),
                 ),
               if (_currentIndex > 0) const SizedBox(width: 16),
@@ -411,7 +541,9 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       } on ApiException catch (e) {
         if (mounted) {
           setState(() {
-            _saveError = 'exams.take.saveErrorWithDetail'.tr(namedArgs: {'error': e.message});
+            _saveError = 'exams.take.saveErrorWithDetail'.tr(
+              namedArgs: {'error': e.message},
+            );
           });
         }
         return;
@@ -427,9 +559,11 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     setState(() {
       _currentIndex++;
     });
+    _restartQuestionTimer();
   }
 
   Future<void> _submitExam() async {
+    _questionTimer?.cancel();
     setState(() => _isSubmitting = true);
     try {
       final answers = _localAnswers.entries
@@ -445,21 +579,22 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(
-          content: Text(
-            'exams.take.submitErrorWithDetail'.tr(namedArgs: {'error': '$e'}),
-            style: GoogleFonts.cairo(),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'exams.take.submitErrorWithDetail'.tr(namedArgs: {'error': '$e'}),
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: AppColors.danger,
           ),
-          backgroundColor: AppColors.danger,
-        ));
+        );
         setState(() => _isSubmitting = false);
       }
     }
   }
 
   Future<void> _autoSubmit() async {
+    _questionTimer?.cancel();
     setState(() => _isSubmitting = true);
     try {
       final answers = _localAnswers.entries

@@ -6,6 +6,8 @@ enum ExamStatus { available, completed, locked }
 
 enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts }
 
+enum ExamTimingMode { perQuestion, wholeExam }
+
 enum SessionStatus { inProgress, submitted, timedOut }
 
 enum PassFail { pass, fail, none }
@@ -23,6 +25,7 @@ class Exam with _$Exam {
     @Default(0) int freeAttemptsRemaining,
     DateTime? dueDate,
     @Default(ExamAccessMode.codeRequired) ExamAccessMode accessMode,
+    @Default(ExamTimingMode.perQuestion) ExamTimingMode timingMode,
     @Default(ExamStatus.available) ExamStatus status,
     double? lastScore,
   }) = _Exam;
@@ -32,15 +35,28 @@ class Exam with _$Exam {
     if (id == null || id.isEmpty) {
       throw FormatException('Exam.fromJson: missing "id" in $json');
     }
+    final timingMode = _parseTimingMode(json['timingMode'] as String?);
+    final questions =
+        (json['questions'] as List<dynamic>?)
+            ?.map((e) => ExamQuestion.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final examTimeLimitMinutes = json['examTimeLimitMinutes'] as int?;
+    final computedDurationMinutes = _resolveDurationMinutes(
+      rawDurationMinutes: json['durationMinutes'] as int?,
+      timingMode: timingMode,
+      examTimeLimitMinutes: examTimeLimitMinutes,
+      questions: questions,
+    );
+
     return _Exam(
       id: id,
       title: json['title'] as String? ?? '',
       subjectId: json['subjectId'] as String? ?? '',
-      durationMinutes: json['durationMinutes'] as int? ?? 0,
-      questionCount:
-          (json['questions'] as List<dynamic>?)?.length ??
-          json['questionCount'] as int? ??
-          0,
+      durationMinutes: computedDurationMinutes,
+      questionCount: questions.isNotEmpty
+          ? questions.length
+          : json['questionCount'] as int? ?? 0,
       attemptsAllowed: json['attemptsAllowed'] as int? ?? 0,
       attemptsRemaining: json['attemptsRemaining'] as int? ?? 0,
       freeAttemptsRemaining: json['freeAttemptsRemaining'] as int? ?? 0,
@@ -48,14 +64,15 @@ class Exam with _$Exam {
           ? DateTime.tryParse(json['dueDate'] as String)
           : null,
       accessMode: _parseAccessMode(json['accessMode'] as String?),
+      timingMode: timingMode,
       status: _parseExamStatus(json['status'] as String?),
       lastScore: (json['lastScore'] as num?)?.toDouble(),
     );
   }
 
   static ExamAccessMode _parseAccessMode(String? value) => switch (value) {
-    'free_section' => ExamAccessMode.freeSection,
     'full_exam_free_attempts' => ExamAccessMode.fullExamFreeAttempts,
+    'free_section' => ExamAccessMode.freeSection,
     _ => ExamAccessMode.codeRequired,
   };
 
@@ -64,11 +81,42 @@ class Exam with _$Exam {
     'locked' => ExamStatus.locked,
     _ => ExamStatus.available,
   };
+
+  static ExamTimingMode _parseTimingMode(String? value) => switch (value) {
+    'whole_exam' => ExamTimingMode.wholeExam,
+    _ => ExamTimingMode.perQuestion,
+  };
+
+  static int _resolveDurationMinutes({
+    required int? rawDurationMinutes,
+    required ExamTimingMode timingMode,
+    required int? examTimeLimitMinutes,
+    required List<ExamQuestion> questions,
+  }) {
+    if (rawDurationMinutes != null && rawDurationMinutes > 0) {
+      return rawDurationMinutes;
+    }
+
+    if (timingMode == ExamTimingMode.wholeExam) {
+      return examTimeLimitMinutes ?? 0;
+    }
+
+    final validSeconds = questions.fold<int>(
+      0,
+      (sum, q) => q.timeLimitSeconds >= 5 ? sum + q.timeLimitSeconds : sum,
+    );
+    if (validSeconds > 0) return (validSeconds / 60).ceil();
+    if (examTimeLimitMinutes != null && examTimeLimitMinutes > 0) {
+      return examTimeLimitMinutes;
+    }
+    return (questions.length * 5 / 60).ceil().clamp(1, 999);
+  }
 }
 
 extension ExamAccessX on Exam {
   bool get canStartDirectly =>
-      accessMode == ExamAccessMode.fullExamFreeAttempts &&
+      (accessMode == ExamAccessMode.fullExamFreeAttempts ||
+          accessMode == ExamAccessMode.freeSection) &&
       freeAttemptsRemaining > 0;
 
   bool get needsCodeEntry => !canStartDirectly;
@@ -94,7 +142,7 @@ class ExamQuestion with _$ExamQuestion {
               ?.map((e) => QuestionOption.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      timeLimitSeconds: json['timeLimitSeconds'] as int? ?? 60,
+      timeLimitSeconds: json['timeLimitSeconds'] as int? ?? 0,
       order: json['order'] as int? ?? 0,
     );
   }

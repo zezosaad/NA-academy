@@ -70,13 +70,19 @@ class User {
     final email = json['email'] as String?;
 
     if (id == null || id.isEmpty) {
-      throw FormatException('User.fromJson: missing or empty "id" field in $json');
+      throw FormatException(
+        'User.fromJson: missing or empty "id" field in $json',
+      );
     }
     if (name == null || name.isEmpty) {
-      throw FormatException('User.fromJson: missing or empty "name" field in $json');
+      throw FormatException(
+        'User.fromJson: missing or empty "name" field in $json',
+      );
     }
     if (email == null || email.isEmpty) {
-      throw FormatException('User.fromJson: missing or empty "email" field in $json');
+      throw FormatException(
+        'User.fromJson: missing or empty "email" field in $json',
+      );
     }
 
     return User(
@@ -91,14 +97,14 @@ class User {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'avatarUrl': avatarUrl,
-        'role': role.name,
-        'status': status.name,
-        'level': level?.apiValue,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'avatarUrl': avatarUrl,
+    'role': role.name,
+    'status': status.name,
+    'level': level?.apiValue,
+  };
 
   User copyWith({
     String? id,
@@ -177,16 +183,14 @@ class AuthSession {
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
   Map<String, dynamic> toJson() => {
-        'tokens': {
-          'accessToken': accessToken,
-          'refreshToken': refreshToken,
-        },
-      };
+    'tokens': {'accessToken': accessToken, 'refreshToken': refreshToken},
+  };
 
   static DateTime _extractExpiry(String token) {
     try {
       final parts = token.split('.');
-      if (parts.length != 3) return DateTime.now().add(const Duration(minutes: 15));
+      if (parts.length != 3)
+        return DateTime.now().add(const Duration(minutes: 15));
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
       final decoded = utf8.decode(base64Url.decode(normalized));

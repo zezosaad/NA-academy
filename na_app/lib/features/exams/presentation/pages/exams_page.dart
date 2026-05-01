@@ -180,8 +180,6 @@ class _ExamCard extends StatelessWidget {
     final badgeText = switch (exam.accessMode) {
       ExamAccessMode.fullExamFreeAttempts when exam.freeAttemptsRemaining > 0 =>
         '${exam.freeAttemptsRemaining} free tries',
-      ExamAccessMode.freeSection when exam.freeAttemptsRemaining > 0 =>
-        '${exam.freeAttemptsRemaining} preview tries',
       _ when exam.attemptsRemaining > 0 => _getAttemptsText(
         exam.attemptsRemaining,
       ),
@@ -189,7 +187,6 @@ class _ExamCard extends StatelessWidget {
     };
     final badgeColor = switch (exam.accessMode) {
       ExamAccessMode.fullExamFreeAttempts => Colors.amber,
-      ExamAccessMode.freeSection => Colors.teal,
       _ => isDark ? AppColors.darkAccent : AppColors.accent,
     };
 

@@ -24,12 +24,12 @@
 
 **Purpose**: Bring in the new dependencies and create the empty module directories so foundational and story work can proceed without scaffolding interruptions.
 
-- [ ] T001 [P] Add Flutter dependencies in `na_app/pubspec.yaml`: `drift: ^2.18.0`, `drift_dev: ^2.18.0` (dev), `sqlite3_flutter_libs: ^0.5.24`, `cryptography: ^2.7.0`, `path_provider: ^2.1.4`, `connectivity_plus: ^6.0.5`. Run `flutter pub get`.
-- [ ] T002 [P] Add backend dependencies (verify only — no new packages expected) by inspecting `back/package.json` for existing `class-validator`, `class-transformer`, `@nestjs/swagger`, `@nestjs/throttler`. Document any missing piece in this task's description and add as needed.
-- [ ] T003 [P] Create empty Flutter module directories: `na_app/lib/core/offline/` and `na_app/lib/features/offline_downloads/{data,domain,presentation/{controllers,pages,widgets}}/`. Add a top-level `barrel.dart` only if the codebase already uses barrel files (it does not — leave as plain dirs).
-- [ ] T004 [P] Create empty backend DTO directories if missing: `back/src/devices/dto/` and `back/src/media/dto/` and `back/src/lesson-progress/dto/`. Each `dto/` should be a directory; no index file is required since NestJS modules import individual files.
-- [ ] T005 Wire Drift's build runner: confirm `na_app/build.yaml` (create if missing) lists `drift_dev:preserve_include_imports: true` and that `flutter packages pub run build_runner build --delete-conflicting-outputs` completes cleanly with no Drift sources yet (smoke check). If a `build.yaml` already exists for `riverpod_generator` / `freezed`, **add** Drift to it — do not overwrite.
-- [ ] T006 [P] Verify Swagger UI is enabled in dev for `back/`: hit `http://localhost:3000/api` (or whatever the existing `SwaggerModule.setup(...)` path is in `back/src/main.ts`) and confirm the existing `Devices`, `Media`, and `Lesson Progress` tags render. No code change unless Swagger is currently disabled.
+- [X] T001 [P] Add Flutter dependencies in `na_app/pubspec.yaml`: `drift: ^2.18.0`, `drift_dev: ^2.18.0` (dev), `sqlite3_flutter_libs: ^0.5.24`, `cryptography: ^2.7.0`, `path_provider: ^2.1.4`, `connectivity_plus: ^6.0.5`. Run `flutter pub get`.
+- [X] T002 [P] Add backend dependencies (verify only — no new packages expected) by inspecting `back/package.json` for existing `class-validator`, `class-transformer`, `@nestjs/swagger`, `@nestjs/throttler`. Document any missing piece in this task's description and add as needed.
+- [X] T003 [P] Create empty Flutter module directories: `na_app/lib/core/offline/` and `na_app/lib/features/offline_downloads/{data,domain,presentation/{controllers,pages,widgets}}/`. Add a top-level `barrel.dart` only if the codebase already uses barrel files (it does not — leave as plain dirs).
+- [X] T004 [P] Create empty backend DTO directories if missing: `back/src/devices/dto/` and `back/src/media/dto/` and `back/src/lesson-progress/dto/`. Each `dto/` should be a directory; no index file is required since NestJS modules import individual files.
+- [X] T005 Wire Drift's build runner: confirm `na_app/build.yaml` (create if missing) lists `drift_dev:preserve_include_imports: true` and that `flutter packages pub run build_runner build --delete-conflicting-outputs` completes cleanly with no Drift sources yet (smoke check). If a `build.yaml` already exists for `riverpod_generator` / `freezed`, **add** Drift to it — do not overwrite.
+- [X] T006 [P] Verify Swagger UI is enabled in dev for `back/`: hit `http://localhost:3000/api` (or whatever the existing `SwaggerModule.setup(...)` path is in `back/src/main.ts`) and confirm the existing `Devices`, `Media`, and `Lesson Progress` tags render. No code change unless Swagger is currently disabled.
 
 ---
 

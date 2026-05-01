@@ -23,6 +23,13 @@ export default function ExamScreen() {
   const [submitting, setSubmitting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const qTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Per-question remaining seconds, keyed by question id. Lets the user navigate
+  // between questions without replenishing the timer on revisits.
+  const qRemainingRef = useRef<Record<string, number>>({});
+  // Holds the latest auto-submit closure so the global timer effect can call it
+  // without re-subscribing whenever `answers`/`session` change.
+  const handleAutoSubmitRef = useRef<() => Promise<void>>(async () => {});
+  const usesPerQuestionTiming = exam?.timingMode !== 'whole_exam';
 
   const questions = exam?.questions || [];
   const currentQuestion = questions[currentQuestionIndex];
@@ -39,8 +46,10 @@ export default function ExamScreen() {
       if (data.session.timeLimitMinutes) {
         setTimeLeft(data.session.timeLimitMinutes * 60);
       }
-      if (data.exam.questions[0]) {
+      if (data.exam.timingMode !== 'whole_exam' && data.exam.questions[0]?.timeLimitSeconds) {
         setQuestionTimeLeft(data.exam.questions[0].timeLimitSeconds);
+      } else {
+        setQuestionTimeLeft(0);
       }
     } catch (error: any) {
       const msg = error.response?.data?.message || 'Failed to start exam';
@@ -63,7 +72,7 @@ export default function ExamScreen() {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          handleAutoSubmit();
+          handleAutoSubmitRef.current();
           return 0;
         }
         return prev - 1;
@@ -74,19 +83,33 @@ export default function ExamScreen() {
 
   // Per-question timer
   useEffect(() => {
-    if (!examStarted || !currentQuestion) return;
-    setQuestionTimeLeft(currentQuestion.timeLimitSeconds);
+    if (!examStarted || !currentQuestion || !usesPerQuestionTiming) return;
+    const qid = currentQuestion._id;
+    const qTimeLimit = currentQuestion.timeLimitSeconds ?? 0;
+    if (qTimeLimit <= 0) {
+      setQuestionTimeLeft(0);
+      return;
+    }
+    // Resume from stored remaining time on revisit; only seed from full limit
+    // the first time we see this question.
+    const stored = qRemainingRef.current[qid];
+    const initial = stored !== undefined ? stored : qTimeLimit;
+    qRemainingRef.current[qid] = initial;
+    setQuestionTimeLeft(initial);
     qTimerRef.current = setInterval(() => {
       setQuestionTimeLeft((prev) => {
+        const next = prev - 1;
         if (prev <= 1) {
+          qRemainingRef.current[qid] = 0;
           handleNextQuestion();
           return 0;
         }
-        return prev - 1;
+        qRemainingRef.current[qid] = next;
+        return next;
       });
     }, 1000);
     return () => { if (qTimerRef.current) clearInterval(qTimerRef.current); };
-  }, [currentQuestionIndex, examStarted]);
+  }, [currentQuestionIndex, examStarted, usesPerQuestionTiming]);
 
   const handleSelectOption = (label: string) => {
     if (!currentQuestion) return;
@@ -108,6 +131,11 @@ export default function ExamScreen() {
   const handleAutoSubmit = useCallback(async () => {
     await handleSubmit();
   }, [answers, session]);
+
+  // Keep the ref in sync so the global timer always calls the latest closure.
+  useEffect(() => {
+    handleAutoSubmitRef.current = handleAutoSubmit;
+  }, [handleAutoSubmit]);
 
   const handleSubmit = async () => {
     if (!session || submitting) return;
@@ -214,12 +242,13 @@ export default function ExamScreen() {
         <ProgressBar progress={(currentQuestionIndex + 1) / questions.length} />
       </View>
 
-      {/* Question timer */}
-      <View style={styles.questionTimerRow}>
-        <Text style={[styles.questionTimerText, questionTimeLeft < 10 && styles.timerDanger]}>
-          ⏱ {formatTimer(questionTimeLeft)}
-        </Text>
-      </View>
+      {usesPerQuestionTiming && (
+        <View style={styles.questionTimerRow}>
+          <Text style={[styles.questionTimerText, questionTimeLeft < 10 && styles.timerDanger]}>
+            ⏱ {formatTimer(questionTimeLeft)}
+          </Text>
+        </View>
+      )}
 
       {/* Question */}
       <ScrollView style={styles.questionScroll}>
