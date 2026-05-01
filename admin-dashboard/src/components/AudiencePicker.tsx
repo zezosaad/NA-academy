@@ -33,8 +33,10 @@ const ADMIN_TABS: Array<{ kind: AudienceKind; label: string }> = [
 
 export function AudiencePicker({ value, onChange, role }: AudiencePickerProps) {
   const [subjects, setSubjects] = useState<AudienceSubjectOption[]>([])
+  const [subjectsError, setSubjectsError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [results, setResults] = useState<AudienceUserOption[]>([])
+  const [selectedUserCache, setSelectedUserCache] = useState<Record<string, AudienceUserOption>>({})
   const [loadingUsers, setLoadingUsers] = useState(false)
 
   const activeKind: AudienceKind = role === 'teacher' ? 'subject' : value.kind
@@ -44,15 +46,31 @@ export function AudiencePicker({ value, onChange, role }: AudiencePickerProps) {
   const selectedUsers = useMemo(
     () =>
       selectedUserIds
-        .map((id) => results.find((user) => user.id === id) ?? { id, name: id, email: '', role: 'student' as const })
+        .map(
+          (id) =>
+            selectedUserCache[id] ??
+            results.find((user) => user.id === id) ?? {
+              id,
+              name: id,
+              email: '',
+              role: 'student' as const,
+            },
+        )
         .slice(0, 1000),
-    [results, selectedUserIds],
+    [results, selectedUserCache, selectedUserIds],
   )
 
   useEffect(() => {
     const loadSubjects = async () => {
-      const nextSubjects = role === 'teacher' ? await getTeachingSubjects() : await getAllSubjects()
-      setSubjects(nextSubjects)
+      try {
+        setSubjectsError(null)
+        const nextSubjects = role === 'teacher' ? await getTeachingSubjects() : await getAllSubjects()
+        setSubjects(nextSubjects)
+      } catch (error) {
+        console.error('Failed to load audience subjects', error)
+        setSubjects([])
+        setSubjectsError('Unable to load subjects')
+      }
     }
 
     void loadSubjects()
@@ -91,6 +109,8 @@ export function AudiencePicker({ value, onChange, role }: AudiencePickerProps) {
   }
 
   const toggleUser = (user: AudienceUserOption) => {
+    setSelectedUserCache((current) => ({ ...current, [user.id]: user }))
+
     const ids = new Set(selectedUserIds)
     if (ids.has(user.id)) {
       ids.delete(user.id)
@@ -148,6 +168,7 @@ export function AudiencePicker({ value, onChange, role }: AudiencePickerProps) {
               ))}
             </SelectContent>
           </Select>
+          {subjectsError && <p className="text-xs text-red-600">{subjectsError}</p>}
         </div>
       )}
 

@@ -102,6 +102,7 @@ export class UsersService {
     const regex = new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
     const users = await this.userModel
       .find({
+        status: UserStatus.ACTIVE,
         $or: [{ name: regex }, { email: regex }],
       })
       .select('_id name email role')

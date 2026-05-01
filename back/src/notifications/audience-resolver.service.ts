@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument, UserRole, UserStatus } from '../users/schemas/user.schema.js';
@@ -27,6 +32,10 @@ export class AudienceResolverService {
    * Stub — to be implemented in US3 (T062).
    */
   async resolveUserList(userIds: string[]): Promise<Types.ObjectId[]> {
+    if (userIds.some((id) => !Types.ObjectId.isValid(id))) {
+      throw new BadRequestException('One or more user ids are invalid');
+    }
+
     const validIds = userIds.filter((id) => Types.ObjectId.isValid(id));
     const objectIds = validIds.map((id) => new Types.ObjectId(id));
 
@@ -39,7 +48,7 @@ export class AudienceResolverService {
       .lean()
       .exec();
 
-    if (users.length !== userIds.length) {
+    if (users.length !== validIds.length) {
       throw new NotFoundException('One or more users were not found or inactive');
     }
 
