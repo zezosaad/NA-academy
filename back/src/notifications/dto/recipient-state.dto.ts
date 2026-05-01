@@ -20,6 +20,40 @@ export class RecipientStateDto {
   readAt?: string;
 }
 
+export class InboxItemDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  title!: string;
+
+  @ApiProperty()
+  body!: string;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' } })
+  data?: Record<string, string>;
+
+  @ApiProperty()
+  createdAt!: string;
+
+  @ApiPropertyOptional()
+  readAt?: string;
+
+  @ApiPropertyOptional()
+  senderName?: string;
+}
+
+export class InboxResponseDto {
+  @ApiProperty({ type: [InboxItemDto] })
+  items!: InboxItemDto[];
+
+  @ApiPropertyOptional()
+  nextCursor?: string;
+
+  @ApiProperty()
+  unreadCount!: number;
+}
+
 export class NotificationDetailResponseDto {
   @ApiProperty()
   id!: string;

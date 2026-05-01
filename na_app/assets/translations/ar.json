@@ -446,13 +446,20 @@
     }
   },
   "notifications": {
+    "inboxTitle": "الإشعارات",
     "inbox_title": "الإشعارات",
+    "title": "إشعار",
+    "emptyState": "لا توجد إشعارات بعد",
     "empty_state": "لا توجد إشعارات بعد",
+    "markAllRead": "تحديد الكل كمقروء",
     "mark_all_read": "تحديد الكل كمقروء",
     "now": "الآن",
+    "minsAgo": "منذ ${count} دقيقة",
     "mins_ago": "منذ {} دقيقة",
     "today": "اليوم",
     "yesterday": "أمس",
+    "notFound": "الإشعار غير موجود",
+    "payload": "الحمولة",
     "permission_denied_explainer": "الإشعارات معطّلة. فعّلها من إعدادات جهازك لاستلام التنبيهات."
   }
 }

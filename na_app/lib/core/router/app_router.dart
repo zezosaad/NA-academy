@@ -27,6 +27,8 @@ import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
 import 'package:na_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:na_app/features/profile/presentation/pages/saved_lessons_page.dart';
 import 'package:na_app/features/profile/presentation/pages/settings_page.dart';
+import 'package:na_app/features/notifications/presentation/pages/notifications_inbox_page.dart';
+import 'package:na_app/features/notifications/presentation/pages/notification_detail_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -292,6 +294,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ExamScore(sessionId: '', score: 0);
           final timedOut = extra['timedOut'] as bool? ?? false;
           return ExamResultPage(score: score, timedOut: timedOut);
+        },
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsInboxPage(),
+      ),
+      GoRoute(
+        path: '/notifications/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return NotificationDetailPage(notificationId: id);
         },
       ),
     ],

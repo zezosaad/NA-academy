@@ -4,6 +4,8 @@ import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
 import 'package:na_app/core/widgets/progress_ring.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:go_router/go_router.dart';
+import 'package:na_app/features/notifications/presentation/widgets/unread_badge.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -73,24 +75,40 @@ class HomeScreen extends StatelessWidget {
             ),
             Tooltip(
               message: 'Notifications',
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                  borderRadius: BorderRadius.circular(AppShapes.inputRadius),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorderSubtle
-                        : AppColors.borderSubtle,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.push('/notifications'),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                    borderRadius: BorderRadius.circular(AppShapes.inputRadius),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorderSubtle
+                          : AppColors.borderSubtle,
+                    ),
                   ),
-                ),
-                child: Icon(
-                  LucideIcons.bell,
-                  size: 18,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.textSecondary,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Center(
+                        child: Icon(
+                          LucideIcons.bell,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: UnreadBadge(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

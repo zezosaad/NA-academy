@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-class Notification extends Equatable {
+class Notification {
   final String id;
   final String title;
   final String body;
@@ -20,7 +18,4 @@ class Notification extends Equatable {
   });
 
   bool get isRead => readAt != null;
-
-  @override
-  List<Object?> get props => [id, title, body, data, senderName, createdAt, readAt];
 }
