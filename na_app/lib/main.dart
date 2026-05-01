@@ -67,8 +67,9 @@ class _NAAppState extends ConsumerState<NAApp> {
   }
 
   void _setupFcmListeners() {
-    FirebaseMessaging.onMessage.listen((message) {
-      handleForegroundMessage(message);
+    FirebaseMessaging.onMessage.listen((message) async {
+      await handleForegroundMessage(message);
+      if (!mounted) return;
       ForegroundNotificationBanner.show(
         context,
         title: message.notification?.title ?? '',
@@ -81,7 +82,7 @@ class _NAAppState extends ConsumerState<NAApp> {
             return;
           }
 
-          final notifId = message.data['id'] ?? message.messageId;
+          final notifId = extractNotificationId(message);
           if (notifId != null) {
             router.push('/notifications/$notifId');
           }
@@ -89,8 +90,8 @@ class _NAAppState extends ConsumerState<NAApp> {
       );
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      handleMessageOpenedApp(message);
+    FirebaseMessaging.onMessageOpenedApp.listen((message) async {
+      await handleMessageOpenedApp(message);
       final target = extractDeepLinkTarget(message);
       if (target != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,7 +101,7 @@ class _NAAppState extends ConsumerState<NAApp> {
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final router = ref.read(appRouterProvider);
-          final notifId = message.data['id'] ?? message.messageId;
+          final notifId = extractNotificationId(message);
           if (notifId != null) {
             router.push('/notifications/$notifId');
           }
@@ -108,16 +109,16 @@ class _NAAppState extends ConsumerState<NAApp> {
       }
     });
 
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
+    FirebaseMessaging.instance.getInitialMessage().then((message) async {
       if (message != null) {
-        handleInitialMessage(message);
+        await handleInitialMessage(message);
         final target = extractDeepLinkTarget(message);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final router = ref.read(appRouterProvider);
           if (target != null) {
             _openTarget(router, target, message);
           } else {
-            final notifId = message.data['id'] ?? message.messageId;
+            final notifId = extractNotificationId(message);
             if (notifId != null) {
               router.push('/notifications/$notifId');
             }

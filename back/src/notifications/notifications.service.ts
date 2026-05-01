@@ -154,6 +154,7 @@ export class NotificationsService {
     if (activeTokenDocs.length > 0) {
       const tokens = activeTokenDocs.map((td) => td.token);
       const dataPayload: Record<string, string> = {};
+      dataPayload.notificationId = notificationId.toHexString();
       if (dto.data) {
         for (const [k, v] of Object.entries(dto.data)) {
           dataPayload[k] = v;

@@ -94,15 +94,41 @@ export async function getTeachingSubjects(): Promise<AudienceSubjectOption[]> {
 }
 
 export async function getAllSubjects(): Promise<AudienceSubjectOption[]> {
-  const response = await apiFetch<{
-    data: Array<{ _id: string; title: string }>
-    total: number
-    page: number
-    limit: number
-  }>('/api/v1/subjects?limit=1000')
+  const PAGE_LIMIT = 100
+  const all: AudienceSubjectOption[] = []
+  let page = 1
 
-  return response.data.map((subject) => ({
-    id: subject._id,
-    title: subject.title,
-  }))
+  while (true) {
+    // apiFetch unwraps json.data, so the response IS the items array
+    const items = await apiFetch<Array<{ _id: string; title: string }>>(
+      `/api/v1/subjects?limit=${PAGE_LIMIT}&page=${page}`,
+    )
+
+    all.push(...items.map((s) => ({ id: s._id, title: s.title })))
+
+    if (items.length < PAGE_LIMIT) break
+    page++
+  }
+
+  return all
+}
+
+export async function getAllExams(): Promise<Array<{ _id: string; title: string; subjectId: string | { _id: string; title: string } }>> {
+  const PAGE_LIMIT = 100
+  const all: Array<{ _id: string; title: string; subjectId: string | { _id: string; title: string } }> = []
+  let page = 1
+
+  while (true) {
+    // apiFetch unwraps json.data, so the response IS the items array
+    const items = await apiFetch<Array<{ _id: string; title: string; subjectId: string | { _id: string; title: string } }>>(
+      `/api/v1/exams?limit=${PAGE_LIMIT}&page=${page}`,
+    )
+
+    all.push(...items)
+
+    if (items.length < PAGE_LIMIT) break
+    page++
+  }
+
+  return all
 }
