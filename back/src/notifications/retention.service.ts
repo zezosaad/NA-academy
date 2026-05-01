@@ -35,24 +35,35 @@ export class RetentionService {
 
     const notificationCutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
     const tokenCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const cursor = this.notificationModel
+      .aggregate<{ _id: string }>([
+        { $match: { createdAt: { $lt: notificationCutoff } } },
+        { $project: { _id: 1 } },
+      ])
+      .cursor({ batchSize: 500 });
 
-    const expiredNotifications = await this.notificationModel
-      .aggregate<{
-        _id: string;
-      }>([{ $match: { createdAt: { $lt: notificationCutoff } } }, { $project: { _id: 1 } }])
-      .exec();
+    let deletedRecipientCount = 0;
+    let batch: string[] = [];
+    for await (const notification of cursor) {
+      batch.push(notification._id);
+      if (batch.length >= 500) {
+        const result = await this.recipientModel.deleteMany({ notificationId: { $in: batch } }).exec();
+        deletedRecipientCount += result.deletedCount ?? 0;
+        batch = [];
+      }
+    }
 
-    const notificationIds = expiredNotifications.map((notification) => notification._id);
-    const deletedRecipients = notificationIds.length
-      ? await this.recipientModel.deleteMany({ notificationId: { $in: notificationIds } }).exec()
-      : { deletedCount: 0 };
+    if (batch.length > 0) {
+      const result = await this.recipientModel.deleteMany({ notificationId: { $in: batch } }).exec();
+      deletedRecipientCount += result.deletedCount ?? 0;
+    }
 
     const deletedTokens = await this.pushTokenModel
       .deleteMany({ tombstonedAt: { $lt: tokenCutoff } })
       .exec();
 
     this.logger.log(
-      `Retention prune completed: recipients=${deletedRecipients.deletedCount ?? 0}, pushTokens=${deletedTokens.deletedCount ?? 0}`,
+      `Retention prune completed: recipients=${deletedRecipientCount}, pushTokens=${deletedTokens.deletedCount ?? 0}`,
     );
   }
 }

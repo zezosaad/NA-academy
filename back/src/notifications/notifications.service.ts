@@ -275,6 +275,7 @@ export class NotificationsService {
     query: NotificationListQueryDto,
   ): Promise<NotificationListResponseDto> {
     const filter: Record<string, unknown> = {};
+    const limit = query.limit ?? 20;
 
     if (currentUserRole === UserRole.TEACHER) {
       filter.senderId = new Types.ObjectId(currentUserId);
@@ -289,7 +290,14 @@ export class NotificationsService {
     }
 
     if (query.before) {
-      filter.createdAt = { $lt: new Date(query.before) };
+      const [beforeIso, beforeId] = query.before.split('|');
+      const beforeDate = new Date(beforeIso);
+      if (!Number.isNaN(beforeDate.getTime()) && Types.ObjectId.isValid(beforeId)) {
+        filter.$or = [
+          { createdAt: { $lt: beforeDate } },
+          { createdAt: beforeDate, _id: { $lt: new Types.ObjectId(beforeId) } },
+        ];
+      }
     }
 
     if (query.q) {
@@ -299,18 +307,22 @@ export class NotificationsService {
     const notifications = await this.notificationModel
       .find(filter)
       .sort(
-        query.q ? ({ score: { $meta: 'textScore' }, createdAt: -1 } as const) : { createdAt: -1 },
+        query.q
+          ? ({ score: { $meta: 'textScore' }, createdAt: -1, _id: -1 } as const)
+          : { createdAt: -1, _id: -1 },
       )
-      .limit((query.limit ?? 20) + 1)
+      .limit(limit + 1)
       .exec();
 
-    const hasMore = notifications.length > (query.limit ?? 20);
-    const items = hasMore ? notifications.slice(0, query.limit ?? 20) : notifications;
+    const hasMore = notifications.length > limit;
+    const items = hasMore ? notifications.slice(0, limit) : notifications;
     const responseItems = await Promise.all(items.map((item) => this.toResponseDto(item)));
 
     const response = new NotificationListResponseDto();
     response.items = responseItems;
-    response.nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : undefined;
+    response.nextCursor = hasMore
+      ? `${items[items.length - 1].createdAt.toISOString()}|${items[items.length - 1]._id.toHexString()}`
+      : undefined;
     return response;
   }
 
@@ -319,6 +331,7 @@ export class NotificationsService {
     currentUserId: string,
     currentUserRole: UserRole,
   ): Promise<NotificationDetailResponseDto> {
+    const recipientPageLimit = 100;
     const notification = await this.notificationModel.findById(id).exec();
     if (!notification) {
       throw new NotFoundException('Notification not found');
@@ -341,14 +354,19 @@ export class NotificationsService {
       return detail;
     }
 
+    const recipientsTotal = await this.recipientModel.countDocuments({ notificationId: notification._id }).exec();
+
     const recipients = await this.recipientModel
       .find({ notificationId: notification._id })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: 1, _id: 1 })
+      .limit(recipientPageLimit)
       .lean()
       .exec();
 
-    const userIds = recipients.map((recipient) => recipient.userId.toString());
-    const users = await Promise.all(userIds.map((userId) => this.usersService.findById(userId)));
+    const userIds = recipients.map((recipient) => recipient.userId).filter((userId, index, array) => index === array.findIndex((candidate) => candidate.equals(userId)));
+    const users = userIds.length
+      ? await this.usersService.findManyByIds(userIds.map((userId) => userId.toString()))
+      : [];
     const userNameMap = new Map(
       users
         .filter((user): user is NonNullable<typeof user> => Boolean(user))
@@ -363,6 +381,11 @@ export class NotificationsService {
       deliveredAt: recipient.deliveredAt?.toISOString(),
       readAt: recipient.readAt?.toISOString(),
     }));
+    detail.recipientsTotal = recipientsTotal;
+    detail.recipientsLimit = recipientPageLimit;
+    detail.recipientsNextCursor = recipientsTotal > recipients.length && recipients.length > 0
+      ? `${recipients[recipients.length - 1].createdAt.toISOString()}|${recipients[recipients.length - 1]._id.toString()}`
+      : undefined;
 
     return detail;
   }

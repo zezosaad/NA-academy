@@ -89,6 +89,15 @@ export class NotificationDetailResponseDto {
   recipients?: RecipientStateDto[];
 
   @ApiPropertyOptional()
+  recipientsTotal?: number;
+
+  @ApiPropertyOptional()
+  recipientsLimit?: number;
+
+  @ApiPropertyOptional()
+  recipientsNextCursor?: string;
+
+  @ApiPropertyOptional()
   recipientsArchived?: boolean;
 
   @ApiPropertyOptional()

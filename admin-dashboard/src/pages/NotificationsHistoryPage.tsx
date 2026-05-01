@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { NotificationDetailDrawer } from '@/components/NotificationDetailDrawer'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,12 @@ export function NotificationsHistoryPage() {
   const [selected, setSelected] = useState<NotificationResponseDto | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [subjectTitles, setSubjectTitles] = useState<Record<string, string>>({})
+  const requestSeq = useRef(0)
+
+  const openDetails = (notification: NotificationResponseDto) => {
+    setSelected(notification)
+    setDrawerOpen(true)
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setQuery(searchDraft.trim()), 350)
@@ -44,34 +50,54 @@ export function NotificationsHistoryPage() {
   }, [])
 
   useEffect(() => {
+    const requestId = ++requestSeq.current
+    let cancelled = false
+
     const load = async () => {
       setLoading(true)
       setError(null)
       try {
         const response = await listNotifications({ q: query || undefined, limit: 20 })
-        setItems(response.items)
-        setNextCursor(response.nextCursor)
+        if (!cancelled && requestSeq.current === requestId) {
+          setItems(response.items)
+          setNextCursor(response.nextCursor)
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load notifications')
+        if (!cancelled && requestSeq.current === requestId) {
+          setError(err instanceof Error ? err.message : 'Failed to load notifications')
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled && requestSeq.current === requestId) {
+          setLoading(false)
+        }
       }
     }
 
     void load()
+
+    return () => {
+      cancelled = true
+    }
   }, [query])
 
   const loadMore = async () => {
     if (!nextCursor || loading) return
+    const requestId = ++requestSeq.current
     setLoading(true)
     try {
       const response = await listNotifications({ q: query || undefined, before: nextCursor, limit: 20 })
-      setItems((current) => [...current, ...response.items])
-      setNextCursor(response.nextCursor)
+      if (requestSeq.current === requestId) {
+        setItems((current) => [...current, ...response.items])
+        setNextCursor(response.nextCursor)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load more notifications')
+      if (requestSeq.current === requestId) {
+        setError(err instanceof Error ? err.message : 'Failed to load more notifications')
+      }
     } finally {
-      setLoading(false)
+      if (requestSeq.current === requestId) {
+        setLoading(false)
+      }
     }
   }
 
@@ -109,20 +135,26 @@ export function NotificationsHistoryPage() {
           </TableHeader>
           <TableBody>
             {rows.map((notification) => (
-              <TableRow
-                key={notification.id}
-                className="cursor-pointer"
-                onClick={() => {
-                  setSelected(notification)
-                  setDrawerOpen(true)
-                }}
-              >
+              <TableRow key={notification.id}>
                 <TableCell className="font-medium text-stone-900">{notification.title}</TableCell>
                 <TableCell className="text-stone-600">{audienceLabel(notification)}</TableCell>
                 <TableCell>{notification.senderName || notification.senderId}</TableCell>
                 <TableCell>{new Date(notification.createdAt).toLocaleString()}</TableCell>
                 <TableCell>{notification.stats.delivered} / {notification.stats.total}</TableCell>
-                <TableCell>{notification.stats.read}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-between gap-3">
+                    <span>{notification.stats.read}</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Open details for notification ${notification.id}`}
+                      onClick={() => openDetails(notification)}
+                    >
+                      Open details
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

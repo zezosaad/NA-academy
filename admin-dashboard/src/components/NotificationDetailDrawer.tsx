@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   Dialog,
@@ -26,28 +26,43 @@ export function NotificationDetailDrawer({
   const [detail, setDetail] = useState<NotificationDetailResponseDto | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestSeq = useRef(0)
 
   useEffect(() => {
     if (!open || !notification) {
       return
     }
 
+    const requestId = ++requestSeq.current
+    let cancelled = false
+
     const load = async () => {
       setLoading(true)
       setError(null)
       try {
-        setDetail(await getNotification(notification.id))
+        const response = await getNotification(notification.id)
+        if (!cancelled && requestSeq.current === requestId) {
+          setDetail(response)
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load notification details')
+        if (!cancelled && requestSeq.current === requestId) {
+          setError(err instanceof Error ? err.message : 'Failed to load notification details')
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled && requestSeq.current === requestId) {
+          setLoading(false)
+        }
       }
     }
 
     void load()
+
+    return () => {
+      cancelled = true
+    }
   }, [notification, open])
 
-  const active = detail ?? notification
+  const active = detail && detail.id === notification?.id ? detail : notification
   const archived = detail?.recipientsArchived === true
   const recipients = detail?.recipients ?? []
   const audienceLabel = active

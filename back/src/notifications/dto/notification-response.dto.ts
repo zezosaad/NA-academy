@@ -68,3 +68,14 @@ export class NotificationListResponseDto {
   @ApiPropertyOptional()
   nextCursor?: string;
 }
+
+export class NotificationRecipientsPageDto {
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty()
+  limit!: number;
+
+  @ApiPropertyOptional()
+  nextCursor?: string;
+}

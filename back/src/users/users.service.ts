@@ -93,6 +93,15 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  async findManyByIds(ids: string[]): Promise<UserDocument[]> {
+    const objectIds = ids.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+    if (objectIds.length === 0) {
+      return [];
+    }
+
+    return this.userModel.find({ _id: { $in: objectIds } }).exec();
+  }
+
   async searchUsers(q: string, limit = 20): Promise<Array<{ id: string; name: string; email: string; role: UserRole }>> {
     const normalized = q.trim();
     if (!normalized) {
