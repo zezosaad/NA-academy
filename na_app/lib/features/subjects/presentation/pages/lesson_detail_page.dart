@@ -423,6 +423,9 @@ class _LessonPlaylist extends StatelessWidget {
   Widget build(BuildContext context) {
     if (lessons.isEmpty) return const SizedBox.shrink();
 
+    final sortedLessons = [...lessons]
+      ..sort((a, b) => a.order.compareTo(b.order));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,13 +440,13 @@ class _LessonPlaylist extends StatelessWidget {
             ),
           ),
         ),
-        for (var index = 0; index < lessons.length; index++)
+        for (var index = 0; index < sortedLessons.length; index++)
           _PlaylistLessonRow(
-            lesson: lessons[index],
+            lesson: sortedLessons[index],
             subjectTitle: subjectTitle,
-            isCurrent: lessons[index].id == currentLessonId,
+            isCurrent: sortedLessons[index].id == currentLessonId,
             isFirst: index == 0,
-            isLast: index == lessons.length - 1,
+            isLast: index == sortedLessons.length - 1,
             isDark: isDark,
           ),
       ],

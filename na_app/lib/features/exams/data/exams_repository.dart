@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/api/dio_client.dart';
@@ -153,10 +154,29 @@ class ExamsListNotifier extends AsyncNotifier<List<Exam>> {
   }
 }
 
-final startExamProvider = FutureProvider.family<ExamStartResult, String>((
-  ref,
-  examId,
-) async {
-  final repo = ref.watch(examsRepositoryProvider);
-  return repo.getExamAndStart(examId);
-});
+@immutable
+class ExamStartParams {
+  const ExamStartParams({required this.examId, this.isFree = false});
+
+  final String examId;
+  final bool isFree;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExamStartParams &&
+          other.examId == examId &&
+          other.isFree == isFree);
+
+  @override
+  int get hashCode => Object.hash(examId, isFree);
+}
+
+final startExamProvider =
+    FutureProvider.family<ExamStartResult, ExamStartParams>((
+      ref,
+      params,
+    ) async {
+      final repo = ref.watch(examsRepositoryProvider);
+      return repo.getExamAndStart(params.examId, isFree: params.isFree);
+    });

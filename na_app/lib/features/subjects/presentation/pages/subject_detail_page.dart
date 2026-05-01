@@ -105,13 +105,11 @@ class _Content extends StatelessWidget {
 
   const _Content({required this.subject, required this.lessons});
 
-  Lesson? _firstPlayableLesson(List<Lesson> lessons) {
-    final sorted = List<Lesson>.from(lessons)
-      ..sort((a, b) => a.order.compareTo(b.order));
-    for (final lesson in sorted) {
+  Lesson? _firstPlayableLesson(List<Lesson> sortedLessons) {
+    for (final lesson in sortedLessons) {
       if (lesson.status == LessonStatus.active) return lesson;
     }
-    for (final lesson in sorted) {
+    for (final lesson in sortedLessons) {
       if (lesson.status == LessonStatus.done) return lesson;
     }
     return null;
@@ -120,6 +118,8 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sortedLessons = [...lessons]
+      ..sort((a, b) => a.order.compareTo(b.order));
 
     return MaxTextScale(
       child: Scaffold(
@@ -149,7 +149,7 @@ class _Content extends StatelessWidget {
                 child: _buildHero(
                   context,
                   isDark,
-                  _firstPlayableLesson(lessons),
+                  _firstPlayableLesson(sortedLessons),
                 ),
               ),
               const SizedBox(height: 28),
@@ -171,7 +171,7 @@ class _Content extends StatelessWidget {
               FadeInUp(
                 delay: const Duration(milliseconds: 300),
                 duration: const Duration(milliseconds: 500),
-                child: _buildLessonList(context, isDark, lessons),
+                child: _buildLessonList(context, isDark, sortedLessons),
               ),
             ],
           ),

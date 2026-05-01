@@ -12,20 +12,27 @@ FROM node:${NODE_VERSION} AS builder
 WORKDIR /admin
 
 COPY package.json package-lock.json ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 RUN npm run build
 
 # ──────────────────────────────────────────────────────────────────────
-# Stage 2: serve static assets with nginx, proxy /api and /socket.io
+# Stage 2: serve static assets with nginx as a non-root user
 # ──────────────────────────────────────────────────────────────────────
 FROM nginx:1.27-alpine AS runtime
 
+# Static SPA assets.
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /admin/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY --chown=nginx:nginx --from=builder /admin/dist /usr/share/nginx/html
+COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
 
-RUN sed -i 's/listen 80 default_server/listen 8080 default_server/' /etc/nginx/nginx.conf
+# Make every directory nginx writes to owned by the unprivileged `nginx` user.
+# /tmp holds the PID + temp paths (see nginx.conf), /var/cache/nginx is the proxy cache.
+RUN chown -R nginx:nginx /var/cache/nginx /usr/share/nginx/html \
+    && touch /tmp/nginx.pid \
+    && chown nginx:nginx /tmp/nginx.pid
+
+USER nginx
 
 EXPOSE 8080

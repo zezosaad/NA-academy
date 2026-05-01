@@ -25,6 +25,7 @@ class Exam with _$Exam {
     @Default(0) int freeAttemptsRemaining,
     DateTime? dueDate,
     @Default(ExamAccessMode.codeRequired) ExamAccessMode accessMode,
+    @Default(ExamTimingMode.perQuestion) ExamTimingMode timingMode,
     @Default(ExamStatus.available) ExamStatus status,
     double? lastScore,
   }) = _Exam;
@@ -63,6 +64,7 @@ class Exam with _$Exam {
           ? DateTime.tryParse(json['dueDate'] as String)
           : null,
       accessMode: _parseAccessMode(json['accessMode'] as String?),
+      timingMode: timingMode,
       status: _parseExamStatus(json['status'] as String?),
       lastScore: (json['lastScore'] as num?)?.toDouble(),
     );

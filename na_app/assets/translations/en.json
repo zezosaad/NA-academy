@@ -215,7 +215,7 @@
       "saved": "Saved",
       "save": "Save",
       "markCompleteActionShort": "Complete",
-      "minutes": "minutes"
+      "minutes": "{count} minutes"
     },
     "card": {
       "semanticLabel": "{title}, {count} lessons",
