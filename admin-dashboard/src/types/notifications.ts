@@ -97,6 +97,11 @@ export interface NotificationListQueryDto {
   limit?: number
 }
 
+export interface NotificationListResponseDto {
+  items: NotificationResponseDto[]
+  nextCursor?: string
+}
+
 export interface AudienceSubjectOption {
   id: string
   title: string

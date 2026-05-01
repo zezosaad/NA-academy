@@ -19,13 +19,19 @@ import {
   NotificationResponseDto,
   NotificationStatsDto,
   AudienceResponseDto,
+  NotificationListResponseDto,
 } from './dto/notification-response.dto.js';
-import { InboxItemDto, InboxResponseDto } from './dto/recipient-state.dto.js';
+import {
+  InboxItemDto,
+  InboxResponseDto,
+  NotificationDetailResponseDto,
+} from './dto/recipient-state.dto.js';
 import { FcmService } from './fcm.service.js';
 import { AudienceResolverService } from './audience-resolver.service.js';
 import { PushTokensService } from '../push-tokens/push-tokens.service.js';
 import { UserRole } from '../users/schemas/user.schema.js';
 import { UsersService } from '../users/users.service.js';
+import { NotificationListQueryDto } from './dto/notification-list-query.dto.js';
 
 type InboxNotificationAggregate = {
   notificationId: Types.ObjectId;
@@ -261,6 +267,104 @@ export class NotificationsService {
     dto.stats = statsDto;
     dto.createdAt = notification.createdAt.toISOString();
     return dto;
+  }
+
+  async listHistory(
+    currentUserId: string,
+    currentUserRole: UserRole,
+    query: NotificationListQueryDto,
+  ): Promise<NotificationListResponseDto> {
+    const filter: Record<string, unknown> = {};
+
+    if (currentUserRole === UserRole.TEACHER) {
+      filter.senderId = new Types.ObjectId(currentUserId);
+    }
+
+    if (query.audienceKind) {
+      filter['audience.kind'] = query.audienceKind;
+    }
+
+    if (query.subjectId) {
+      filter['audience.subjectId'] = new Types.ObjectId(query.subjectId);
+    }
+
+    if (query.before) {
+      filter.createdAt = { $lt: new Date(query.before) };
+    }
+
+    if (query.q) {
+      filter.$text = { $search: query.q };
+    }
+
+    const notifications = await this.notificationModel
+      .find(filter)
+      .sort(
+        query.q ? ({ score: { $meta: 'textScore' }, createdAt: -1 } as const) : { createdAt: -1 },
+      )
+      .limit((query.limit ?? 20) + 1)
+      .exec();
+
+    const hasMore = notifications.length > (query.limit ?? 20);
+    const items = hasMore ? notifications.slice(0, query.limit ?? 20) : notifications;
+    const responseItems = await Promise.all(items.map((item) => this.toResponseDto(item)));
+
+    const response = new NotificationListResponseDto();
+    response.items = responseItems;
+    response.nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : undefined;
+    return response;
+  }
+
+  async getDetail(
+    id: string,
+    currentUserId: string,
+    currentUserRole: UserRole,
+  ): Promise<NotificationDetailResponseDto> {
+    const notification = await this.notificationModel.findById(id).exec();
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    if (
+      currentUserRole === UserRole.TEACHER &&
+      notification.senderId.toHexString() !== currentUserId
+    ) {
+      throw new ForbiddenException('audience-forbidden');
+    }
+
+    const base = await this.toResponseDto(notification);
+    const detail = Object.assign(new NotificationDetailResponseDto(), base);
+
+    const retentionCutoff = new Date(notification.createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+    if (retentionCutoff < new Date()) {
+      detail.recipientsArchived = true;
+      detail.recipientsArchivedAt = retentionCutoff.toISOString();
+      return detail;
+    }
+
+    const recipients = await this.recipientModel
+      .find({ notificationId: notification._id })
+      .sort({ createdAt: 1 })
+      .lean()
+      .exec();
+
+    const userIds = recipients.map((recipient) => recipient.userId.toString());
+    const users = await Promise.all(userIds.map((userId) => this.usersService.findById(userId)));
+    const userNameMap = new Map(
+      users
+        .filter((user): user is NonNullable<typeof user> => Boolean(user))
+        .map((user) => [user._id.toString(), user.name]),
+    );
+
+    detail.recipients = recipients.map((recipient) => ({
+      userId: recipient.userId.toString(),
+      userName: userNameMap.get(recipient.userId.toString()) ?? recipient.userId.toString(),
+      state: recipient.state,
+      failureReason: recipient.failureReason,
+      deliveredAt: recipient.deliveredAt?.toISOString(),
+      readAt: recipient.readAt?.toISOString(),
+    }));
+
+    return detail;
   }
 
   async getInbox(userId: string, limit: number, before?: string): Promise<InboxResponseDto> {

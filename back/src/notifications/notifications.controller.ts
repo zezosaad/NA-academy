@@ -24,10 +24,14 @@ import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CreateNotificationDto } from './dto/create-notification.dto.js';
-import { NotificationResponseDto } from './dto/notification-response.dto.js';
-import { InboxResponseDto } from './dto/recipient-state.dto.js';
+import {
+  NotificationListResponseDto,
+  NotificationResponseDto,
+} from './dto/notification-response.dto.js';
+import { InboxResponseDto, NotificationDetailResponseDto } from './dto/recipient-state.dto.js';
 import { NotificationsService } from './notifications.service.js';
 import { UserRole } from '../users/schemas/user.schema.js';
+import { NotificationListQueryDto } from './dto/notification-list-query.dto.js';
 
 const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -119,5 +123,29 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Returns count of marked-as-read items' })
   async markAllRead(@CurrentUser('userId') userId: string): Promise<{ markedRead: number }> {
     return this.notificationsService.markAllRead(userId);
+  }
+
+  @Get()
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: 'List notification history' })
+  @ApiResponse({ status: 200, type: NotificationListResponseDto })
+  async listNotifications(
+    @CurrentUser('userId') currentUserId: string,
+    @CurrentUser('role') currentUserRole: UserRole,
+    @Query() query: NotificationListQueryDto,
+  ): Promise<NotificationListResponseDto> {
+    return this.notificationsService.listHistory(currentUserId, currentUserRole, query);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @ApiOperation({ summary: 'Get notification detail' })
+  @ApiResponse({ status: 200, type: NotificationDetailResponseDto })
+  async getNotification(
+    @Param('id') id: string,
+    @CurrentUser('userId') currentUserId: string,
+    @CurrentUser('role') currentUserRole: UserRole,
+  ): Promise<NotificationDetailResponseDto> {
+    return this.notificationsService.getDetail(id, currentUserId, currentUserRole);
   }
 }

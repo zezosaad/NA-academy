@@ -60,3 +60,11 @@ export class NotificationResponseDto {
   @ApiProperty()
   createdAt!: string;
 }
+
+export class NotificationListResponseDto {
+  @ApiProperty({ type: [NotificationResponseDto] })
+  items!: NotificationResponseDto[];
+
+  @ApiPropertyOptional()
+  nextCursor?: string;
+}

@@ -2,6 +2,7 @@ import type {
   AudienceSubjectOption,
   AudienceUserOption,
   CreateNotificationDto,
+  NotificationListResponseDto,
   NotificationResponseDto,
   NotificationDetailResponseDto,
   NotificationListQueryDto,
@@ -58,7 +59,7 @@ export async function sendNotification(
  */
 export async function listNotifications(
   query: NotificationListQueryDto = {},
-): Promise<NotificationResponseDto[]> {
+): Promise<NotificationListResponseDto> {
   const params = new URLSearchParams()
   if (query.q) params.set('q', query.q)
   if (query.audienceKind) params.set('audienceKind', query.audienceKind)
@@ -66,7 +67,7 @@ export async function listNotifications(
   if (query.before) params.set('before', query.before)
   if (query.limit != null) params.set('limit', String(query.limit))
   const qs = params.toString()
-  return apiFetch<NotificationResponseDto[]>(
+  return apiFetch<NotificationListResponseDto>(
     `/api/v1/notifications${qs ? `?${qs}` : ''}`,
   )
 }
