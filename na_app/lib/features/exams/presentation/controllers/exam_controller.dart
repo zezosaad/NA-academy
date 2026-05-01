@@ -10,8 +10,8 @@ class ExamSaveError {
 
 final examSessionProvider =
     NotifierProvider<ExamSessionNotifier, AsyncValue<ExamSession?>>(
-  ExamSessionNotifier.new,
-);
+      ExamSessionNotifier.new,
+    );
 
 class ExamSessionNotifier extends Notifier<AsyncValue<ExamSession?>> {
   @override
@@ -37,7 +37,10 @@ class ExamSessionNotifier extends Notifier<AsyncValue<ExamSession?>> {
       final updated = session.copyWith(
         answers: {
           ...session.answers,
-          questionId: AnswerValue(selectedOption: value, selectedOptions: [value]),
+          questionId: AnswerValue(
+            selectedOption: value,
+            selectedOptions: [value],
+          ),
         },
       );
       state = AsyncData(updated);
@@ -51,7 +54,12 @@ class ExamSessionNotifier extends Notifier<AsyncValue<ExamSession?>> {
     final session = state.value!;
     final repo = ref.read(examsRepositoryProvider);
     final answers = session.answers.entries
-        .map((e) => {'questionId': e.key, 'selectedOption': e.value.selectedOption})
+        .map(
+          (e) => {
+            'questionId': e.key,
+            'selectedOption': e.value.selectedOption,
+          },
+        )
         .toList();
     final score = await repo.submitSession(session.id, answers);
     state = AsyncData(session.copyWith(status: SessionStatus.submitted));
