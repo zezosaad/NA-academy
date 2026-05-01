@@ -2,12 +2,16 @@ import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Device, DeviceDocument } from './schemas/device.schema.js';
+import { PushTokensService } from '../push-tokens/push-tokens.service.js';
 
 @Injectable()
 export class DevicesService {
   private readonly logger = new Logger(DevicesService.name);
 
-  constructor(@InjectModel(Device.name) private readonly deviceModel: Model<DeviceDocument>) {}
+  constructor(
+    @InjectModel(Device.name) private readonly deviceModel: Model<DeviceDocument>,
+    private readonly pushTokensService: PushTokensService,
+  ) {}
 
   async registerDevice(userId: string, hardwareId: string): Promise<DeviceDocument> {
     // Check if user already has a device
@@ -61,6 +65,7 @@ export class DevicesService {
       .exec();
 
     if (device) {
+      await this.pushTokensService.tombstoneActiveForUser(userId);
       this.logger.log(`Device reset for user ${userId}`);
     }
   }

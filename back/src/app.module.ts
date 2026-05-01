@@ -17,6 +17,8 @@ import { ChatModule } from './chat/chat.module.js';
 import { SecurityModule } from './security/security.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { PushTokensModule } from './push-tokens/push-tokens.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 
@@ -59,6 +61,8 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     SecurityModule,
     AnalyticsModule,
     AdminModule,
+    NotificationsModule,
+    PushTokensModule,
   ],
   providers: [
     // Global guards — JwtAuthGuard runs first, then RolesGuard

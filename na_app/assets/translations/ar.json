@@ -444,5 +444,15 @@
       "secondary3": "المرحلة الثالثة",
       "secondary4": "المرحلة الرابعة"
     }
+  },
+  "notifications": {
+    "inbox_title": "الإشعارات",
+    "empty_state": "لا توجد إشعارات بعد",
+    "mark_all_read": "تحديد الكل كمقروء",
+    "now": "الآن",
+    "mins_ago": "منذ {} دقيقة",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "permission_denied_explainer": "الإشعارات معطّلة. فعّلها من إعدادات جهازك لاستلام التنبيهات."
   }
 }

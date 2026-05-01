@@ -6,8 +6,11 @@ build/
 .DS_Store
 Thumbs.db
 *.tmp
-*.swp
+*..swp
 .vscode/
 .idea/
 coverage/
 *.min.js
+
+na_app/android/app/google-services.json
+na_app/ios/Runner/GoogleService-Info.plist
