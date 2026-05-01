@@ -155,6 +155,20 @@ export class SubjectsService {
     return { data, total };
   }
 
+  async findTeachingSubjects(userId: string): Promise<Array<{ id: string; title: string }>> {
+    const subjects = await this.subjectModel
+      .find({ createdBy: new Types.ObjectId(userId), isActive: true })
+      .select('_id title')
+      .sort({ title: 1 })
+      .lean()
+      .exec();
+
+    return subjects.map((subject) => ({
+      id: subject._id.toString(),
+      title: subject.title,
+    }));
+  }
+
   async getUnlockedSubjectIds(userId: string): Promise<Set<string>> {
     const sId = new Types.ObjectId(userId);
 

@@ -169,27 +169,27 @@ User-story map (priorities from spec.md):
 
 ### Backend
 
-- [ ] T062 [US3] Implement `back/src/notifications/audience-resolver.service.ts::resolveUserList(userIds)`: validates each id is an active user; returns intersection. Throws `NotFoundException` for any missing/inactive user.
-- [ ] T063 [US3] Implement `back/src/notifications/audience-resolver.service.ts::resolveSubject(subjectId, currentUserId, currentUserRole)`:
+- [X] T062 [US3] Implement `back/src/notifications/audience-resolver.service.ts::resolveUserList(userIds)`: validates each id is an active user; returns intersection. Throws `NotFoundException` for any missing/inactive user.
+- [X] T063 [US3] Implement `back/src/notifications/audience-resolver.service.ts::resolveSubject(subjectId, currentUserId, currentUserRole)`:
   1. Load `Subject` by id; 404 if missing.
   2. Teacher path: enforce `subject.createdBy.toString() === currentUserId.toString()`; throw `ForbiddenException('audience-forbidden')` otherwise.
   3. Resolve enrollment: `User.find({ status: 'active', role: 'student', assignedSubjects: subjectId })._id`. (Field already exists on `User` schema per `back/src/users/schemas/user.schema.ts:41-42`.)
-- [ ] T064 [US3] Update `back/src/notifications/notifications.service.ts::send` to dispatch on `dto.audience.kind`: `all` → `resolveAll`, `user-list` → `resolveUserList`, `subject` → `resolveSubject`. Update the role check inside the service: admin OK on any kind; teacher OK only on `subject`.
-- [ ] T065 [US3] Add `GET /subjects/me/teaching` endpoint (or extend existing `GET /subjects` with a `?ownerOnly=true` query) in `back/src/subjects/subjects.controller.ts` so the dashboard can list a teacher's owned subjects for the picker. If a similar endpoint already exists, reuse it; otherwise add the smallest possible new route under existing `SubjectsModule`.
-- [ ] T066 [US3] Add `GET /users/search?q=<term>&limit=20` endpoint in `back/src/users/users.controller.ts` (admin-only) for the user-list picker. Searches `name` and `email` (case-insensitive prefix). Returns `{ id, name, email, role }[]` capped at 20.
+- [X] T064 [US3] Update `back/src/notifications/notifications.service.ts::send` to dispatch on `dto.audience.kind`: `all` → `resolveAll`, `user-list` → `resolveUserList`, `subject` → `resolveSubject`. Update the role check inside the service: admin OK on any kind; teacher OK only on `subject`.
+- [X] T065 [US3] Add `GET /subjects/me/teaching` endpoint (or extend existing `GET /subjects` with a `?ownerOnly=true` query) in `back/src/subjects/subjects.controller.ts` so the dashboard can list a teacher's owned subjects for the picker. If a similar endpoint already exists, reuse it; otherwise add the smallest possible new route under existing `SubjectsModule`.
+- [X] T066 [US3] Add `GET /users/search?q=<term>&limit=20` endpoint in `back/src/users/users.controller.ts` (admin-only) for the user-list picker. Searches `name` and `email` (case-insensitive prefix). Returns `{ id, name, email, role }[]` capped at 20.
 
 ### Admin dashboard
 
-- [ ] T067 [US3] Create `admin-dashboard/src/components/AudiencePicker.tsx`:
+- [X] T067 [US3] Create `admin-dashboard/src/components/AudiencePicker.tsx`:
   - Tab-style selector: `All users` | `Specific users` | `Subject`.
   - For admins: all three tabs visible.
   - For teachers: only `Subject` tab; the subject dropdown is filtered to subjects from `GET /subjects/me/teaching`.
   - `Specific users` tab: debounced search input (350 ms) calling `GET /users/search`; results render as a list; selected users appear as removable chips. Cap at 1000 selected (matches DTO bound).
   - `Subject` tab: dropdown populated from the teaching/owned-subjects endpoint.
   - Returns `AudienceDto`-shaped state via `react-hook-form` controller.
-- [ ] T068 [US3] Update `admin-dashboard/src/components/NotificationComposer.tsx` from US1 to embed the `AudiencePicker`. Replace the hard-coded `{ kind: 'all' }` with the picker's value. Validate via the existing zod schema (extend it to mirror the discriminated union).
-- [ ] T069 [P] [US3] Update `admin-dashboard/src/services/notifications.api.ts` and `admin-dashboard/src/types/notifications.ts` if needed so the types correctly model the discriminated audience union. (No new endpoints; just the type refinement.)
-- [ ] T070 [US3] Add a `useCurrentUserRole()` hook in `admin-dashboard/src/hooks/` (or extend an existing auth hook) so `AudiencePicker` can branch admin vs teacher cleanly.
+- [X] T068 [US3] Update `admin-dashboard/src/components/NotificationComposer.tsx` from US1 to embed the `AudiencePicker`. Replace the hard-coded `{ kind: 'all' }` with the picker's value. Validate via the existing zod schema (extend it to mirror the discriminated union).
+- [X] T069 [P] [US3] Update `admin-dashboard/src/services/notifications.api.ts` and `admin-dashboard/src/types/notifications.ts` if needed so the types correctly model the discriminated audience union. (No new endpoints; just the type refinement.)
+- [X] T070 [US3] Add a `useCurrentUserRole()` hook in `admin-dashboard/src/hooks/` (or extend an existing auth hook) so `AudiencePicker` can branch admin vs teacher cleanly.
 
 **Checkpoint**: All audience kinds work end-to-end. Teacher restriction holds at both the dashboard UI layer (only the Subject tab) and the backend (server-side ownership check is the source of truth).
 

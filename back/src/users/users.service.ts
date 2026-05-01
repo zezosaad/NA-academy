@@ -93,6 +93,31 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  async searchUsers(q: string, limit = 20): Promise<Array<{ id: string; name: string; email: string; role: UserRole }>> {
+    const normalized = q.trim();
+    if (!normalized) {
+      return [];
+    }
+
+    const regex = new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+    const users = await this.userModel
+      .find({
+        $or: [{ name: regex }, { email: regex }],
+      })
+      .select('_id name email role')
+      .sort({ name: 1 })
+      .limit(Math.min(limit, 20))
+      .lean()
+      .exec();
+
+    return users.map((user) => ({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    }));
+  }
+
   async findAll(query: ListUsersQueryDto): Promise<{ data: UserDocument[]; total: number }> {
     const filter: Record<string, any> = {};
 

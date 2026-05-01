@@ -1,4 +1,6 @@
 import type {
+  AudienceSubjectOption,
+  AudienceUserOption,
   CreateNotificationDto,
   NotificationResponseDto,
   NotificationDetailResponseDto,
@@ -74,4 +76,32 @@ export async function listNotifications(
  */
 export async function getNotification(id: string): Promise<NotificationDetailResponseDto> {
   return apiFetch<NotificationDetailResponseDto>(`/api/v1/notifications/${id}`)
+}
+
+export async function searchAudienceUsers(
+  q: string,
+  limit = 20,
+): Promise<AudienceUserOption[]> {
+  const params = new URLSearchParams()
+  params.set('q', q)
+  params.set('limit', String(limit))
+  return apiFetch<AudienceUserOption[]>(`/api/v1/users/search?${params.toString()}`)
+}
+
+export async function getTeachingSubjects(): Promise<AudienceSubjectOption[]> {
+  return apiFetch<AudienceSubjectOption[]>('/api/v1/subjects/me/teaching')
+}
+
+export async function getAllSubjects(): Promise<AudienceSubjectOption[]> {
+  const response = await apiFetch<{
+    data: Array<{ _id: string; title: string }>
+    total: number
+    page: number
+    limit: number
+  }>('/api/v1/subjects?limit=1000')
+
+  return response.data.map((subject) => ({
+    id: subject._id,
+    title: subject.title,
+  }))
 }
