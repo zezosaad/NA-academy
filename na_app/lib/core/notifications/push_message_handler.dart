@@ -20,14 +20,19 @@ Future<void> _upsertToInbox(RemoteMessage message) async {
     final notifId = extractNotificationId(message) ?? '';
     if (notifId.isEmpty) return;
 
-    await db.into(db.notificationsInbox).insertOnConflictUpdate(
+    await db
+        .into(db.notificationsInbox)
+        .insertOnConflictUpdate(
           NotificationsInboxCompanion(
             id: Value(notifId),
             title: Value(message.notification?.title ?? ''),
             body: Value(message.notification?.body ?? ''),
             data: Value(data.isNotEmpty ? jsonEncode(data) : null),
             senderName: Value(data['senderName'] ?? ''),
-            createdAt: Value(message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch),
+            createdAt: Value(
+              message.sentTime?.millisecondsSinceEpoch ??
+                  DateTime.now().millisecondsSinceEpoch,
+            ),
             readAt: const Value.absent(),
             lastSyncedAt: Value(DateTime.now().millisecondsSinceEpoch),
           ),
