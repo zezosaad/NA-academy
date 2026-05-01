@@ -406,6 +406,15 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
     }
 
     final initialSeconds = _questions[_currentIndex].timeLimitSeconds;
+    if (initialSeconds <= 0) {
+      if (mounted) {
+        setState(() {
+          _questionTimeLeftSeconds = 0;
+        });
+      }
+      return;
+    }
+
     if (mounted) {
       setState(() {
         _questionTimeLeftSeconds = initialSeconds;

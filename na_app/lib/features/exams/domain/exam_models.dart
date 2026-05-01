@@ -4,7 +4,7 @@ part 'exam_models.freezed.dart';
 
 enum ExamStatus { available, completed, locked }
 
-enum ExamAccessMode { codeRequired, fullExamFreeAttempts }
+enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts }
 
 enum ExamTimingMode { perQuestion, wholeExam }
 
@@ -70,6 +70,7 @@ class Exam with _$Exam {
 
   static ExamAccessMode _parseAccessMode(String? value) => switch (value) {
     'full_exam_free_attempts' => ExamAccessMode.fullExamFreeAttempts,
+    'free_section' => ExamAccessMode.freeSection,
     _ => ExamAccessMode.codeRequired,
   };
 
@@ -98,18 +99,22 @@ class Exam with _$Exam {
       return examTimeLimitMinutes ?? 0;
     }
 
-    final totalSeconds = questions.fold<int>(
+    final validSeconds = questions.fold<int>(
       0,
-      (sum, q) => sum + q.timeLimitSeconds,
+      (sum, q) => q.timeLimitSeconds >= 5 ? sum + q.timeLimitSeconds : sum,
     );
-    if (totalSeconds <= 0) return 0;
-    return (totalSeconds / 60).ceil();
+    if (validSeconds > 0) return (validSeconds / 60).ceil();
+    if (examTimeLimitMinutes != null && examTimeLimitMinutes > 0) {
+      return examTimeLimitMinutes;
+    }
+    return (questions.length * 5 / 60).ceil().clamp(1, 999);
   }
 }
 
 extension ExamAccessX on Exam {
   bool get canStartDirectly =>
-      accessMode == ExamAccessMode.fullExamFreeAttempts &&
+      (accessMode == ExamAccessMode.fullExamFreeAttempts ||
+          accessMode == ExamAccessMode.freeSection) &&
       freeAttemptsRemaining > 0;
 
   bool get needsCodeEntry => !canStartDirectly;

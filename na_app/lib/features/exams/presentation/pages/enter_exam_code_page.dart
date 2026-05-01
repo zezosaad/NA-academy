@@ -338,11 +338,11 @@ class _EnterExamCodePageState extends ConsumerState<EnterExamCodePage> {
         switch (result.reason) {
           case ActivationErrorReason.expired:
             if (mounted) {
-              context.push('/subjects/code-expired', extra: {'code': _code.toUpperCase(), 'expiredAt': result.expiredAt});
+              context.push('/subjects/code-expired', extra: {'code': _code, 'expiredAt': result.expiredAt});
             }
           case ActivationErrorReason.alreadyUsed:
             if (mounted) {
-              context.push('/subjects/code-used', extra: {'code': _code.toUpperCase(), 'consumedAt': result.consumedAt});
+              context.push('/subjects/code-used', extra: {'code': _code, 'consumedAt': result.consumedAt});
             }
           case ActivationErrorReason.deviceMismatch:
             if (!mounted) return;

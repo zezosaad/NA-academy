@@ -106,10 +106,12 @@ class _Content extends StatelessWidget {
   const _Content({required this.subject, required this.lessons});
 
   Lesson? _firstPlayableLesson(List<Lesson> lessons) {
-    for (final lesson in lessons) {
+    final sorted = List<Lesson>.from(lessons)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    for (final lesson in sorted) {
       if (lesson.status == LessonStatus.active) return lesson;
     }
-    for (final lesson in lessons) {
+    for (final lesson in sorted) {
       if (lesson.status == LessonStatus.done) return lesson;
     }
     return null;

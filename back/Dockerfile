@@ -12,7 +12,7 @@ FROM node:${NODE_VERSION} AS builder
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 COPY tsconfig*.json nest-cli.json ./
 COPY src/ ./src/

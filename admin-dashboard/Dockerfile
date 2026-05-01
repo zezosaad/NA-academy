@@ -26,4 +26,6 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /admin/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
+RUN sed -i 's/listen 80 default_server/listen 8080 default_server/' /etc/nginx/nginx.conf
+
+EXPOSE 8080

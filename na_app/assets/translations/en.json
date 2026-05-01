@@ -206,7 +206,16 @@
       "videoLoadFailure": "Failed to load video",
       "playlistTitle": "Lessons",
       "currentLesson": "Now playing",
-      "goBackTooltip": "Go back"
+      "goBackTooltip": "Go back",
+      "comingSoon": "Coming soon",
+      "like": "Like",
+      "dislike": "Dislike",
+      "summary": "Summary",
+      "share": "Share",
+      "saved": "Saved",
+      "save": "Save",
+      "markCompleteActionShort": "Complete",
+      "minutes": "minutes"
     },
     "card": {
       "semanticLabel": "{title}, {count} lessons",

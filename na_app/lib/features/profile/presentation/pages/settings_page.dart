@@ -30,7 +30,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = notifs;
-      _localeFollowsSystem = followsSystem;
+      _localeFollowsSystem = followsSystem ?? true;
       _loading = false;
     });
   }

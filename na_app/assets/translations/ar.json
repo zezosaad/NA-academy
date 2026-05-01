@@ -206,7 +206,16 @@
       "videoLoadFailure": "فشل تحميل الفيديو",
       "playlistTitle": "الدروس",
       "currentLesson": "يتم عرضه الآن",
-      "goBackTooltip": "رجوع"
+      "goBackTooltip": "رجوع",
+      "comingSoon": "قريباً",
+      "like": "إعجاب",
+      "dislike": "لا أحبه",
+      "summary": "الملخص",
+      "share": "مشاركة",
+      "saved": "محفوظ",
+      "save": "حفظ",
+      "markCompleteActionShort": "إتمام",
+      "minutes": "دقيقة"
     },
     "card": {
       "semanticLabel": "{title}، {count} دروس",

@@ -78,7 +78,12 @@ export default function ExamScreen() {
   // Per-question timer
   useEffect(() => {
     if (!examStarted || !currentQuestion || !usesPerQuestionTiming) return;
-    setQuestionTimeLeft(currentQuestion.timeLimitSeconds ?? 0);
+    const qTimeLimit = currentQuestion.timeLimitSeconds ?? 0;
+    if (qTimeLimit <= 0) {
+      setQuestionTimeLeft(0);
+      return;
+    }
+    setQuestionTimeLeft(qTimeLimit);
     qTimerRef.current = setInterval(() => {
       setQuestionTimeLeft((prev) => {
         if (prev <= 1) {

@@ -280,7 +280,7 @@ class _LessonActionBar extends StatelessWidget {
   void _showComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('قريباً', style: GoogleFonts.cairo(fontSize: 14)),
+        content: Text('subjects.lesson.comingSoon'.tr(), style: GoogleFonts.cairo(fontSize: 14)),
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -300,39 +300,35 @@ class _LessonActionBar extends StatelessWidget {
           // Like
           _ActionButton(
             icon: LucideIcons.thumbsUp,
-            label: 'إعجاب',
+            label: 'subjects.lesson.like'.tr(),
             color: muted,
             isDark: isDark,
             onTap: _showComingSoon,
           ),
-          // Dislike
           _ActionButton(
             icon: LucideIcons.thumbsDown,
-            label: 'لا أحبه',
+            label: 'subjects.lesson.dislike'.tr(),
             color: muted,
             isDark: isDark,
             onTap: _showComingSoon,
           ),
-          // Summary
           _ActionButton(
             icon: LucideIcons.fileText,
-            label: 'الملخص',
+            label: 'subjects.lesson.summary'.tr(),
             color: muted,
             isDark: isDark,
             onTap: _showComingSoon,
           ),
-          // Share
           _ActionButton(
             icon: LucideIcons.share2,
-            label: 'مشاركة',
+            label: 'subjects.lesson.share'.tr(),
             color: muted,
             isDark: isDark,
             onTap: _showComingSoon,
           ),
-          // Save
           _ActionButton(
             icon: isSaved ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
-            label: isSaved ? 'محفوظ' : 'حفظ',
+            label: isSaved ? 'subjects.lesson.saved'.tr() : 'subjects.lesson.save'.tr(),
             color: isSaved ? accent : muted,
             isDark: isDark,
             onTap: onSave,
@@ -343,16 +339,15 @@ class _LessonActionBar extends StatelessWidget {
               icon: isMarkingManually
                   ? LucideIcons.loader
                   : LucideIcons.circleCheck,
-              label: 'إتمام',
+              label: 'subjects.lesson.markCompleteActionShort'.tr(),
               color: accent,
               isDark: isDark,
               onTap: isMarkingManually ? () {} : onMarkComplete,
             ),
-          // Completed badge (compact)
           if (isCompleted)
             _ActionButton(
               icon: LucideIcons.circleCheck,
-              label: 'مكتمل',
+              label: 'subjects.lesson.completed'.tr(),
               color: accent,
               isDark: isDark,
               onTap: null,
@@ -664,7 +659,9 @@ class _PlaylistLessonRow extends StatelessWidget {
                             namedArgs: {'lesson': lesson.title},
                           )
                         : lesson.estimatedMinutes != null
-                        ? '${lesson.estimatedMinutes} دقيقة'
+                        ? 'subjects.lesson.minutes'.tr(
+                            namedArgs: {'count': '${lesson.estimatedMinutes}'},
+                          )
                         : 'subjects.detail.watchAction'.tr(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
