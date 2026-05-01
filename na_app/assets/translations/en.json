@@ -446,13 +446,21 @@
     }
   },
   "notifications": {
+    "inboxTitle": "Notifications",
     "inbox_title": "Notifications",
+    "title": "Notification",
+    "emptyState": "No notifications yet",
     "empty_state": "No notifications yet",
+    "markAllRead": "Mark all as read",
     "mark_all_read": "Mark all as read",
     "now": "Just now",
+    "minsAgo": "${count} min ago",
     "mins_ago": "{} min ago",
     "today": "Today",
     "yesterday": "Yesterday",
+    "notFound": "Notification not found",
+    "payload": "Payload",
+    "open_url": "Open link",
     "permission_denied_explainer": "Notifications are disabled. Enable them in your device settings to receive push alerts."
   }
 }

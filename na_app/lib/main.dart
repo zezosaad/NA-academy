@@ -1,19 +1,26 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:na_app/core/theme/app_theme.dart';
 import 'package:na_app/core/router/app_router.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/api/dio_client.dart';
 import 'package:na_app/core/notifications/firebase_bootstrap.dart';
+import 'package:na_app/core/notifications/local_notifications.dart';
 import 'package:na_app/core/notifications/push_message_handler.dart';
+import 'package:na_app/features/notifications/presentation/widgets/foreground_notification_banner.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await initializeNotifications();
+  await LocalNotificationsService.initialize();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   final prefs = PrefsStore();
   final initialThemeMode = await prefs.themeMode;
@@ -50,12 +57,87 @@ class _NAAppState extends ConsumerState<NAApp> {
   void initState() {
     super.initState();
     _listenSessionExpiry();
+    _setupFcmListeners();
   }
 
   void _listenSessionExpiry() {
     sessionExpiredStream.listen((_) {
       ref.invalidate(authControllerProvider);
     });
+  }
+
+  void _setupFcmListeners() {
+    FirebaseMessaging.onMessage.listen((message) {
+      handleForegroundMessage(message);
+      ForegroundNotificationBanner.show(
+        context,
+        title: message.notification?.title ?? '',
+        body: message.notification?.body ?? '',
+        onTap: () {
+          final target = extractDeepLinkTarget(message);
+          final router = ref.read(appRouterProvider);
+          if (target != null) {
+            _openTarget(router, target, message);
+            return;
+          }
+
+          final notifId = message.data['id'] ?? message.messageId;
+          if (notifId != null) {
+            router.push('/notifications/$notifId');
+          }
+        },
+      );
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      handleMessageOpenedApp(message);
+      final target = extractDeepLinkTarget(message);
+      if (target != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final router = ref.read(appRouterProvider);
+          _openTarget(router, target, message);
+        });
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final router = ref.read(appRouterProvider);
+          final notifId = message.data['id'] ?? message.messageId;
+          if (notifId != null) {
+            router.push('/notifications/$notifId');
+          }
+        });
+      }
+    });
+
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        handleInitialMessage(message);
+        final target = extractDeepLinkTarget(message);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final router = ref.read(appRouterProvider);
+          if (target != null) {
+            _openTarget(router, target, message);
+          } else {
+            final notifId = message.data['id'] ?? message.messageId;
+            if (notifId != null) {
+              router.push('/notifications/$notifId');
+            }
+          }
+        });
+      }
+    });
+  }
+
+  void _openTarget(GoRouter router, String target, RemoteMessage message) {
+    if (target.startsWith('http://') || target.startsWith('https://')) {
+      final uri = Uri.tryParse(target);
+      if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+        return;
+      }
+      unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
+      return;
+    }
+
+    router.push(target);
   }
 
   @override

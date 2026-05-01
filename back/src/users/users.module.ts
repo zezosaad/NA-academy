@@ -5,10 +5,7 @@ import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
 import { DevicesModule } from '../devices/devices.module.js';
 import { Session, SessionSchema } from '../auth/schemas/session.schema.js';
-import {
-  SubjectCode,
-  SubjectCodeSchema,
-} from '../activation-codes/schemas/subject-code.schema.js';
+import { SubjectCode, SubjectCodeSchema } from '../activation-codes/schemas/subject-code.schema.js';
 import { ExamCode, ExamCodeSchema } from '../activation-codes/schemas/exam-code.schema.js';
 import { WatchTime, WatchTimeSchema } from '../analytics/schemas/watch-time.schema.js';
 import { ExamSession, ExamSessionSchema } from '../exams/schemas/exam-session.schema.js';

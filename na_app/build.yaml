@@ -5,4 +5,3 @@ targets:
         options:
           skip_verification_code: true
           generate_manager: true
-          preserve_include_imports: true

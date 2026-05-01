@@ -52,7 +52,10 @@ export class FcmService implements OnModuleInit {
     }
   }
 
-  async sendBatch(tokens: string[], payload: { title: string; body: string; data?: Record<string, string> }): Promise<BatchSendResult> {
+  async sendBatch(
+    tokens: string[],
+    payload: { title: string; body: string; data?: Record<string, string> },
+  ): Promise<BatchSendResult> {
     if (!this.messaging) {
       this.logger.warn('Firebase messaging not initialized — skipping send');
       return {
@@ -88,7 +91,11 @@ export class FcmService implements OnModuleInit {
         this.logger.error('FCM sendEachForMulticast failed', err);
         for (const t of batch) {
           failureCount++;
-          perTokenResults.push({ token: t, success: false, error: { code: 'unknown', message: String(err) } });
+          perTokenResults.push({
+            token: t,
+            success: false,
+            error: { code: 'unknown', message: String(err) },
+          });
         }
         continue;
       }

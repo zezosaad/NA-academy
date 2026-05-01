@@ -36,16 +36,15 @@ export class LessonsController {
   }
 
   @Get('subjects/:subjectId/lessons')
-  @ApiOperation({ summary: 'List lessons for a subject with first-lesson free gating for students' })
+  @ApiOperation({
+    summary: 'List lessons for a subject with first-lesson free gating for students',
+  })
   async findBySubject(
     @Param('subjectId') subjectId: string,
     @CurrentUser('role') role: string,
     @CurrentUser('userId') userId: string,
   ) {
-    return this.lessonsService.findBySubject(
-      subjectId,
-      role === 'student' ? userId : undefined,
-    );
+    return this.lessonsService.findBySubject(subjectId, role === 'student' ? userId : undefined);
   }
 
   @Get('lessons/:id')
@@ -55,10 +54,7 @@ export class LessonsController {
     @CurrentUser('role') role: string,
     @CurrentUser('userId') userId: string,
   ) {
-    const lesson = await this.lessonsService.findById(
-      id,
-      role === 'student' ? userId : undefined,
-    );
+    const lesson = await this.lessonsService.findById(id, role === 'student' ? userId : undefined);
     if (role === 'student' && lesson.status === 'locked') {
       throw new ForbiddenException('Lesson is locked. Activate the subject code first.');
     }

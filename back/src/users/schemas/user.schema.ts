@@ -1,9 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import {
-  DEFAULT_STUDENT_LEVEL,
-  EducationLevel,
-} from '../../common/enums/education-level.enum.js';
+import { DEFAULT_STUDENT_LEVEL, EducationLevel } from '../../common/enums/education-level.enum.js';
 
 export type UserDocument = HydratedDocument<User>;
 

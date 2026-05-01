@@ -7,6 +7,7 @@ import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/api/dio_client.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
+import 'package:na_app/core/notifications/push_token_registrar.dart';
 import 'package:na_app/features/auth/data/auth_repository.dart';
 import 'package:na_app/features/auth/domain/auth_models.dart';
 
@@ -16,6 +17,7 @@ final authControllerProvider =
         authRepository: ref.watch(authRepositoryProvider),
         prefsStore: ref.watch(prefsStoreProvider),
         tokenStore: ref.watch(secureTokenStoreProvider),
+        pushTokenRegistrar: ref.watch(pushTokenRegistrarProvider),
       )..bootstrap();
     });
 
@@ -23,6 +25,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   final AuthRepository _authRepository;
   final PrefsStore _prefsStore;
   final SecureTokenStore _tokenStore;
+  final PushTokenRegistrar _pushTokenRegistrar;
   StreamSubscription<void>? _sessionExpiredSub;
 
   User? _currentUser;
@@ -34,9 +37,11 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     required AuthRepository authRepository,
     required PrefsStore prefsStore,
     required SecureTokenStore tokenStore,
+    required PushTokenRegistrar pushTokenRegistrar,
   }) : _authRepository = authRepository,
        _prefsStore = prefsStore,
        _tokenStore = tokenStore,
+       _pushTokenRegistrar = pushTokenRegistrar,
        super(const AsyncValue.loading()) {
     _sessionExpiredSub = sessionExpiredStream.listen((_) {
       _currentUser = null;
@@ -58,20 +63,17 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       _currentUser = user;
       _wasAuthenticated = true;
       state = AsyncValue.data(session);
+      unawaited(_pushTokenRegistrar.registerOnLogin());
+      return;
     } catch (e, st) {
+      _logAuthError('bootstrap', e, st);
       if (_shouldClearStoredSession(e)) {
-        // Stored session is no longer valid (token expired / user removed).
-        // This is a benign, expected path — log quietly and reset.
-        debugPrint('[AuthController] bootstrap: clearing stale session ($e)');
         await _tokenStore.clear();
         _currentUser = null;
         _wasAuthenticated = false;
         state = const AsyncValue.data(null);
         return;
       }
-
-      // Unexpected failure — keep stored session and surface a real error log.
-      _logAuthError('bootstrap', e, st);
       final storedSession = await _tokenStore.storedSession;
       _currentUser = null;
       _wasAuthenticated = storedSession != null;
@@ -92,6 +94,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       _currentUser = result.user;
       _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
+      unawaited(_pushTokenRegistrar.registerOnLogin());
       return const AuthAttemptResult.success();
     } catch (e, st) {
       _logAuthError('login', e, st);
@@ -116,6 +119,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       _currentUser = result.user;
       _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
+      unawaited(_pushTokenRegistrar.registerOnLogin());
       return const AuthAttemptResult.success();
     } catch (e, st) {
       _logAuthError('register', e, st);
@@ -124,6 +128,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
   }
 
   Future<void> logout() async {
+    await _pushTokenRegistrar.unregisterOnLogout();
     await _authRepository.logout();
     _currentUser = null;
     _wasAuthenticated = false;
@@ -153,6 +158,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       _currentUser = result.user;
       _wasAuthenticated = true;
       state = AsyncValue.data(result.session);
+      unawaited(_pushTokenRegistrar.registerOnLogin());
       return const AuthAttemptResult.success();
     } catch (e, st) {
       _logAuthError('resetPassword', e, st);

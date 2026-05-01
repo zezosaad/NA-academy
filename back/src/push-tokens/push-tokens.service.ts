@@ -9,7 +9,9 @@ import { RegisterTokenDto, RefreshTokenDto } from './dto/register-token.dto.js';
 export class PushTokensService {
   private readonly logger = new Logger(PushTokensService.name);
 
-  constructor(@InjectModel(PushToken.name) private readonly pushTokenModel: Model<PushTokenDocument>) {}
+  constructor(
+    @InjectModel(PushToken.name) private readonly pushTokenModel: Model<PushTokenDocument>,
+  ) {}
 
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');

@@ -5,7 +5,10 @@ import { AnalyticsService } from './analytics.service.js';
 import { AnalyticsController } from './analytics.controller.js';
 import { MediaModule } from '../media/media.module.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
-import { LessonProgress, LessonProgressSchema } from '../lesson-progress/schemas/lesson-progress.schema.js';
+import {
+  LessonProgress,
+  LessonProgressSchema,
+} from '../lesson-progress/schemas/lesson-progress.schema.js';
 import { ExamScore, ExamScoreSchema } from '../exams/schemas/exam-score.schema.js';
 
 @Module({

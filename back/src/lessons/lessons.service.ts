@@ -51,7 +51,11 @@ export class LessonsService {
     return firstLessonId == lesson._id.toString();
   }
 
-  async canAccessMediaContent(userId: string, subjectId: string, mediaId: string): Promise<boolean> {
+  async canAccessMediaContent(
+    userId: string,
+    subjectId: string,
+    mediaId: string,
+  ): Promise<boolean> {
     const hasSubjectAccess = await this.hasUnlockedSubjectAccess(userId, subjectId);
     if (hasSubjectAccess) {
       return true;
@@ -75,11 +79,7 @@ export class LessonsService {
     return this.canAccessLessonContent(userId, lesson);
   }
 
-  async create(
-    subjectId: string,
-    dto: CreateLessonDto,
-    userId: string,
-  ): Promise<LessonDocument> {
+  async create(subjectId: string, dto: CreateLessonDto, userId: string): Promise<LessonDocument> {
     const subject = await this.subjectModel.findById(subjectId).exec();
     if (!subject) throw new NotFoundException('Subject not found');
 
@@ -117,9 +117,7 @@ export class LessonsService {
         .exec(),
       this.hasUnlockedSubjectAccess(userId, subjectId),
     ]);
-    const completedSet = new Set(
-      completedRows.map((r) => r.lessonId.toString()),
-    );
+    const completedSet = new Set(completedRows.map((r) => r.lessonId.toString()));
     const firstAccessibleLessonId = lessons.length > 0 ? lessons[0]._id.toString() : null;
 
     return lessons.map((l) => ({

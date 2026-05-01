@@ -1,4 +1,14 @@
-import { IsOptional, IsString, Length, IsIn, IsMongoId, IsISO8601, IsInt, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Length,
+  IsIn,
+  IsMongoId,
+  IsISO8601,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import type { AudienceKind } from './audience.dto.js';

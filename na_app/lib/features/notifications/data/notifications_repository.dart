@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/storage/app_database.dart';
 import 'package:na_app/features/notifications/data/notifications_local_data_source.dart';
@@ -32,6 +33,10 @@ class NotificationsRepository {
 
   Stream<int> getUnreadCountStream() {
     return _local.getUnreadCountStream();
+  }
+
+  Future<NotificationsInboxData?> getById(String id) {
+    return _local.getById(id);
   }
 
   Future<void> refreshFromServer({int limit = 50}) async {

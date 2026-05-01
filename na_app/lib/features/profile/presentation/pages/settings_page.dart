@@ -1,9 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
+import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -12,7 +15,7 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
   bool _notificationsEnabled = true;
   bool _localeFollowsSystem = true;
   bool _loading = true;
@@ -20,19 +23,52 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadPrefs();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncNotificationPermission();
+    }
   }
 
   Future<void> _loadPrefs() async {
     final prefsStore = ref.read(prefsStoreProvider);
-    final notifs = await prefsStore.notificationsEnabled;
     final followsSystem = await prefsStore.localeFollowsSystem;
+    final notifs = await _syncNotificationPermission(savePreference: false);
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = notifs;
       _localeFollowsSystem = followsSystem ?? true;
       _loading = false;
     });
+  }
+
+  Future<bool> _syncNotificationPermission({bool savePreference = true}) async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final enabled = settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+
+    if (savePreference) {
+      final prefsStore = ref.read(prefsStoreProvider);
+      await prefsStore.setNotificationsEnabled(enabled);
+    }
+
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = enabled;
+      });
+    }
+
+    return enabled;
   }
 
   @override
@@ -232,44 +268,121 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor),
       ),
-      child: SwitchListTile(
-        value: _notificationsEnabled,
-        onChanged: (enabled) async {
-          setState(() => _notificationsEnabled = enabled);
-          final prefsStore = ref.read(prefsStoreProvider);
-          await prefsStore.setNotificationsEnabled(enabled);
-        },
-        title: Text(
-          'settings.notifications.title'.tr(),
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontSize: 15),
-        ),
-        subtitle: Text(
-          _notificationsEnabled
-              ? 'settings.notifications.enabled'.tr()
-              : 'settings.notifications.disabled'.tr(),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: mutedColor,
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: _notificationsEnabled,
+            onChanged: (enabled) async {
+              final prefsStore = ref.read(prefsStoreProvider);
+              if (enabled) {
+                await FirebaseMessaging.instance.requestPermission(
+                  alert: true,
+                  badge: true,
+                  sound: true,
+                );
+                await _syncNotificationPermission();
+              } else {
+                final settings = await FirebaseMessaging.instance.getNotificationSettings();
+                final osStillEnabled = settings.authorizationStatus == AuthorizationStatus.authorized ||
+                    settings.authorizationStatus == AuthorizationStatus.provisional;
+
+                if (osStillEnabled && mounted) {
+                  final openSettings = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        title: const Text('Notifications'),
+                        content: Text('notifications.permission_denied_explainer'.tr()),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(true),
+                            child: const Text('Open settings'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (openSettings == true) {
+                    await openAppSettings();
+                  }
+                }
+
+                await prefsStore.setNotificationsEnabled(false);
+                if (mounted) {
+                  setState(() => _notificationsEnabled = false);
+                }
+              }
+            },
+            title: Text(
+              'settings.notifications.title'.tr(),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontSize: 15),
+            ),
+            subtitle: Text(
+              _notificationsEnabled
+                  ? 'settings.notifications.enabled'.tr()
+                  : 'settings.notifications.disabled'.tr(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: mutedColor,
+                  ),
+            ),
+            secondary: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+                borderRadius: BorderRadius.circular(10),
               ),
-        ),
-        secondary: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
-            borderRadius: BorderRadius.circular(10),
+              child: Icon(
+                LucideIcons.bell,
+                size: 16,
+                color: textColor,
+              ),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
           ),
-          child: Icon(
-            LucideIcons.bell,
-            size: 16,
-            color: textColor,
+          InkWell(
+            onTap: () => context.push('/notifications'),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(18),
+              bottomRight: Radius.circular(18),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: borderColor),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'notifications.inbox_title'.tr(),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: textColor,
+                        ),
+                  ),
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 16,
+                    color: mutedColor,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        ],
       ),
     );
   }

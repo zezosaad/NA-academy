@@ -212,11 +212,7 @@ export class SubjectsService {
     return subject;
   }
 
-  async findSubjectByIdForUser(
-    id: string,
-    role?: string,
-    userId?: string,
-  ): Promise<any> {
+  async findSubjectByIdForUser(id: string, role?: string, userId?: string): Promise<any> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid subject id');
     }
