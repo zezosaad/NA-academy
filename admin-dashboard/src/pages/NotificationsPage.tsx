@@ -1,4 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { NotificationsHistoryPage } from "./NotificationsHistoryPage"
 import { NotificationsSendPage } from "./NotificationsSendPage"
 import { Bell } from "lucide-react"
 
@@ -13,13 +14,15 @@ export function NotificationsPage() {
       <Tabs defaultValue="send">
         <TabsList className="border border-stone-200 bg-stone-50">
           <TabsTrigger value="send">Send</TabsTrigger>
-          <TabsTrigger value="history" disabled className="opacity-40">
-            History (coming soon)
-          </TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="send" className="mt-6">
           <NotificationsSendPage />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <NotificationsHistoryPage />
         </TabsContent>
       </Tabs>
     </div>

@@ -60,3 +60,22 @@ export class NotificationResponseDto {
   @ApiProperty()
   createdAt!: string;
 }
+
+export class NotificationListResponseDto {
+  @ApiProperty({ type: [NotificationResponseDto] })
+  items!: NotificationResponseDto[];
+
+  @ApiPropertyOptional()
+  nextCursor?: string;
+}
+
+export class NotificationRecipientsPageDto {
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty()
+  limit!: number;
+
+  @ApiPropertyOptional()
+  nextCursor?: string;
+}

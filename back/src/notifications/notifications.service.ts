@@ -19,13 +19,19 @@ import {
   NotificationResponseDto,
   NotificationStatsDto,
   AudienceResponseDto,
+  NotificationListResponseDto,
 } from './dto/notification-response.dto.js';
-import { InboxItemDto, InboxResponseDto } from './dto/recipient-state.dto.js';
+import {
+  InboxItemDto,
+  InboxResponseDto,
+  NotificationDetailResponseDto,
+} from './dto/recipient-state.dto.js';
 import { FcmService } from './fcm.service.js';
 import { AudienceResolverService } from './audience-resolver.service.js';
 import { PushTokensService } from '../push-tokens/push-tokens.service.js';
 import { UserRole } from '../users/schemas/user.schema.js';
 import { UsersService } from '../users/users.service.js';
+import { NotificationListQueryDto } from './dto/notification-list-query.dto.js';
 
 type InboxNotificationAggregate = {
   notificationId: Types.ObjectId;
@@ -148,6 +154,7 @@ export class NotificationsService {
     if (activeTokenDocs.length > 0) {
       const tokens = activeTokenDocs.map((td) => td.token);
       const dataPayload: Record<string, string> = {};
+      dataPayload.notificationId = notificationId.toHexString();
       if (dto.data) {
         for (const [k, v] of Object.entries(dto.data)) {
           dataPayload[k] = v;
@@ -261,6 +268,127 @@ export class NotificationsService {
     dto.stats = statsDto;
     dto.createdAt = notification.createdAt.toISOString();
     return dto;
+  }
+
+  async listHistory(
+    currentUserId: string,
+    currentUserRole: UserRole,
+    query: NotificationListQueryDto,
+  ): Promise<NotificationListResponseDto> {
+    const filter: Record<string, unknown> = {};
+    const limit = query.limit ?? 20;
+
+    if (currentUserRole === UserRole.TEACHER) {
+      filter.senderId = new Types.ObjectId(currentUserId);
+    }
+
+    if (query.audienceKind) {
+      filter['audience.kind'] = query.audienceKind;
+    }
+
+    if (query.subjectId) {
+      filter['audience.subjectId'] = new Types.ObjectId(query.subjectId);
+    }
+
+    if (query.before) {
+      const [beforeIso, beforeId] = query.before.split('|');
+      const beforeDate = new Date(beforeIso);
+      if (!Number.isNaN(beforeDate.getTime()) && Types.ObjectId.isValid(beforeId)) {
+        filter.$or = [
+          { createdAt: { $lt: beforeDate } },
+          { createdAt: beforeDate, _id: { $lt: new Types.ObjectId(beforeId) } },
+        ];
+      }
+    }
+
+    if (query.q) {
+      filter.$text = { $search: query.q };
+    }
+
+    const notifications = await this.notificationModel
+      .find(filter)
+      .sort(
+        query.q
+          ? ({ score: { $meta: 'textScore' }, createdAt: -1, _id: -1 } as const)
+          : { createdAt: -1, _id: -1 },
+      )
+      .limit(limit + 1)
+      .exec();
+
+    const hasMore = notifications.length > limit;
+    const items = hasMore ? notifications.slice(0, limit) : notifications;
+    const responseItems = await Promise.all(items.map((item) => this.toResponseDto(item)));
+
+    const response = new NotificationListResponseDto();
+    response.items = responseItems;
+    response.nextCursor = hasMore
+      ? `${items[items.length - 1].createdAt.toISOString()}|${items[items.length - 1]._id.toHexString()}`
+      : undefined;
+    return response;
+  }
+
+  async getDetail(
+    id: string,
+    currentUserId: string,
+    currentUserRole: UserRole,
+  ): Promise<NotificationDetailResponseDto> {
+    const recipientPageLimit = 100;
+    const notification = await this.notificationModel.findById(id).exec();
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    if (
+      currentUserRole === UserRole.TEACHER &&
+      notification.senderId.toHexString() !== currentUserId
+    ) {
+      throw new ForbiddenException('audience-forbidden');
+    }
+
+    const base = await this.toResponseDto(notification);
+    const detail = Object.assign(new NotificationDetailResponseDto(), base);
+
+    const retentionCutoff = new Date(notification.createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+    if (retentionCutoff < new Date()) {
+      detail.recipientsArchived = true;
+      detail.recipientsArchivedAt = retentionCutoff.toISOString();
+      return detail;
+    }
+
+    const recipientsTotal = await this.recipientModel.countDocuments({ notificationId: notification._id }).exec();
+
+    const recipients = await this.recipientModel
+      .find({ notificationId: notification._id })
+      .sort({ createdAt: 1, _id: 1 })
+      .limit(recipientPageLimit)
+      .lean()
+      .exec();
+
+    const userIds = recipients.map((recipient) => recipient.userId).filter((userId, index, array) => index === array.findIndex((candidate) => candidate.equals(userId)));
+    const users = userIds.length
+      ? await this.usersService.findManyByIds(userIds.map((userId) => userId.toString()))
+      : [];
+    const userNameMap = new Map(
+      users
+        .filter((user): user is NonNullable<typeof user> => Boolean(user))
+        .map((user) => [user._id.toString(), user.name]),
+    );
+
+    detail.recipients = recipients.map((recipient) => ({
+      userId: recipient.userId.toString(),
+      userName: userNameMap.get(recipient.userId.toString()) ?? recipient.userId.toString(),
+      state: recipient.state,
+      failureReason: recipient.failureReason,
+      deliveredAt: recipient.deliveredAt?.toISOString(),
+      readAt: recipient.readAt?.toISOString(),
+    }));
+    detail.recipientsTotal = recipientsTotal;
+    detail.recipientsLimit = recipientPageLimit;
+    detail.recipientsNextCursor = recipientsTotal > recipients.length && recipients.length > 0
+      ? `${recipients[recipients.length - 1].createdAt.toISOString()}|${recipients[recipients.length - 1]._id.toString()}`
+      : undefined;
+
+    return detail;
   }
 
   async getInbox(userId: string, limit: number, before?: string): Promise<InboxResponseDto> {

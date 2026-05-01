@@ -17,17 +17,22 @@ Future<void> _upsertToInbox(RemoteMessage message) async {
   try {
     final db = AppDatabase();
     final data = message.data;
-    final notifId = data['id'] ?? message.messageId ?? '';
+    final notifId = extractNotificationId(message) ?? '';
     if (notifId.isEmpty) return;
 
-    await db.into(db.notificationsInbox).insertOnConflictUpdate(
+    await db
+        .into(db.notificationsInbox)
+        .insertOnConflictUpdate(
           NotificationsInboxCompanion(
             id: Value(notifId),
             title: Value(message.notification?.title ?? ''),
             body: Value(message.notification?.body ?? ''),
             data: Value(data.isNotEmpty ? jsonEncode(data) : null),
             senderName: Value(data['senderName'] ?? ''),
-            createdAt: Value(message.sentTime?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch),
+            createdAt: Value(
+              message.sentTime?.millisecondsSinceEpoch ??
+                  DateTime.now().millisecondsSinceEpoch,
+            ),
             readAt: const Value.absent(),
             lastSyncedAt: Value(DateTime.now().millisecondsSinceEpoch),
           ),
@@ -35,6 +40,31 @@ Future<void> _upsertToInbox(RemoteMessage message) async {
   } catch (e) {
     _log.e('Failed to upsert notification to inbox: $e');
   }
+}
+
+String? extractNotificationId(RemoteMessage message) {
+  final data = message.data;
+
+  final explicitId = data['notificationId'];
+  if (explicitId != null && explicitId.toString().isNotEmpty) {
+    return explicitId.toString();
+  }
+
+  // Legacy fallback: use `id` only for generic notifications without deep-link types.
+  final legacyId = data['id'];
+  final type = data['type'];
+  if ((type == null || type.toString().isEmpty) &&
+      legacyId != null &&
+      legacyId.toString().isNotEmpty) {
+    return legacyId.toString();
+  }
+
+  final messageId = message.messageId;
+  if (messageId != null && messageId.isNotEmpty) {
+    return messageId;
+  }
+
+  return null;
 }
 
 Future<void> handleForegroundMessage(RemoteMessage message) async {

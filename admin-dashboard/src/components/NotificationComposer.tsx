@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,30 +11,31 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole'
-import { sendNotification } from '@/services/notifications.api'
-import type { AudienceDto, NotificationResponseDto } from '@/types/notifications'
+import { api } from '@/services/api'
+import {
+  getAllExams,
+  getAllSubjects,
+  getTeachingSubjects,
+  sendNotification,
+} from '@/services/notifications.api'
+import type { Lesson } from '@/types'
+import type {
+  AudienceDto,
+  AudienceSubjectOption,
+  NotificationResponseDto,
+} from '@/types/notifications'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const schema = z
   .object({
     title: z.string().min(1, 'Title is required').max(100, 'Title must be ≤100 characters'),
     body: z.string().min(1, 'Message body is required').max(1000, 'Body must be ≤1000 characters'),
-    data: z
-      .string()
-      .optional()
-      .refine((val) => {
-        if (!val || val.trim() === '') return true
-        try {
-          const parsed = JSON.parse(val)
-          return (
-            typeof parsed === 'object' &&
-            parsed !== null &&
-            !Array.isArray(parsed) &&
-            Object.values(parsed).every((v) => typeof v === 'string')
-          )
-        } catch {
-          return false
-        }
-      }, { message: 'Data must be valid JSON with string values only, e.g. {"key": "value"}' }),
     audience: z.object({
       kind: z.enum(['all', 'user-list', 'subject']),
       userIds: z.array(z.string()).optional(),
@@ -60,6 +61,7 @@ const schema = z
   })
 
 type FormValues = z.infer<typeof schema>
+type PayloadType = 'none' | 'subject' | 'lesson' | 'exam' | 'url'
 
 interface NotificationComposerProps {
   onSent?: (notification: NotificationResponseDto) => void
@@ -70,6 +72,18 @@ export function NotificationComposer({ onSent }: NotificationComposerProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [lastSentId, setLastSentId] = useState<string | null>(null)
+  const [payloadType, setPayloadType] = useState<PayloadType>('none')
+  const [payloadSubjectId, setPayloadSubjectId] = useState('')
+  const [payloadLessonSubjectId, setPayloadLessonSubjectId] = useState('')
+  const [payloadLessonId, setPayloadLessonId] = useState('')
+  const [payloadExamId, setPayloadExamId] = useState('')
+  const [payloadUrl, setPayloadUrl] = useState('')
+  const [payloadError, setPayloadError] = useState<string | null>(null)
+  const [payloadTargetsError, setPayloadTargetsError] = useState<string | null>(null)
+  const [payloadSubjects, setPayloadSubjects] = useState<AudienceSubjectOption[]>([])
+  const [payloadLessons, setPayloadLessons] = useState<Lesson[]>([])
+  const [payloadExams, setPayloadExams] = useState<Array<{ _id: string; title: string; subjectId: string | { _id: string; title: string } }>>([])
+  const [payloadLoading, setPayloadLoading] = useState(false)
 
   const {
     register,
@@ -88,20 +102,129 @@ export function NotificationComposer({ onSent }: NotificationComposerProps) {
   const bodyValue = watch('body') ?? ''
   const audience = watch('audience') as AudienceDto
 
+  const selectedExam = useMemo(
+    () => payloadExams.find((exam) => exam._id === payloadExamId) ?? null,
+    [payloadExamId, payloadExams],
+  )
+
+  useEffect(() => {
+    const loadPayloadTargets = async () => {
+      setPayloadLoading(true)
+      setPayloadTargetsError(null)
+
+      const [subjectsResult, examsResult] = await Promise.allSettled([
+        role === 'teacher' ? getTeachingSubjects() : getAllSubjects(),
+        getAllExams(),
+      ])
+
+      if (subjectsResult.status === 'fulfilled') {
+        setPayloadSubjects(subjectsResult.value)
+      } else {
+        console.error('Failed to load payload subjects', subjectsResult.reason)
+        setPayloadSubjects([])
+        setPayloadTargetsError('Unable to load subjects list')
+      }
+
+      if (examsResult.status === 'fulfilled') {
+        setPayloadExams(examsResult.value)
+      } else {
+        console.error('Failed to load payload exams', examsResult.reason)
+        setPayloadExams([])
+      }
+
+      setPayloadLoading(false)
+    }
+
+    void loadPayloadTargets()
+  }, [role])
+
+  useEffect(() => {
+    if (payloadType !== 'lesson' || !payloadLessonSubjectId) {
+      setPayloadLessons([])
+      setPayloadLessonId('')
+      return
+    }
+
+    const loadLessons = async () => {
+      try {
+        const lessons = await api.getLessons(payloadLessonSubjectId)
+        setPayloadLessons(lessons)
+      } catch (error) {
+        console.error('Failed to load lessons for payload', error)
+        setPayloadLessons([])
+      }
+    }
+
+    void loadLessons()
+  }, [payloadLessonSubjectId, payloadType])
+
   const onSubmit = async (values: FormValues) => {
     setStatus('loading')
     setErrorMessage('')
+    setPayloadError(null)
 
     try {
-      let data: Record<string, string> | undefined
-      if (values.data && values.data.trim()) {
-        data = JSON.parse(values.data) as Record<string, string>
+      let data: Record<string, string> = {}
+
+      if (payloadType === 'subject') {
+        if (!payloadSubjectId) {
+          setPayloadError('Please select a subject for payload')
+          setStatus('idle')
+          return
+        }
+        data = { ...data, type: 'subject', id: payloadSubjectId }
       }
+
+      if (payloadType === 'lesson') {
+        if (!payloadLessonSubjectId || !payloadLessonId) {
+          setPayloadError('Please select subject and lesson for payload')
+          setStatus('idle')
+          return
+        }
+        data = {
+          ...data,
+          type: 'lesson',
+          subjectId: payloadLessonSubjectId,
+          id: payloadLessonId,
+        }
+      }
+
+      if (payloadType === 'exam') {
+        if (!payloadExamId) {
+          setPayloadError('Please select an exam for payload')
+          setStatus('idle')
+          return
+        }
+        data = { ...data, type: 'exam', id: payloadExamId }
+      }
+
+      if (payloadType === 'url') {
+        const normalizedUrl = payloadUrl.trim()
+        if (!normalizedUrl) {
+          setPayloadError('Please enter URL for payload')
+          setStatus('idle')
+          return
+        }
+
+        try {
+          // Validate URL format before sending.
+          // eslint-disable-next-line no-new
+          new URL(normalizedUrl)
+        } catch {
+          setPayloadError('Please enter a valid URL (https://...)')
+          setStatus('idle')
+          return
+        }
+
+        data = { ...data, type: 'url', url: normalizedUrl }
+      }
+
+      const finalData = Object.keys(data).length > 0 ? data : undefined
 
       const result = await sendNotification({
         title: values.title,
         body: values.body,
-        data,
+        data: finalData,
         audience: values.audience,
       })
 
@@ -111,9 +234,14 @@ export function NotificationComposer({ onSent }: NotificationComposerProps) {
       reset({
         title: '',
         body: '',
-        data: '',
         audience: role === 'teacher' ? { kind: 'subject' } : { kind: 'all' },
       })
+      setPayloadType('none')
+      setPayloadSubjectId('')
+      setPayloadLessonSubjectId('')
+      setPayloadLessonId('')
+      setPayloadExamId('')
+      setPayloadUrl('')
     } catch (err) {
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Failed to send notification')
@@ -165,18 +293,143 @@ export function NotificationComposer({ onSent }: NotificationComposerProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="data" className="text-sm font-medium text-stone-700">
-              Payload <span className="font-normal text-stone-400">(optional JSON)</span>
-            </Label>
-            <Textarea
-              id="data"
-              placeholder='{"type": "lesson", "lessonId": "..."}'
-              rows={3}
-              className="resize-none border-stone-200 bg-white font-mono text-xs focus-visible:ring-teal-600"
-              {...register('data')}
-            />
-            {errors.data && <p className="text-xs text-red-600">{errors.data.message}</p>}
+            <Label className="text-sm font-medium text-stone-700">Payload target</Label>
+            <Select
+              value={payloadType}
+              onValueChange={(value) => {
+                setPayloadType(value as PayloadType)
+                setPayloadError(null)
+              }}
+            >
+              <SelectTrigger className="border-stone-200 bg-white focus:ring-teal-600">
+                <SelectValue placeholder="Choose target type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="subject">Open subject</SelectItem>
+                <SelectItem value="lesson">Open lesson</SelectItem>
+                <SelectItem value="exam">Open exam</SelectItem>
+                <SelectItem value="url">Open URL</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {payloadType === 'subject' && (
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-stone-700">Choose subject</Label>
+              <Select value={payloadSubjectId} onValueChange={setPayloadSubjectId}>
+                <SelectTrigger className="border-stone-200 bg-white focus:ring-teal-600">
+                  <SelectValue placeholder={payloadLoading ? 'Loading subjects...' : 'Select subject'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {payloadSubjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {payloadTargetsError && <p className="text-xs text-red-600">{payloadTargetsError}</p>}
+              {!payloadLoading && !payloadTargetsError && payloadSubjects.length === 0 && (
+                <p className="text-xs text-stone-500">No subjects available for your account.</p>
+              )}
+            </div>
+          )}
+
+          {payloadType === 'lesson' && (
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-stone-700">Choose subject</Label>
+                <Select
+                  value={payloadLessonSubjectId}
+                  onValueChange={(nextSubjectId) => {
+                    setPayloadLessonSubjectId(nextSubjectId)
+                    setPayloadLessonId('')
+                  }}
+                >
+                  <SelectTrigger className="border-stone-200 bg-white focus:ring-teal-600">
+                    <SelectValue placeholder={payloadLoading ? 'Loading subjects...' : 'Select subject'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {payloadSubjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-stone-700">Choose lesson</Label>
+                <Select
+                  value={payloadLessonId}
+                  onValueChange={setPayloadLessonId}
+                  disabled={!payloadLessonSubjectId}
+                >
+                  <SelectTrigger className="border-stone-200 bg-white focus:ring-teal-600">
+                    <SelectValue
+                      placeholder={
+                        !payloadLessonSubjectId
+                          ? 'Select subject first'
+                          : payloadLessons.length === 0
+                            ? 'No lessons found'
+                            : 'Select lesson'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {payloadLessons.map((lesson) => (
+                      <SelectItem key={lesson._id} value={lesson._id}>
+                        {lesson.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {payloadType === 'exam' && (
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-stone-700">Choose exam</Label>
+              <Select value={payloadExamId} onValueChange={setPayloadExamId}>
+                <SelectTrigger className="border-stone-200 bg-white focus:ring-teal-600">
+                  <SelectValue placeholder={payloadLoading ? 'Loading exams...' : 'Select exam'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {payloadExams.map((exam) => (
+                    <SelectItem key={exam._id} value={exam._id}>
+                      {exam.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedExam && (
+                <p className="text-xs text-stone-500">
+                  Linked subject:{' '}
+                  {typeof selectedExam.subjectId === 'string'
+                    ? payloadSubjects.find((subject) => subject.id === selectedExam.subjectId)?.title ?? selectedExam.subjectId
+                    : selectedExam.subjectId.title}
+                </p>
+              )}
+            </div>
+          )}
+
+          {payloadType === 'url' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="payload-url" className="text-sm font-medium text-stone-700">Destination URL</Label>
+              <Input
+                id="payload-url"
+                value={payloadUrl}
+                onChange={(event) => setPayloadUrl(event.target.value)}
+                placeholder="https://example.com/path"
+                className="border-stone-200 bg-white focus-visible:ring-teal-600"
+              />
+            </div>
+          )}
+
+          {payloadError && <p className="text-xs text-red-600">{payloadError}</p>}
 
           <AudiencePicker
             value={audience}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import configuration from './config/configuration.js';
@@ -46,6 +47,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
         limit: 100,
       },
     ]),
+    ScheduleModule.forRoot(),
 
     // Feature modules
     AuthModule,

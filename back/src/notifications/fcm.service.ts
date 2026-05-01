@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { isAbsolute, resolve } from 'path';
 
 export interface BatchSendResult {
   successCount: number;
@@ -36,7 +37,10 @@ export class FcmService implements OnModuleInit {
       }
     } else if (serviceAccountPath) {
       try {
-        const cred = require(serviceAccountPath);
+        const resolvedPath = isAbsolute(serviceAccountPath)
+          ? serviceAccountPath
+          : resolve(process.cwd(), serviceAccountPath);
+        const cred = require(resolvedPath);
         const app = admin.apps.length
           ? admin.apps[0]!
           : admin.initializeApp({ credential: admin.credential.cert(cred) });
