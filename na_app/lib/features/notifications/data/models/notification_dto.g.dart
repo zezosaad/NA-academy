@@ -11,7 +11,9 @@ _$InboxItemDtoImpl _$$InboxItemDtoImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       title: json['title'] as String,
       body: json['body'] as String,
-      data: json['data'] as String?,
+      data: (json['data'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ),
       createdAt: json['createdAt'] as String,
       readAt: json['readAt'] as String?,
       senderName: json['senderName'] as String?,

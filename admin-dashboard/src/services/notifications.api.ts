@@ -38,24 +38,15 @@ async function apiFetch<T>(endpoint: string, init: RequestInit = {}): Promise<T>
   return (json?.data ?? json) as T
 }
 
-function generateUUIDv4(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
 /**
  * Send a push notification. Generates a fresh UUID v4 idempotency key per call.
  */
 export async function sendNotification(
   dto: CreateNotificationDto,
 ): Promise<NotificationResponseDto> {
-  const idempotencyKey = generateUUIDv4()
   return apiFetch<NotificationResponseDto>('/api/v1/notifications', {
     method: 'POST',
-    headers: { 'Idempotency-Key': idempotencyKey },
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
     body: JSON.stringify(dto),
   })
 }

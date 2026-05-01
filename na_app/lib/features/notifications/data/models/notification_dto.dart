@@ -9,7 +9,7 @@ class InboxItemDto with _$InboxItemDto {
     required String id,
     required String title,
     required String body,
-    String? data,
+    Map<String, String>? data,
     required String createdAt,
     String? readAt,
     String? senderName,

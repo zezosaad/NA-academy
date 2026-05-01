@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -281,6 +282,36 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                 );
                 await _syncNotificationPermission();
               } else {
+                final settings = await FirebaseMessaging.instance.getNotificationSettings();
+                final osStillEnabled = settings.authorizationStatus == AuthorizationStatus.authorized ||
+                    settings.authorizationStatus == AuthorizationStatus.provisional;
+
+                if (osStillEnabled && mounted) {
+                  final openSettings = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        title: const Text('Notifications'),
+                        content: Text('notifications.permission_denied_explainer'.tr()),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.of(dialogContext).pop(true),
+                            child: const Text('Open settings'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (openSettings == true) {
+                    await openAppSettings();
+                  }
+                }
+
                 await prefsStore.setNotificationsEnabled(false);
                 if (mounted) {
                   setState(() => _notificationsEnabled = false);

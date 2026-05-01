@@ -75,39 +75,43 @@ class HomeScreen extends StatelessWidget {
             ),
             Tooltip(
               message: 'Notifications',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => context.push('/notifications'),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                    borderRadius: BorderRadius.circular(AppShapes.inputRadius),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorderSubtle
-                          : AppColors.borderSubtle,
+              child: Semantics(
+                button: true,
+                label: 'Notifications',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => context.push('/notifications'),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                      borderRadius: BorderRadius.circular(AppShapes.inputRadius),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkBorderSubtle
+                            : AppColors.borderSubtle,
+                      ),
                     ),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Center(
-                        child: Icon(
-                          LucideIcons.bell,
-                          size: 18,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.textSecondary,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Center(
+                          child: Icon(
+                            LucideIcons.bell,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: UnreadBadge(),
-                      ),
-                    ],
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: UnreadBadge(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

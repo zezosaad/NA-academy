@@ -62,7 +62,7 @@ class NotificationRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _formatTimestamp(item.createdAt),
+                    _formatTimestamp(context, item.createdAt),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: mutedColor,
                         ),
@@ -88,19 +88,22 @@ class NotificationRow extends StatelessWidget {
     );
   }
 
-  String _formatTimestamp(int millis) {
+  String _formatTimestamp(BuildContext context, int millis) {
     final date = DateTime.fromMillisecondsSinceEpoch(millis);
     final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
     final diff = now.difference(date);
 
     if (diff.inMinutes < 1) return 'notifications.now'.tr();
     if (diff.inMinutes < 60) {
       return 'notifications.mins_ago'.tr(args: ['${diff.inMinutes}']);
     }
-    if (diff.inHours < 24 && date.day == now.day) {
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
       return 'notifications.today'.tr();
     }
-    if (diff.inDays == 1) return 'notifications.yesterday'.tr();
-    return DateFormat.yMMMd().format(date);
+    if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
+      return 'notifications.yesterday'.tr();
+    }
+    return DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(date);
   }
 }

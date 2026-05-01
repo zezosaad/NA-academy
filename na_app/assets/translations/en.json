@@ -460,6 +460,7 @@
     "yesterday": "Yesterday",
     "notFound": "Notification not found",
     "payload": "Payload",
+    "open_url": "Open link",
     "permission_denied_explainer": "Notifications are disabled. Enable them in your device settings to receive push alerts."
   }
 }

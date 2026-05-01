@@ -8,10 +8,9 @@ import {
   Query,
   Param,
   HttpStatus,
+  HttpException,
   BadRequestException,
-  Res,
 } from '@nestjs/common';
-import type { Response } from 'express';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -39,7 +38,7 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post()
-  @Roles('admin', 'teacher')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @ApiOperation({ summary: 'Send a push notification to an audience' })
   @ApiHeader({
@@ -61,8 +60,7 @@ export class NotificationsController {
     @CurrentUser('role') senderRole: UserRole,
     @Headers('idempotency-key') idempotencyKey: string,
     @Body() dto: CreateNotificationDto,
-    @Res() res: Response,
-  ): Promise<void> {
+  ): Promise<NotificationResponseDto> {
     if (!idempotencyKey || !UUID_V4_RE.test(idempotencyKey)) {
       throw new BadRequestException(
         'Idempotency-Key header is required and must be a valid UUID v4',
@@ -76,13 +74,13 @@ export class NotificationsController {
       idempotencyKey,
     );
 
-    const responseDto = this.notificationsService.toResponseDto(notification);
+    const responseDto = await this.notificationsService.toResponseDto(notification);
 
     if (recipientCount > 1000) {
-      res.status(HttpStatus.ACCEPTED).json(responseDto);
-    } else {
-      res.status(HttpStatus.CREATED).json(responseDto);
+      throw new HttpException(responseDto, HttpStatus.ACCEPTED);
     }
+
+    return responseDto;
   }
 
   @Get('me')

@@ -129,7 +129,11 @@ class _NAAppState extends ConsumerState<NAApp> {
 
   void _openTarget(GoRouter router, String target, RemoteMessage message) {
     if (target.startsWith('http://') || target.startsWith('https://')) {
-      unawaited(launchUrl(Uri.parse(target), mode: LaunchMode.externalApplication));
+      final uri = Uri.tryParse(target);
+      if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
+        return;
+      }
+      unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
       return;
     }
 

@@ -67,6 +67,13 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
       return;
     } catch (e, st) {
       _logAuthError('bootstrap', e, st);
+      if (_shouldClearStoredSession(e)) {
+        await _tokenStore.clear();
+        _currentUser = null;
+        _wasAuthenticated = false;
+        state = const AsyncValue.data(null);
+        return;
+      }
       final storedSession = await _tokenStore.storedSession;
       _currentUser = null;
       _wasAuthenticated = storedSession != null;

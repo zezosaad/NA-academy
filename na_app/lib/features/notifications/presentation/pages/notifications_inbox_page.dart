@@ -119,6 +119,7 @@ class _NotificationsInboxPageState extends ConsumerState<NotificationsInboxPage>
   }
 
   Widget _buildError(Object error) {
+    debugPrint('Failed to load notifications: $error');
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -126,7 +127,7 @@ class _NotificationsInboxPageState extends ConsumerState<NotificationsInboxPage>
           height: MediaQuery.of(context).size.height * 0.5,
           child: Center(
             child: Text(
-              error.toString(),
+              'Unable to load notifications',
               style: const TextStyle(color: AppColors.danger),
               textAlign: TextAlign.center,
             ),

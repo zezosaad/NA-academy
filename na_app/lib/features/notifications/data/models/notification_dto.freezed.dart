@@ -24,7 +24,7 @@ mixin _$InboxItemDto {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get body => throw _privateConstructorUsedError;
-  String? get data => throw _privateConstructorUsedError;
+  Map<String, String>? get data => throw _privateConstructorUsedError;
   String get createdAt => throw _privateConstructorUsedError;
   String? get readAt => throw _privateConstructorUsedError;
   String? get senderName => throw _privateConstructorUsedError;
@@ -50,7 +50,7 @@ abstract class $InboxItemDtoCopyWith<$Res> {
     String id,
     String title,
     String body,
-    String? data,
+    Map<String, String>? data,
     String createdAt,
     String? readAt,
     String? senderName,
@@ -97,7 +97,7 @@ class _$InboxItemDtoCopyWithImpl<$Res, $Val extends InboxItemDto>
             data: freezed == data
                 ? _value.data
                 : data // ignore: cast_nullable_to_non_nullable
-                      as String?,
+                      as Map<String, String>?,
             createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
@@ -129,7 +129,7 @@ abstract class _$$InboxItemDtoImplCopyWith<$Res>
     String id,
     String title,
     String body,
-    String? data,
+    Map<String, String>? data,
     String createdAt,
     String? readAt,
     String? senderName,
@@ -173,9 +173,9 @@ class __$$InboxItemDtoImplCopyWithImpl<$Res>
             : body // ignore: cast_nullable_to_non_nullable
                   as String,
         data: freezed == data
-            ? _value.data
+            ? _value._data
             : data // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                  as Map<String, String>?,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -200,11 +200,11 @@ class _$InboxItemDtoImpl implements _InboxItemDto {
     required this.id,
     required this.title,
     required this.body,
-    this.data,
+    final Map<String, String>? data,
     required this.createdAt,
     this.readAt,
     this.senderName,
-  });
+  }) : _data = data;
 
   factory _$InboxItemDtoImpl.fromJson(Map<String, dynamic> json) =>
       _$$InboxItemDtoImplFromJson(json);
@@ -215,8 +215,16 @@ class _$InboxItemDtoImpl implements _InboxItemDto {
   final String title;
   @override
   final String body;
+  final Map<String, String>? _data;
   @override
-  final String? data;
+  Map<String, String>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
   @override
   final String createdAt;
   @override
@@ -237,7 +245,7 @@ class _$InboxItemDtoImpl implements _InboxItemDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.body, body) || other.body == body) &&
-            (identical(other.data, data) || other.data == data) &&
+            const DeepCollectionEquality().equals(other._data, _data) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.readAt, readAt) || other.readAt == readAt) &&
@@ -252,7 +260,7 @@ class _$InboxItemDtoImpl implements _InboxItemDto {
     id,
     title,
     body,
-    data,
+    const DeepCollectionEquality().hash(_data),
     createdAt,
     readAt,
     senderName,
@@ -277,7 +285,7 @@ abstract class _InboxItemDto implements InboxItemDto {
     required final String id,
     required final String title,
     required final String body,
-    final String? data,
+    final Map<String, String>? data,
     required final String createdAt,
     final String? readAt,
     final String? senderName,
@@ -293,7 +301,7 @@ abstract class _InboxItemDto implements InboxItemDto {
   @override
   String get body;
   @override
-  String? get data;
+  Map<String, String>? get data;
   @override
   String get createdAt;
   @override

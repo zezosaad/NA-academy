@@ -35,6 +35,10 @@ class NotificationsRepository {
     return _local.getUnreadCountStream();
   }
 
+  Future<NotificationsInboxData?> getById(String id) {
+    return _local.getById(id);
+  }
+
   Future<void> refreshFromServer({int limit = 50}) async {
     try {
       final response = await _remote.getInbox(limit: limit);

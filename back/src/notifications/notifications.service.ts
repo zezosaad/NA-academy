@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { createHash } from 'crypto';
 import { Notification, NotificationDocument } from './schemas/notification.schema.js';
 import {
@@ -25,6 +25,7 @@ import { FcmService } from './fcm.service.js';
 import { AudienceResolverService } from './audience-resolver.service.js';
 import { PushTokensService } from '../push-tokens/push-tokens.service.js';
 import { UserRole } from '../users/schemas/user.schema.js';
+import { UsersService } from '../users/users.service.js';
 
 type InboxNotificationAggregate = {
   notificationId: Types.ObjectId;
@@ -48,6 +49,7 @@ export class NotificationsService {
     private readonly fcmService: FcmService,
     private readonly audienceResolver: AudienceResolverService,
     private readonly pushTokensService: PushTokensService,
+    private readonly usersService: UsersService,
   ) {}
 
   async send(
@@ -157,26 +159,45 @@ export class NotificationsService {
         data: dataPayload,
       });
 
-      // Map results per-user
+      const recipientUpdates = [] as Array<{
+        updateOne: {
+          filter: { notificationId: Types.ObjectId; userId: Types.ObjectId };
+          update: {
+            state: RecipientState;
+            deliveredAt?: Date;
+            failureReason?: string;
+          };
+        };
+      }>;
+
       for (const tokenResult of result.perTokenResults) {
         const userId = tokenUserMap.get(tokenResult.token);
         if (!userId) continue;
+
         if (tokenResult.success) {
-          await this.recipientModel.updateOne(
-            { notificationId, userId },
-            { state: RecipientState.DELIVERED, deliveredAt: new Date() },
-          );
+          recipientUpdates.push({
+            updateOne: {
+              filter: { notificationId, userId },
+              update: { state: RecipientState.DELIVERED, deliveredAt: new Date() },
+            },
+          });
           deliveredCount++;
         } else {
-          await this.recipientModel.updateOne(
-            { notificationId, userId },
-            {
-              state: RecipientState.FAILED,
-              failureReason: tokenResult.error?.code ?? 'unknown',
+          recipientUpdates.push({
+            updateOne: {
+              filter: { notificationId, userId },
+              update: {
+                state: RecipientState.FAILED,
+                failureReason: tokenResult.error?.code ?? 'unknown',
+              },
             },
-          );
+          });
           failedCount++;
         }
+      }
+
+      if (recipientUpdates.length > 0) {
+        await this.recipientModel.bulkWrite(recipientUpdates, { ordered: false });
       }
     }
 
@@ -213,7 +234,7 @@ export class NotificationsService {
     };
   }
 
-  toResponseDto(notification: NotificationDocument): NotificationResponseDto {
+  async toResponseDto(notification: NotificationDocument): Promise<NotificationResponseDto> {
     const statsDto = new NotificationStatsDto();
     statsDto.total = notification.stats.total;
     statsDto.delivered = notification.stats.delivered;
@@ -226,13 +247,15 @@ export class NotificationsService {
     audienceDto.subjectId = notification.audience.subjectId?.toHexString();
     audienceDto.resolvedRecipientCount = notification.audience.resolvedRecipientCount;
 
+    const sender = await this.usersService.findById(notification.senderId.toHexString());
+
     const dto = new NotificationResponseDto();
     dto.id = notification._id.toHexString();
     dto.title = notification.title;
     dto.body = notification.body;
     dto.data = notification.data ? Object.fromEntries(notification.data) : undefined;
     dto.senderId = notification.senderId.toHexString();
-    dto.senderName = '';
+    dto.senderName = sender?.name ?? '';
     dto.senderRole = notification.senderRole;
     dto.audience = audienceDto;
     dto.stats = statsDto;
@@ -243,7 +266,7 @@ export class NotificationsService {
   async getInbox(userId: string, limit: number, before?: string): Promise<InboxResponseDto> {
     const userObjectId = new Types.ObjectId(userId);
     const beforeDate = before ? new Date(before) : undefined;
-    const pipeline: Record<string, unknown>[] = [
+    const pipeline: PipelineStage[] = [
       { $match: { userId: userObjectId } },
       {
         $lookup: {
@@ -360,9 +383,11 @@ export class NotificationsService {
       .exec();
 
     if (affected.modifiedCount > 0) {
-      for (const notifId of affectedNotificationIds) {
-        await this._recomputeReadStats(new Types.ObjectId(notifId));
-      }
+      await Promise.all(
+        affectedNotificationIds.map((notifId) =>
+          this._recomputeReadStats(new Types.ObjectId(notifId)),
+        ),
+      );
     }
 
     return { markedRead: affected.modifiedCount };

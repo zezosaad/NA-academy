@@ -3,10 +3,9 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:na_app/core/storage/app_database.dart';
 import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
-import 'package:na_app/core/storage/app_database.dart';
-import 'package:na_app/features/notifications/data/notifications_local_data_source.dart';
 import 'package:na_app/features/notifications/data/notifications_repository.dart';
 import 'package:na_app/features/notifications/presentation/controllers/inbox_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,9 +30,8 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
   }
 
   Future<void> _loadItem() async {
-    final db = ref.read(appDatabaseProvider);
-    final local = NotificationsLocalDataSource(db);
-    final item = await local.getById(widget.notificationId);
+    final repository = ref.read(notificationsRepositoryProvider);
+    final item = await repository.getById(widget.notificationId);
     if (!mounted) return;
     setState(() {
       _item = item;
@@ -174,7 +172,7 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
       },
-      child: Text('notifications.payload'.tr()),
-    );
+        child: Text('notifications.open_url'.tr()),
+      );
   }
 }

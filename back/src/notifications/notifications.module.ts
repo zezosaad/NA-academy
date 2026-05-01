@@ -11,12 +11,14 @@ import { FcmService } from './fcm.service.js';
 import { AudienceResolverService } from './audience-resolver.service.js';
 import { PushTokensModule } from '../push-tokens/push-tokens.module.js';
 import { UsersModule } from '../users/users.module.js';
+import { User, UserSchema } from '../users/schemas/user.schema.js';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Notification.name, schema: NotificationSchema },
       { name: NotificationRecipient.name, schema: NotificationRecipientSchema },
+      { name: User.name, schema: UserSchema },
     ]),
     PushTokensModule,
     UsersModule,

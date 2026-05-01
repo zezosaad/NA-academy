@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/theme/app_shapes.dart';
 
 class ForegroundNotificationBanner {
@@ -92,19 +91,23 @@ class _BannerOverlayState extends State<_BannerOverlay> with SingleTickerProvide
       right: 16,
       child: SafeArea(
         child: disableAnimations
-            ? Opacity(opacity: _opacityAnimation.value, child: _buildContent())
+            ? FadeTransition(opacity: _opacityAnimation, child: _buildContent(context))
             : SlideTransition(
                 position: _slideAnimation,
                 child: FadeTransition(
                   opacity: _opacityAnimation,
-                  child: _buildContent(),
+                  child: _buildContent(context),
                 ),
               ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final titleStyle = theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
+    final bodyStyle = theme.textTheme.bodyMedium;
     return GestureDetector(
       onTap: () {
         widget.onDismiss();
@@ -113,12 +116,12 @@ class _BannerOverlayState extends State<_BannerOverlay> with SingleTickerProvide
       child: Material(
         elevation: 6,
         borderRadius: BorderRadius.circular(AppShapes.radiusMedium),
-        color: AppColors.bgSurface,
+        color: colorScheme.surface,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppShapes.radiusMedium),
-            border: Border.all(color: AppColors.borderSubtle),
+            border: Border.all(color: colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,21 +131,14 @@ class _BannerOverlayState extends State<_BannerOverlay> with SingleTickerProvide
                 widget.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
+                style: titleStyle,
               ),
               const SizedBox(height: 2),
               Text(
                 widget.body,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
+                style: bodyStyle?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),

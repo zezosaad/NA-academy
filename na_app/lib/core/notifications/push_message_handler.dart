@@ -44,11 +44,21 @@ Future<void> handleForegroundMessage(RemoteMessage message) async {
 
 Future<void> handleMessageOpenedApp(RemoteMessage message) async {
   _log.i('Push opened from background: ${message.messageId}');
+  try {
+    await _upsertToInbox(message);
+  } catch (e) {
+    _log.e('Failed to persist opened notification: $e');
+  }
 }
 
 Future<void> handleInitialMessage(RemoteMessage? message) async {
   if (message == null) return;
   _log.i('Cold-start push: ${message.messageId}');
+  try {
+    await _upsertToInbox(message);
+  } catch (e) {
+    _log.e('Failed to persist initial notification: $e');
+  }
 }
 
 String? extractDeepLinkTarget(RemoteMessage message) {
