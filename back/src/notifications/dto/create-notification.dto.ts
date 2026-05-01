@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AudienceDto } from './audience.dto.js';
 import { ValidateData } from './validators/data-payload.validator.js';
+import { NoSecretsInBody } from './validators/no-secrets.validator.js';
 
 export class CreateNotificationDto {
   @ApiProperty({ minLength: 1, maxLength: 100 })
@@ -13,6 +14,7 @@ export class CreateNotificationDto {
   @ApiProperty({ minLength: 1, maxLength: 1000 })
   @IsString()
   @Length(1, 1000)
+  @NoSecretsInBody()
   body!: string;
 
   @ApiPropertyOptional({ type: 'object', additionalProperties: { type: 'string' } })

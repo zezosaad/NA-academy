@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:na_app/core/storage/app_database.dart';
 import 'package:na_app/features/notifications/data/notifications_local_data_source.dart';
@@ -42,7 +44,7 @@ class NotificationsRepository {
           id: Value(map['id'] as String),
           title: Value(map['title'] as String),
           body: Value(map['body'] as String),
-          data: Value(map['data']?.toString()),
+          data: Value(map['data'] != null ? jsonEncode(map['data']) : null),
           senderName: Value(map['senderName'] as String?),
           createdAt: Value(DateTime.parse(map['createdAt'] as String).millisecondsSinceEpoch),
           readAt: Value(map['readAt'] != null

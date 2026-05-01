@@ -13,7 +13,7 @@ export class PushToken {
   @Prop({ type: String, required: true })
   token!: string;
 
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ type: String, required: true })
   tokenHash!: string;
 
   @Prop({ type: String, required: true, enum: ['ios', 'android'] })
@@ -39,6 +39,10 @@ export const PushTokenSchema = SchemaFactory.createForClass(PushToken);
 
 PushTokenSchema.index(
   { userId: 1 },
+  { unique: true, partialFilterExpression: { tombstonedAt: { $exists: false } } },
+);
+PushTokenSchema.index(
+  { tokenHash: 1 },
   { unique: true, partialFilterExpression: { tombstonedAt: { $exists: false } } },
 );
 PushTokenSchema.index({ tombstonedAt: 1 });

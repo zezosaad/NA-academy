@@ -2,6 +2,8 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
+  ValidationOptions,
+  registerDecorator,
 } from 'class-validator';
 
 const CREDENTIAL_PATTERNS = [
@@ -29,6 +31,13 @@ export class NoSecretsInBodyConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export function NoSecretsInBody() {
-  return NoSecretsInBodyConstraint;
+export function NoSecretsInBody(options?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options,
+      validator: NoSecretsInBodyConstraint,
+    });
+  };
 }

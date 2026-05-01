@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { createHash } from 'crypto';
@@ -54,8 +54,11 @@ export class PushTokensService {
 
   async refresh(id: string, userId: string, dto: RefreshTokenDto): Promise<PushTokenDocument> {
     const doc = await this.pushTokenModel.findById(id).exec();
-    if (!doc || !doc.userId.equals(new Types.ObjectId(userId))) {
-      throw new Error('not-found');
+    if (!doc) {
+      throw new NotFoundException();
+    }
+    if (!doc.userId.equals(new Types.ObjectId(userId))) {
+      throw new ForbiddenException();
     }
 
     if (dto.token) {

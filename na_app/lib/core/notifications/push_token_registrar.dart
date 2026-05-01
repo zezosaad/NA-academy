@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +29,9 @@ class PushTokenRegistrar {
         return;
       }
 
-      final isApple = await _isApplePlatform();
       final response = await _api.register(
         token: token,
-        platform: isApple ? 'ios' : 'android',
+        platform: Platform.isIOS ? 'ios' : 'android',
       );
 
       await appSecureStorage.write(key: _pushTokenIdKey, value: response['id'] as String);
@@ -71,14 +71,6 @@ class PushTokenRegistrar {
       }
     } catch (e) {
       _log.e('Failed to unregister push token: $e');
-    }
-  }
-
-  Future<bool> _isApplePlatform() async {
-    try {
-      return await FirebaseMessaging.instance.isSupported();
-    } catch (_) {
-      return false;
     }
   }
 }

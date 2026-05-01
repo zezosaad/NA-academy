@@ -11,18 +11,20 @@ class NotificationsLocalDataSource {
   }
 
   Future<void> markRead(String id) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
     final query = _db.update(_db.notificationsInbox)
       ..where((t) => t.id.equals(id));
-    await query.write(const NotificationsInboxCompanion(
-      readAt: Value(1),
+    await query.write(NotificationsInboxCompanion(
+      readAt: Value(now),
     ));
   }
 
   Future<void> markAllRead() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
     final query = _db.update(_db.notificationsInbox)
       ..where((t) => t.readAt.isNull());
-    await query.write(const NotificationsInboxCompanion(
-      readAt: Value(1),
+    await query.write(NotificationsInboxCompanion(
+      readAt: Value(now),
     ));
   }
 

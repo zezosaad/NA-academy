@@ -26,8 +26,10 @@ export class FcmService implements OnModuleInit {
     if (serviceAccountJson) {
       try {
         const cred = JSON.parse(serviceAccountJson);
-        admin.initializeApp({ credential: admin.credential.cert(cred) });
-        this.messaging = admin.messaging();
+        const app = admin.apps.length
+          ? admin.apps[0]!
+          : admin.initializeApp({ credential: admin.credential.cert(cred) });
+        this.messaging = admin.messaging(app);
         this.logger.log('Firebase initialized from FIREBASE_SERVICE_ACCOUNT_JSON');
       } catch (err) {
         this.logger.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON', err);
@@ -35,8 +37,10 @@ export class FcmService implements OnModuleInit {
     } else if (serviceAccountPath) {
       try {
         const cred = require(serviceAccountPath);
-        admin.initializeApp({ credential: admin.credential.cert(cred) });
-        this.messaging = admin.messaging();
+        const app = admin.apps.length
+          ? admin.apps[0]!
+          : admin.initializeApp({ credential: admin.credential.cert(cred) });
+        this.messaging = admin.messaging(app);
         this.logger.log('Firebase initialized from FIREBASE_SERVICE_ACCOUNT_PATH');
       } catch (err) {
         this.logger.error('Failed to load FIREBASE_SERVICE_ACCOUNT_PATH', err);

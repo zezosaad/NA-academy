@@ -54,7 +54,7 @@ The contract spine is the four DTOs in `contracts/`: `POST /notifications` (admi
 - Constitution Principle V: the mobile inbox is the primary surface; touch targets ≥ 44×44 pt; reduced-motion honored on the foreground banner.
 - The spec's edge case about a user receiving on multiple devices simultaneously is **scoped down** to "the user's current bound device" given the existing single-device-binding rule. The inbox-state-consistency-across-devices guarantee still holds *over time* (a user re-binding to a new device sees the same server-stored inbox).
 
-**Scale/Scope**: ~33 functional requirements across three surfaces. ~7 new endpoints (4 notifications, 3 push-token), 3 new collections, 1 new Flutter feature folder, 1 new admin dashboard page (with composer + history sub-views). Single broadcast must support up to **10,000 recipients** without dashboard timeouts (SC-008).
+**Scale/Scope**: ~33 functional requirements across three surfaces. ~10 new endpoints (6 notifications, 4 push-token), 3 new collections, 1 new Flutter feature folder, 1 new admin dashboard page (with composer + history sub-views). Single broadcast must support up to **10,000 recipients** without dashboard timeouts (SC-008).
 
 ## Constitution Check
 

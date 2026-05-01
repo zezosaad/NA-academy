@@ -3,7 +3,6 @@
 Auto-generated from all feature plans. Last updated: 2026-05-01
 
 ## Active Technologies
-- Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`). (004-offline-mode)
 - Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`); Vite + React 19 + TypeScript (`admin-dashboard/`). (004-offline-mode)
 
 - Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3`); backend stays on NestJS 11 / Node 20+ per the constitution. (003-mobile-app-redesign)
@@ -25,7 +24,6 @@ Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3
 
 ## Recent Changes
 - 004-offline-mode: Added Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`); Vite + React 19 + TypeScript (`admin-dashboard/`).
-- 004-offline-mode: Added Dart 3.11+ / Flutter 3.24+ (`na_app/`); TypeScript on NestJS 11 / Node 20+ (`back/`).
 
 - 003-mobile-app-redesign: Added Dart 3.11 / Flutter 3.24+ (matches `na_app/pubspec.yaml` SDK constraint `^3.11.3`); backend stays on NestJS 11 / Node 20+ per the constitution.
 

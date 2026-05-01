@@ -149,7 +149,7 @@ One document per registered FCM token. Lifecycle is independent of `Device` but 
 1. **Audience snapshot is immutable.** Once a `Notification` is written, its `audience.resolvedUserIds` is never modified. Late enrollments do not retroactively receive past notifications (Decision 9 in `research.md`).
 2. **No stale per-recipient writes.** A `NotificationRecipient` row is only inserted at send time. If a sweep finds orphaned rows (notification deleted but rows remain), they are removed. (Notifications are not deleted in v1, so this is a defensive guard.)
 3. **One source of truth for "read"**. Read state lives only on `NotificationRecipient.readAt`. The `Notification.stats.read` aggregate is denormalized for read-heavy queries and updated by the same service method that flips `readAt`.
-4. **Soft-archived recipient view.** When the retention sweep prunes `NotificationRecipient` rows older than 365 days, the parent `Notification.stats` is **frozen** — the existing aggregate counts (delivered / failed / read) remain in the document and are returned by the history detail view, but the per-recipient list endpoint returns `{ archived: true, archivedAt: <prune timestamp> }` instead of an empty list.
+4. **Soft-archived recipient view.** When the retention sweep prunes `NotificationRecipient` rows older than 365 days, the parent `Notification.stats` is **frozen** — the existing aggregate counts (delivered / failed / read) remain in the document and are returned by the history detail view, but the per-recipient list endpoint returns `{ recipientsArchived: true, recipientsArchivedAt: <prune timestamp> }` (matching `NotificationDetailResponseDto`) instead of an empty list.
 
 ---
 
@@ -183,10 +183,10 @@ A single-row table holding the cached unread count. Updated by triggers in code 
 
 ### Sync protocol
 
-- **On app launch (online)**: `GET /notifications/me?since=<lastSyncedAtMax>&limit=50`. Upsert by `id`. Recompute the unread count from a single SQL aggregate.
+- **On app launch (online)**: `GET /notifications/me?before=<cursor>&limit=50` using the cursor from the latest cached row. Upsert by `id`. Recompute the unread count from a single SQL aggregate. `lastSyncedAt` is set to the current time on every upserted row purely as a debugging/staleness signal — it does not feed the cursor.
 - **On push arrival (foreground / background isolate)**: insert or update the row immediately from the FCM payload. `lastSyncedAt = now()`.
-- **On user opening the inbox (online)**: refresh as in launch.
-- **On user marking-as-read**: optimistic update locally; `PATCH /notifications/:id/read` queued through the existing pending-sync infrastructure from 004 if offline.
+- **On user opening the inbox (online)**: refresh as in launch (cursor-based; no `since` query).
+- **On user marking-as-read**: optimistic update locally; `PATCH /notifications/me/:id/read` queued through the existing pending-sync infrastructure from 004 if offline.
 
 The sync protocol is intentionally similar to 004's offline-progress queue so the existing patterns are reused (constitution Principle IV — consistent multi-feature shape).
 

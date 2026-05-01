@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
 
 part 'app_database.g.dart';
 
@@ -27,8 +30,16 @@ class NotificationsUnreadIndex extends Table {
 
 @DriftDatabase(tables: [NotificationsInbox, NotificationsUnreadIndex])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(NativeDatabase.memory());
+  AppDatabase() : super(_openConnection());
 
   @override
   int get schemaVersion => 1;
+}
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}${Platform.pathSeparator}na_app.sqlite');
+    return NativeDatabase.createInBackground(file);
+  });
 }
