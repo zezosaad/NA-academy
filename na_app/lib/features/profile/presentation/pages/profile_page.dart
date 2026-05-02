@@ -92,7 +92,7 @@ class ProfilePage extends ConsumerWidget {
                 const SizedBox(height: 32),
                 _buildSectionTitle(
                   context,
-                  'profile.mySubjects'.tr(fallbackKey: 'موادي'),
+                  'profile.mySubjects'.tr(),
                   isDark,
                 ),
                 const SizedBox(height: 16),
@@ -483,8 +483,7 @@ class ProfilePage extends ConsumerWidget {
               Icon(LucideIcons.bookOpen, size: 36, color: mutedColor),
               const SizedBox(height: 12),
               Text(
-                'profile.noSubjectsYet'
-                    .tr(fallbackKey: 'أدخل كود مادة للوصول إليها'),
+                'profile.noSubjectsYet'.tr(),
                 style: GoogleFonts.cairo(fontSize: 14, color: mutedColor),
                 textAlign: TextAlign.center,
               ),

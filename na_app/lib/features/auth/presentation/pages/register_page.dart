@@ -116,7 +116,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'auth.register.universityMissing'.tr(fallbackKey: 'من فضلك أدخل اسم الجامعة'),
+            'auth.register.universityMissing'.tr(),
             style: GoogleFonts.cairo(),
           ),
           backgroundColor: AppColors.danger,
@@ -266,8 +266,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         delay: const Duration(milliseconds: 450),
                         child: _buildTextField(
                           controller: _universityController,
-                          label: 'auth.register.universityLabel'.tr(fallbackKey: 'الجامعة'),
-                          hint: 'auth.register.universityHint'.tr(fallbackKey: 'اسم جامعتك'),
+                          label: 'auth.register.universityLabel'.tr(),
+                          hint: 'auth.register.universityHint'.tr(),
                           icon: LucideIcons.school,
                           isDark: isDark,
                         ),
