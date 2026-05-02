@@ -117,6 +117,36 @@ class MessagePreview {
   }
 }
 
+/// Normalizes BSON-style ids often seen when the server emits raw Mongoose docs.
+String? mongoIdToString(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is String) return raw.isEmpty ? null : raw;
+  if (raw is Map) {
+    final oid = raw[r'$oid'];
+    if (oid is String) return oid;
+    final nested = raw['_id'];
+    if (nested != null) return mongoIdToString(nested);
+    if (raw['id'] is String) return raw['id'] as String;
+  }
+  return null;
+}
+
+DateTime? mongoDateToDateTime(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is String) return DateTime.tryParse(raw);
+  if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+  if (raw is Map) {
+    final d = raw[r'$date'];
+    if (d is String) return DateTime.tryParse(d);
+    if (d is int) return DateTime.fromMillisecondsSinceEpoch(d);
+    if (d is Map && d[r'$numberLong'] is String) {
+      final ms = int.tryParse(d[r'$numberLong'] as String);
+      if (ms != null) return DateTime.fromMillisecondsSinceEpoch(ms);
+    }
+  }
+  return null;
+}
+
 class ChatMessage {
   final String id;
   final String conversationId;
@@ -145,14 +175,19 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    final id = (json['_id'] as String?) ?? json['id'] as String?;
+    final id =
+        mongoIdToString(json['_id']) ??
+        mongoIdToString(json['id']) ??
+        (json['id'] as String?);
     if (id == null || id.isEmpty) {
       throw FormatException(
         'ChatMessage.fromJson: "_id" or "id" is required and must be non-empty',
       );
     }
 
-    final conversationId = json['conversationId'] as String?;
+    final conversationId =
+        mongoIdToString(json['conversationId']) ??
+        json['conversationId'] as String?;
     if (conversationId == null || conversationId.isEmpty) {
       throw FormatException(
         'ChatMessage.fromJson: "conversationId" is required and must be non-empty',
@@ -160,28 +195,34 @@ class ChatMessage {
     }
 
     final senderIdRaw = json['senderId'];
-    String senderId;
-    if (senderIdRaw is String) {
-      senderId = senderIdRaw;
-    } else if (senderIdRaw is Map) {
-      senderId = senderIdRaw['_id'] as String? ?? '';
-    } else {
-      senderId = '';
-    }
+    final senderId =
+        senderIdRaw is String && senderIdRaw.isNotEmpty
+            ? senderIdRaw
+            : senderIdRaw is Map
+                ? (mongoIdToString(senderIdRaw['_id']) ??
+                    mongoIdToString(senderIdRaw['id']) ??
+                    '')
+                : mongoIdToString(senderIdRaw) ?? '';
     if (senderId.isEmpty) {
       throw FormatException(
         'ChatMessage.fromJson: "senderId" is required and must be non-empty',
       );
     }
 
-    final recipientId = json['recipientId'] as String?;
+    final recipientRaw = json['recipientId'];
+    final recipientId =
+        mongoIdToString(recipientRaw) ?? recipientRaw as String?;
     if (recipientId == null || recipientId.isEmpty) {
       throw FormatException(
         'ChatMessage.fromJson: "recipientId" is required and must be non-empty',
       );
     }
 
-    final createdAt = _parseDate(json['createdAt'] as String?);
+    final createdAt =
+        mongoDateToDateTime(json['createdAt']) ??
+        mongoDateToDateTime(json['updatedAt']) ??
+        _parseDate(json['createdAt'] as String?) ??
+        _parseDate(json['updatedAt'] as String?);
     if (createdAt == null) {
       throw FormatException(
         'ChatMessage.fromJson: "createdAt" is required and must be a valid date',

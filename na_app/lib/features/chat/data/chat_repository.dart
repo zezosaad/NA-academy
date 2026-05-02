@@ -8,6 +8,7 @@ import 'package:na_app/core/api/api_exception.dart';
 import 'package:na_app/core/api/dio_client.dart';
 import 'package:na_app/core/api/endpoints.dart';
 import 'package:na_app/core/realtime/chat_socket.dart';
+import 'package:na_app/core/realtime/chat_trace.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
 import 'package:na_app/features/chat/domain/chat_models.dart';
 
@@ -49,6 +50,8 @@ class ChatRepository {
   StreamSubscription<Map<String, dynamic>>? _typingSub;
   StreamSubscription<List<Map<String, dynamic>>>? _pendingMessagesSub;
   StreamSubscription<String>? _chatErrorSub;
+  StreamSubscription<Map<String, dynamic>>? _messageAckSub;
+  StreamSubscription<Map<String, dynamic>>? _gatewayErrorSub;
 
   Stream<List<Conversation>> get conversations =>
       _conversationsController.stream;
@@ -79,6 +82,8 @@ class ChatRepository {
     _chatErrorSub = _chatSocket.chatErrors.listen((message) {
       _errorsController.add(message);
     });
+    _messageAckSub = _chatSocket.messageAck.listen(_handleMessageAck);
+    _gatewayErrorSub = _chatSocket.gatewayErrors.listen(_handleGatewayErrorMap);
   }
 
   Future<List<Conversation>> listConversations() async {
@@ -243,10 +248,18 @@ class ChatRepository {
   }
 
   void _handleNewMessage(Map<String, dynamic> data) {
-    String? clientMessageId;
+    String? clientMessageId = data['clientMessageId'] as String?;
     try {
       final message = ChatMessage.fromJson(data);
-      clientMessageId = data['clientMessageId'] as String?;
+
+      ChatTrace.log('NEW_MESSAGE_PARSE_OK', {
+        'idPreview': '${message.id.length > 8 ? message.id.substring(0, 8) : message.id}',
+        'conv': message.conversationId.length > 8
+            ? message.conversationId.substring(0, 8)
+            : message.conversationId,
+        'sender': '${message.senderId.length > 6 ? message.senderId.substring(0, 6) : message.senderId}',
+        'clientMsgId': clientMessageId ?? '',
+      });
 
       final existingIdx = clientMessageId != null
           ? _messages.indexWhere((m) => m.id == clientMessageId)
@@ -265,7 +278,9 @@ class ChatRepository {
         _upsertMessage(message);
       }
 
-      deliveryAck(messageId: message.id, senderId: message.senderId);
+      if (message.senderId != currentUserId && currentUserId.isNotEmpty) {
+        deliveryAck(messageId: message.id, senderId: message.senderId);
+      }
 
       final pendingIdx = _pendingQueue.indexWhere(
         (m) =>
@@ -283,7 +298,45 @@ class ChatRepository {
         error: e,
         stackTrace: st,
       );
+      ChatTrace.log('NEW_MESSAGE_PARSE_FAILED', {
+        'error': e.toString(),
+        'clientMsgId': clientMessageId ?? '',
+        'payloadKeys':
+            '${data.keys.map((k) => k.toString()).join(",")}',
+      });
     }
+  }
+
+  void _handleMessageAck(Map<String, dynamic> data) {
+    final rawMid = data['messageId'];
+    final messageId =
+        mongoIdToString(rawMid) ?? (rawMid is String ? rawMid : '${rawMid ?? ''}');
+    final clientMsgId = data['clientMessageId'] as String?;
+    ChatTrace.log('REPO_MESSAGE_ACK', {
+      'serverMessageId': messageId,
+      'clientMessageId': clientMsgId ?? '',
+    });
+
+    if (clientMsgId == null || clientMsgId.isEmpty || messageId.isEmpty) return;
+
+    final idx = _messages.indexWhere((m) => m.id == clientMsgId);
+    // Keep provisional `id` (pending-…) until `new_message` merges server ids.
+    if (idx >= 0) {
+      _messages[idx] = _messages[idx].copyWith(
+        status: MessageDeliveryStatus.sent,
+      );
+      _messagesController.add(_messages[idx]);
+    }
+
+    final pq = _pendingQueue.indexWhere((m) => m.localId == clientMsgId);
+    if (pq >= 0) _pendingQueue.removeAt(pq);
+  }
+
+  void _handleGatewayErrorMap(Map<String, dynamic> data) {
+    final detail =
+        '${data['detail'] ?? data['message'] ?? data['error'] ?? data}';
+    ChatTrace.log('REPO_GATEWAY_ERROR', {'detail': detail});
+    if (detail.isNotEmpty && detail != 'null') _errorsController.add(detail);
   }
 
   void _handleStatusUpdate(Map<String, dynamic> data) {
@@ -375,6 +428,8 @@ class ChatRepository {
     _typingSub?.cancel();
     _pendingMessagesSub?.cancel();
     _chatErrorSub?.cancel();
+    _messageAckSub?.cancel();
+    _gatewayErrorSub?.cancel();
     _conversationsController.close();
     _messagesController.close();
     _typingController.close();

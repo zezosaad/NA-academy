@@ -51,7 +51,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Send pending offline messages
       const pending = await this.chatService.getPendingMessages(userId.toString());
       if (pending.length > 0) {
-        client.emit('pending_messages', pending);
+        const wired = pending.map((msg) => this.wireOutboundMessage(msg, null));
+        client.emit('pending_messages', wired);
         for (const msg of pending) {
           await this.chatService.updateMessageStatus(msg._id.toString(), MessageStatus.DELIVERED);
         }
@@ -72,6 +73,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
+  /** Normalize Mongoose payloads for socket.io-json / mobile clients (string ids + ISO dates). */
+  private wireOutboundMessage(savedMessage: { toObject: () => Record<string, unknown> }, clientMessageId: string | null) {
+    const o = savedMessage.toObject() as Record<string, unknown>;
+    const snd = o.senderId as Record<string, unknown> | string | undefined;
+    const senderWire =
+      snd && typeof snd === 'object'
+        ? {
+            _id: String((snd['_id'] as { toString: () => string })?.toString?.() ?? snd['_id']),
+            name: snd['name'] !== undefined ? String(snd['name']) : '',
+            role: snd['role'] !== undefined ? String(snd['role']) : '',
+            email: snd['email'] !== undefined ? String(snd['email']) : '',
+          }
+        : String(snd ?? '');
+
+    const toIso = (v: unknown): string => {
+      if (v instanceof Date) return v.toISOString();
+      if (typeof v === 'string') {
+        const t = Date.parse(v);
+        if (!Number.isNaN(t)) return new Date(t).toISOString();
+      }
+      if (typeof v === 'number') return new Date(v).toISOString();
+      return new Date().toISOString();
+    };
+    const createdAt = toIso(o['createdAt']);
+    const updatedAt = toIso(o['updatedAt']);
+
+    return {
+      _id: String(o['_id']),
+      conversationId: String(o['conversationId']),
+      senderId: senderWire,
+      recipientId: String(o['recipientId']),
+      messageType: o['messageType'],
+      text: o['text'],
+      imageFileId: o['imageFileId'],
+      status: o['status'],
+      createdAt,
+      updatedAt,
+      clientMessageId,
+    };
+  }
+
   @SubscribeMessage('send_message')
   async handleMessage(
     @MessageBody()
@@ -88,6 +130,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const canChat = await this.chatService.canChat(senderId, payload.recipientId);
     if (!canChat) {
+      this.logger.warn(
+        `send_message rejected unauthorized sender=${senderId} recipient=${payload.recipientId} clientMsgId=${payload.clientMessageId ?? 'n/a'}`,
+      );
       client.emit('unauthorized_conversation', {
         message: 'You are not authorized to chat with this user',
         recipientId: payload.recipientId,
@@ -104,15 +149,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       conversationId: conversation._id.toString(),
       senderId,
       recipientId: payload.recipientId,
+      messageType: payload.messageType,
       text: payload.text,
       imageFileId: payload.imageFileId,
-      messageType: payload.messageType,
     });
 
-    const messagePayload: Record<string, any> = {
-      ...savedMessage.toObject(),
-      clientMessageId: payload.clientMessageId ?? null,
-    };
+    const messagePayload = this.wireOutboundMessage(
+      savedMessage,
+      payload.clientMessageId ?? null,
+    );
+
+    this.logger.log(
+      `send_message sender=${senderId} recipient=${payload.recipientId} msg=${String(savedMessage._id)} conversation=${conversation._id.toString()} clientMsgId=${payload.clientMessageId ?? 'n/a'} recipientOnline=${this.userSockets.has(payload.recipientId)}`,
+    );
 
     const recipientSocketId = this.userSockets.get(payload.recipientId);
     if (recipientSocketId) {
@@ -124,7 +173,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return {
       event: 'message_ack',
       data: {
-        messageId: savedMessage._id,
+        messageId: savedMessage._id.toString(),
         status: MessageStatus.SENT,
         clientMessageId: payload.clientMessageId ?? null,
       },

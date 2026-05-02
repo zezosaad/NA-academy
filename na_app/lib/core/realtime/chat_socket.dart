@@ -3,20 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:na_app/core/api/api_environment.dart';
+import 'package:na_app/core/realtime/chat_trace.dart';
 import 'package:na_app/core/storage/secure_token_store.dart';
 
-String _socketBaseUrlFromApiBase(String rawApiBase) {
-  final normalized = rawApiBase.trim().replaceAll(RegExp(r'/*$'), '');
-  return normalized.replaceFirst(RegExp(r'/api/v1$'), '');
-}
-
 final chatSocketProvider = Provider<ChatSocket>((ref) {
-  const rawApiBase = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://192.168.1.5:3000/api/v1',
-  );
   return ChatSocket(
-    baseUrl: _socketBaseUrlFromApiBase(rawApiBase),
+    baseUrl: socketIoOriginFromApiBaseUrl(kApiBaseUrl),
     tokenStore: ref.watch(secureTokenStoreProvider),
   );
 });
@@ -39,6 +32,10 @@ class ChatSocket {
   final _pendingMessagesController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
   final _chatErrorController = StreamController<String>.broadcast();
+  final _messageAckController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _gatewayErrorController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get newMessage => _newMessageController.stream;
   Stream<Map<String, dynamic>> get statusUpdate =>
@@ -50,6 +47,9 @@ class ChatSocket {
   Stream<List<Map<String, dynamic>>> get pendingMessages =>
       _pendingMessagesController.stream;
   Stream<String> get chatErrors => _chatErrorController.stream;
+  Stream<Map<String, dynamic>> get messageAck => _messageAckController.stream;
+  Stream<Map<String, dynamic>> get gatewayErrors =>
+      _gatewayErrorController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -85,21 +85,77 @@ class ChatSocket {
 
   Future<void> connect() async {
     final token = await _tokenStore.accessToken;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      ChatTrace.log('CONNECT_SKIPPED', {'reason': 'no_access_token'});
+      return;
+    }
+
+    ChatTrace.log('CONNECT_START', {
+      'socketUrl': '${_baseUrl}/chat',
+      'tokenChars': '${token.length}',
+    });
 
     _socket?.dispose();
     _socket = io.io('$_baseUrl/chat', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
       'auth': {'token': token},
+      'timeout': 20000,
+    });
+
+    _socket!.on('disconnect', (dynamic reason) {
+      ChatTrace.log('SOCKET_DISCONNECTED', {'reason': '$reason'});
+    });
+
+    _socket!.on('reconnect', (dynamic attempt) {
+      ChatTrace.log('SOCKET_RECONNECT_OK', {'attempt': '$attempt'});
+    });
+
+    _socket!.on('reconnect_error', (dynamic err) {
+      ChatTrace.log('SOCKET_RECONNECT_ERROR', {'error': '$err'});
+    });
+
+    /// NestJS gateway `return { event: 'error', data }` → `socket.emit('error', data)`.
+    _socket!.on('error', (dynamic data) {
+      ChatTrace.log(
+        'SOCKET_GATEWAY_ERROR',
+        {'payload': '${data.runtimeType}:$data'},
+      );
+      final m = _tryCastMap(data);
+      if (m != null) {
+        _gatewayErrorController.add(m);
+      } else if (data is String && data.isNotEmpty) {
+        _gatewayErrorController.add({'detail': data});
+      } else if (data != null) {
+        _gatewayErrorController.add({'detail': data.toString()});
+      }
+    });
+
+    _socket!.on('message_ack', (dynamic data) {
+      final map = _tryCastMap(data);
+      if (map != null) {
+        _messageAckController.add(map);
+        ChatTrace.log(
+          'MESSAGE_ACK_RX',
+          map.map((k, v) => MapEntry('$k', v)),
+        );
+      } else {
+        ChatTrace.log('MESSAGE_ACK_INVALID', {'data': '${data.runtimeType}:$data'});
+      }
     });
 
     _socket!.on('new_message', (data) {
+      ChatTrace.log('NEW_MESSAGE_RAW_TYPE', {'type': '${data.runtimeType}'});
       final map = _tryCastMap(data);
       if (map != null) {
         _newMessageController.add(map);
       } else {
         debugPrint('[ChatSocket] Invalid new_message payload: $data');
+        final s = '$data';
+        ChatTrace.log('NEW_MESSAGE_REJECTED', {
+          'snippet':
+              s.length > 240 ? '${s.substring(0, 240)}… (${s.length} chars)' : s,
+        });
       }
     });
 
@@ -146,14 +202,20 @@ class ChatSocket {
       _chatErrorController.add(message);
     });
 
-    _socket!.on('connect_error', (_) async {
+    _socket!.on('connect_error', (dynamic err) async {
+      ChatTrace.log('SOCKET_CONNECT_ERROR', {'error': '$err'});
       await _reconnectWithRefresh();
     });
 
     _socket!.on('connect', (_) {
+      ChatTrace.log('SOCKET_CONNECTED', {'id': _socket?.id ?? '?'});
       if (_pendingOutgoingMessages.isEmpty) return;
       final queued = List<Map<String, dynamic>>.from(_pendingOutgoingMessages);
       _pendingOutgoingMessages.clear();
+      ChatTrace.log(
+        'FLUSH_OUTBOUND_QUEUE',
+        {'queued': queued.length.toString()},
+      );
       for (final payload in queued) {
         _socket?.emit('send_message', payload);
       }
@@ -177,11 +239,24 @@ class ChatSocket {
       if (clientMessageId != null) 'clientMessageId': clientMessageId,
     };
 
+    ChatTrace.log('SEND_MESSAGE', {
+      'connected': '${_socket?.connected}',
+      'socketId': _socket?.id ?? 'null',
+      'recipientId': payload['recipientId']?.toString() ?? '',
+      'messageType': payload['messageType']?.toString() ?? '',
+      'clientMessageId': payload['clientMessageId']?.toString() ?? '',
+      'textLen': '${(payload['text'] as String?)?.length ?? 0}',
+      'queuedBefore': '${_pendingOutgoingMessages.length}',
+    });
+
     if (_socket?.connected == true) {
       _socket?.emit('send_message', payload);
       return;
     }
 
+    ChatTrace.log('SEND_QUEUE_NOT_CONNECTED', {
+      'queueAfter': '${_pendingOutgoingMessages.length + 1}',
+    });
     _pendingOutgoingMessages.add(payload);
     unawaited(connect());
   }
@@ -234,5 +309,7 @@ class ChatSocket {
     _typingIndicatorController.close();
     _pendingMessagesController.close();
     _chatErrorController.close();
+    _messageAckController.close();
+    _gatewayErrorController.close();
   }
 }

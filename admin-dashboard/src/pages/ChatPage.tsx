@@ -12,6 +12,7 @@ import { api } from "@/services/api"
 import type { ChatConversationPreview, ChatMessage } from "@/types"
 import { format, isToday, isYesterday } from "date-fns"
 
+/** REST paths add `/api/v1/...`; socket uses this **origin** + `/chat` (handshake `/socket.io/`). */
 const API_URL = import.meta.env.VITE_API_URL ?? ""
 
 function normalizeApiBaseForMedia(rawBase: string): string {
@@ -32,6 +33,20 @@ function formatMsgTime(dateStr: string): string {
   return format(d, "dd MMM HH:mm")
 }
 
+function normalizeObjectId(raw: unknown): string {
+  if (raw == null || raw === "") return ""
+  if (typeof raw === "string") return raw
+  if (typeof raw === "object" && raw !== null) {
+    if ("$oid" in raw && typeof (raw as { $oid: unknown }).$oid === "string") {
+      return (raw as { $oid: string }).$oid
+    }
+    if ("_id" in raw && (raw as { _id: unknown })._id != null) {
+      return normalizeObjectId((raw as { _id: unknown })._id)
+    }
+  }
+  return String(raw)
+}
+
 function getSenderName(msg: ChatMessage): string {
   if (typeof msg.senderId === "object" && msg.senderId !== null) {
     return (msg.senderId as { name: string }).name
@@ -41,9 +56,26 @@ function getSenderName(msg: ChatMessage): string {
 
 function getSenderId(msg: ChatMessage): string {
   if (typeof msg.senderId === "object" && msg.senderId !== null) {
-    return (msg.senderId as { _id: string })._id
+    return normalizeObjectId((msg.senderId as { _id: string })._id)
   }
-  return msg.senderId as string
+  return normalizeObjectId(msg.senderId)
+}
+
+function getRecipientId(msg: ChatMessage): string {
+  return normalizeObjectId(msg.recipientId as unknown)
+}
+
+/** Socket/API may stringify conversationId; normalize so Map keys match REST-loaded previews. */
+function conversationIdFromMessage(msg: ChatMessage): string {
+  return normalizeObjectId(msg.conversationId as unknown)
+}
+
+function sortConversationsByRecent(a: ChatConversationPreview[]): ChatConversationPreview[] {
+  return [...a].sort((x, y) => {
+    const xTime = x.lastMessage?.sentAt ?? "0"
+    const yTime = y.lastMessage?.sentAt ?? "0"
+    return yTime.localeCompare(xTime)
+  })
 }
 
 export function ChatPage() {
@@ -89,49 +121,159 @@ export function ChatPage() {
     socket.on("disconnect", () => setIsConnected(false))
 
     socket.on("new_message", (msg: ChatMessage) => {
+      const convId = conversationIdFromMessage(msg)
+      if (!convId) return
+
+      const adminId = adminIdRef.current
+      const senderStr = getSenderId(msg)
+      const recipientStr = getRecipientId(msg)
+      const counterpartyId = senderStr === adminId ? recipientStr : senderStr
+      const counterpartyName =
+        senderStr === adminId ? "User" : getSenderName(msg) || "User"
+
+      const msgNormalized: ChatMessage = { ...msg, conversationId: convId }
+
       setMessages((prev) => {
         const updated = new Map(prev)
-        const existing = updated.get(msg.conversationId) ?? []
-        // Deduplicate
+        const existing = updated.get(convId) ?? []
         if (existing.some((m) => m._id === msg._id)) return prev
-        updated.set(msg.conversationId, [...existing, msg])
+        updated.set(convId, [...existing, msgNormalized])
         return updated
       })
-      // Send delivery ack
+
+      setConversations((prev) => {
+        const selectedId = selectedConvRef.current?.id ?? null
+        const lastMessage = {
+          text: msg.text,
+          hasImage: msg.messageType === "image",
+          sentAt: msg.createdAt,
+          senderId: senderStr,
+          status: msg.status,
+        }
+        const idx = prev.findIndex((c) => c.id === convId)
+        const incrementUnread = convId !== selectedId
+
+        if (idx < 0) {
+          return sortConversationsByRecent([
+            {
+              id: convId,
+              virtual: false,
+              counterpartyId,
+              counterpartyName,
+              counterpartyAvatarUrl: null,
+              subjectId: "",
+              subjectTitle: "",
+              lastMessage,
+              unreadCount: incrementUnread ? 1 : 0,
+            },
+            ...prev,
+          ])
+        }
+
+        return sortConversationsByRecent(
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  id: convId,
+                  virtual: false,
+                  counterpartyId: c.counterpartyId || counterpartyId,
+                  counterpartyName: c.counterpartyName || counterpartyName,
+                  unreadCount:
+                    convId === selectedId ? 0 : c.unreadCount + 1,
+                  lastMessage,
+                }
+              : c
+          )
+        )
+      })
+
       socket.emit("delivery_ack", {
         messageId: msg._id,
-        senderId: getSenderId(msg),
+        senderId: senderStr,
       })
-      // Update unread count in conversation list
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === msg.conversationId
-            ? {
-                ...c,
-                unreadCount: c.id === selectedConvRef.current?.id ? 0 : c.unreadCount + 1,
-                lastMessage: {
-                  text: msg.text,
-                  hasImage: msg.messageType === "image",
-                  sentAt: msg.createdAt,
-                  senderId: getSenderId(msg),
-                  status: msg.status,
-                },
-              }
-            : c
-        )
-      )
     })
 
     socket.on("pending_messages", (pending: ChatMessage[]) => {
+      const adminId = adminIdRef.current
+
+      const pendingByConversation = new Map<string, ChatMessage[]>()
+      for (const msg of pending) {
+        const convId = conversationIdFromMessage(msg)
+        if (!convId) continue
+        const list = pendingByConversation.get(convId) ?? []
+        list.push(msg)
+        pendingByConversation.set(convId, list)
+      }
+
       setMessages((prev) => {
         const updated = new Map(prev)
         for (const msg of pending) {
-          const existing = updated.get(msg.conversationId) ?? []
-          if (!existing.some((m) => m._id === msg._id)) {
-            updated.set(msg.conversationId, [...existing, msg])
-          }
+          const convId = conversationIdFromMessage(msg)
+          if (!convId) continue
+          const existing = updated.get(convId) ?? []
+          if (existing.some((m) => m._id === msg._id)) continue
+          updated.set(convId, [...existing, { ...msg, conversationId: convId }])
         }
         return updated
+      })
+
+      setConversations((prev) => {
+        let next = [...prev]
+        const selectedId = selectedConvRef.current?.id ?? null
+
+        for (const [convId, msgs] of pendingByConversation) {
+          const msg = msgs[msgs.length - 1]
+          const senderStr = getSenderId(msg)
+          const recipientStr = getRecipientId(msg)
+          const counterpartyId = senderStr === adminId ? recipientStr : senderStr
+          const counterpartyName =
+            senderStr === adminId ? "User" : getSenderName(msg) || "User"
+
+          const lastMessage = {
+            text: msg.text,
+            hasImage: msg.messageType === "image",
+            sentAt: msg.createdAt,
+            senderId: senderStr,
+            status: msg.status,
+          }
+
+          const idx = next.findIndex((c) => c.id === convId)
+          const unreadAdd = convId === selectedId ? 0 : msgs.length
+
+          if (idx < 0) {
+            next = [
+              {
+                id: convId,
+                virtual: false,
+                counterpartyId,
+                counterpartyName,
+                counterpartyAvatarUrl: null,
+                subjectId: "",
+                subjectTitle: "",
+                lastMessage,
+                unreadCount: unreadAdd,
+              },
+              ...next,
+            ]
+          } else {
+            next = next.map((c) =>
+              c.id === convId
+                ? {
+                    ...c,
+                    virtual: false,
+                    counterpartyId: c.counterpartyId || counterpartyId,
+                    counterpartyName: c.counterpartyName || counterpartyName,
+                    unreadCount:
+                      convId === selectedId ? 0 : c.unreadCount + unreadAdd,
+                    lastMessage,
+                  }
+                : c
+            )
+          }
+        }
+
+        return sortConversationsByRecent(next)
       })
     })
 

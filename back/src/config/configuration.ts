@@ -1,6 +1,20 @@
+function parseCsvEnv(value: string | undefined): string[] | undefined {
+  if (value == null || value.trim() === '') return undefined;
+  const parts = value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length ? parts : undefined;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+
+  cors: {
+    /** Comma-separated browser origins (e.g. https://naacademy.tech). If unset, all origins are allowed. */
+    origins: parseCsvEnv(process.env.CORS_ORIGINS),
+  },
 
   mongodb: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/na-academy',
@@ -38,6 +52,10 @@ export default () => ({
     user: process.env.MAIL_USER || '',
     pass: process.env.MAIL_PASS || '',
     from: process.env.MAIL_FROM || 'no-reply@naacademy.local',
+    /** HTTPS base for password-reset universal links (no trailing slash). */
+    publicResetHost:
+      process.env.MAIL_PUBLIC_RESET_HOST || 'https://naacademy.tech',
+    appSchemeBase: process.env.MAIL_APP_SCHEME_BASE || 'naacademy://auth',
     tls: {
       rejectUnauthorized: process.env.MAIL_TLS_REJECT_UNAUTHORIZED !== 'false',
     },

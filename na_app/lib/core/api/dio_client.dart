@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_exception.dart';
+import 'api_environment.dart';
 import '../storage/secure_token_store.dart';
 import '../utils/connectivity.dart';
 
@@ -18,11 +19,7 @@ final dioProvider = Provider<Dio>((ref) {
   final connectivityNotifier = ref.watch(connectivityProvider.notifier);
   final dio = Dio(
     BaseOptions(
-      baseUrl: const String.fromEnvironment(
-        'API_BASE_URL',
-        defaultValue: 'https://naacademy.tech/api/v1',
-        // defaultValue: 'http://192.168.1.5:3000/api/v1',
-      ),
+      baseUrl: kApiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       sendTimeout: const Duration(seconds: 15),

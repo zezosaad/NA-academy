@@ -29,6 +29,9 @@ services:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
       FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH:-/run/secrets/firebase/firebase-service-account.json}
       FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      MAIL_PUBLIC_RESET_HOST: ${MAIL_PUBLIC_RESET_HOST:-}
+      MAIL_APP_SCHEME_BASE: ${MAIL_APP_SCHEME_BASE:-}
     volumes:
       - ./back/secrets:/run/secrets/firebase:ro
     depends_on:
@@ -40,6 +43,8 @@ services:
     build:
       context: ./admin-dashboard
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
     image: na-academy-admin:latest
     container_name: na-academy-admin
     ports:

@@ -11,11 +11,18 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
+  const configService = app.get(ConfigService);
+  const corsOrigins = configService.get<string[]>('cors.origins');
+
   // Global prefix
   app.setGlobalPrefix('api/v1');
 
-  // CORS
-  app.enableCors();
+  // CORS: set CORS_ORIGINS in production (comma-separated), e.g. https://naacademy.tech
+  if (corsOrigins?.length) {
+    app.enableCors({ origin: corsOrigins, credentials: true });
+  } else {
+    app.enableCors();
+  }
 
   // Global pipes, filters, interceptors
   app.useGlobalPipes(globalValidationPipe);
@@ -36,7 +43,6 @@ async function bootstrap() {
   // Shutdown hooks
   app.enableShutdownHooks();
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('port') || 3000;
 
   await app.listen(port);
