@@ -167,6 +167,16 @@
       "arabic": "العربية",
       "arabicDescription": "Use Arabic",
       "semanticLabel": "{label} language: {description}"
+    },
+    "contact": {
+      "title": "Contact us",
+      "instagramTitle": "Instagram",
+      "instagramSubtitle": "Follow updates and content",
+      "telegramTitle": "Telegram",
+      "telegramSubtitle": "Join our official channel",
+      "youtubeTitle": "YouTube",
+      "youtubeSubtitle": "Watch tutorials and videos",
+      "openFailed": "Could not open link"
     }
   },
   "subjects": {

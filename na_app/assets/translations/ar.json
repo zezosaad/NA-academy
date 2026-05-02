@@ -70,7 +70,7 @@
   },
   "auth": {
     "login": {
-      "title": "مرحباً بعودتك",
+      "title": "مرحبًا بعودتك إلى NA Academy.",
       "subtitle": "قم بتسجيل الدخول لمتابعة رحلتك التعليمية.",
       "emailLabel": "البريد الإلكتروني",
       "emailHint": "you@example.com",
@@ -167,6 +167,16 @@
       "arabic": "العربية",
       "arabicDescription": "استخدم اللغة العربية",
       "semanticLabel": "اللغة {label}: {description}"
+    },
+    "contact": {
+      "title": "تواصل معنا",
+      "instagramTitle": "Instagram",
+      "instagramSubtitle": "تابع آخر الأخبار والمحتوى",
+      "telegramTitle": "Telegram",
+      "telegramSubtitle": "انضم لقناتنا الرسمية",
+      "youtubeTitle": "YouTube",
+      "youtubeSubtitle": "شاهد الشروحات والفيديوهات",
+      "openFailed": "تعذر فتح الرابط"
     }
   },
   "subjects": {

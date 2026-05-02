@@ -15,17 +15,69 @@ class SplashPage extends ConsumerStatefulWidget {
   ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends ConsumerState<SplashPage> {
+class _SplashPageState extends ConsumerState<SplashPage>
+    with TickerProviderStateMixin {
   bool _navigated = false;
+
+  // Logo: drops from the top with a bounce
+  late final AnimationController _logoController;
+  late final Animation<double> _logoSlide;
+  late final Animation<double> _logoFade;
+
+  // Welcome text: fades + slides up after the logo lands
+  late final AnimationController _textController;
+  late final Animation<double> _textFade;
+  late final Animation<double> _textSlide;
 
   @override
   void initState() {
     super.initState();
+
+    // ── Logo animation (drop + bounce) ────────────────────────────
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _logoSlide = Tween<double>(begin: -1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.bounceOut),
+    );
+    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _logoController,
+        curve: const Interval(0.0, 0.35, curve: Curves.easeIn),
+      ),
+    );
+
+    // ── Text animation (fade-in + slide up) ───────────────────────
+    _textController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _textFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeIn),
+    );
+    _textSlide = Tween<double>(begin: 24.0, end: 0.0).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeOut),
+    );
+
+    // Start logo, then trigger text 700 ms later
+    _logoController.forward().then((_) {
+      if (mounted) _textController.forward();
+    });
+
     _startSplash();
   }
 
+  @override
+  void dispose() {
+    _logoController.dispose();
+    _textController.dispose();
+    super.dispose();
+  }
+
   Future<void> _startSplash() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Give the animations time to play (≥ 1.5 s total)
+    await Future.delayed(const Duration(milliseconds: 1600));
     if (!mounted || _navigated) return;
 
     final authState = ref.read(authControllerProvider);
@@ -65,6 +117,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     });
 
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: Container(
@@ -73,47 +126,90 @@ class _SplashPageState extends ConsumerState<SplashPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Logo ──────────────────────────────────────────────
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withValues(alpha: 0.18),
-                      blurRadius: 40,
-                      spreadRadius: 4,
+              // ── Animated Logo (drop + bounce) ─────────────────────
+              AnimatedBuilder(
+                animation: _logoController,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _logoSlide.value * screenHeight * 0.45),
+                    child: Opacity(
+                      opacity: _logoFade.value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 130,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: 0.25),
+                        blurRadius: 48,
+                        spreadRadius: 6,
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    'assets/images/logo.jpeg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // ── Animated welcome text ─────────────────────────────
+              AnimatedBuilder(
+                animation: _textController,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _textFade.value,
+                    child: Transform.translate(
+                      offset: Offset(0, _textSlide.value),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Text(
+                      'مرحبًا بكم في',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary)
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                    Text(
+                      'NA Academy',
+                      style: GoogleFonts.cairo(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ],
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/images/logo.jpeg',
-                  fit: BoxFit.cover,
-                ),
               ),
-              const SizedBox(height: 20),
-              // ── App name ──────────────────────────────────────────
-              Text(
-                'NA Academy',
-                style: GoogleFonts.cairo(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 40),
+
+              const SizedBox(height: 48),
+
               // ── Loading indicator ─────────────────────────────────
               SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: accentColor.withValues(alpha: 0.5),
+                  color: accentColor.withValues(alpha: 0.45),
                 ),
               ),
             ],

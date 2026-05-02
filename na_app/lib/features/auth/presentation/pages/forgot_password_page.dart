@@ -55,7 +55,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/auth/login');
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, size: 20),
@@ -167,6 +172,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

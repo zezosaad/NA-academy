@@ -80,23 +80,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         duration: const Duration(milliseconds: 600),
                         child: Center(
                           child: Container(
-                            padding: const EdgeInsets.all(20),
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkAccentSoft : AppColors.accentSoft,
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
                                   color: (isDark ? AppColors.darkAccent : AppColors.accent)
                                       .withValues(alpha: 0.2),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
+                                  blurRadius: 24,
+                                  spreadRadius: 4,
                                 )
                               ],
                             ),
-                            child: Icon(
-                              LucideIcons.user,
-                              size: 40,
-                              color: isDark ? AppColors.darkAccent : AppColors.accent,
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              'assets/images/logo.jpeg',
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),

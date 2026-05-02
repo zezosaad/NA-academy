@@ -7,6 +7,7 @@ import 'package:na_app/core/theme/app_colors.dart';
 import 'package:na_app/core/storage/prefs_store.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -16,6 +17,14 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
+  static const String _instagramUrl =
+      'https://www.instagram.com/na_acadmy1?igsh=MWJqY2I4MW5oZWcyZQ==';
+  static const String _telegramUrl = 'https://t.me/na_academy1';
+  static const String _youtubeUrl = 'https://youtube.com/@na_academy?si=pHGwiAF3UQEBzbiQ';
+  static final Uri _instagramAppUri = Uri.parse('instagram://user?username=na_acadmy1');
+  static final Uri _telegramAppUri = Uri.parse('tg://resolve?domain=na_academy1');
+  static final Uri _youtubeAppUri = Uri.parse('youtube://www.youtube.com/@na_academy');
+
   bool _notificationsEnabled = true;
   bool _localeFollowsSystem = true;
   bool _loading = true;
@@ -93,7 +102,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
     return Scaffold(
       appBar: AppBar(title: Text('settings.title'.tr())),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -109,10 +118,159 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
             const SizedBox(height: 12),
             _buildLanguageSelector(
                 context, isDark, bgColor, borderColor, textColor),
+            const SizedBox(height: 24),
+            _buildSectionHeader(context, 'settings.contact.title'.tr()),
+            const SizedBox(height: 8),
+            _buildContactLinks(context, isDark, bgColor, borderColor, textColor, mutedColor),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildContactLinks(
+    BuildContext context,
+    bool isDark,
+    Color bgColor,
+    Color borderColor,
+    Color textColor,
+    Color mutedColor,
+  ) {
+    return Material(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          children: [
+            _contactOption(
+              context: context,
+              icon: LucideIcons.camera,
+              label: 'settings.contact.instagramTitle'.tr(),
+              description: 'settings.contact.instagramSubtitle'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              textColor: textColor,
+              mutedColor: mutedColor,
+              onTap: () => _openDeepLinkWithFallback(
+                appUri: _instagramAppUri,
+                webUrl: _instagramUrl,
+              ),
+            ),
+            _contactOption(
+              context: context,
+              icon: LucideIcons.send,
+              label: 'settings.contact.telegramTitle'.tr(),
+              description: 'settings.contact.telegramSubtitle'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              textColor: textColor,
+              mutedColor: mutedColor,
+              onTap: () => _openDeepLinkWithFallback(
+                appUri: _telegramAppUri,
+                webUrl: _telegramUrl,
+              ),
+            ),
+            _contactOption(
+              context: context,
+              icon: LucideIcons.play,
+              label: 'settings.contact.youtubeTitle'.tr(),
+              description: 'settings.contact.youtubeSubtitle'.tr(),
+              isDark: isDark,
+              borderColor: borderColor,
+              textColor: textColor,
+              mutedColor: mutedColor,
+              onTap: () => _openDeepLinkWithFallback(
+                appUri: _youtubeAppUri,
+                webUrl: _youtubeUrl,
+              ),
+              isLast: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _contactOption({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String description,
+    required bool isDark,
+    required Color borderColor,
+    required Color textColor,
+    required Color mutedColor,
+    required Future<void> Function() onTap,
+    bool isLast = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: isLast ? null : Border(bottom: BorderSide(color: borderColor)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 16, color: textColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+                  ),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: mutedColor),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.externalLink, size: 16, color: mutedColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openDeepLinkWithFallback({
+    required Uri appUri,
+    required String webUrl,
+  }) async {
+    final webUri = Uri.tryParse(webUrl);
+    if (webUri == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('settings.contact.openFailed'.tr())),
+      );
+      return;
+    }
+
+    final openedApp = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+    if (openedApp) return;
+
+    final openedWeb = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    if (!openedWeb && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('settings.contact.openFailed'.tr())));
+    }
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
