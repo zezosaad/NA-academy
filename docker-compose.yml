@@ -23,6 +23,7 @@ services:
       GRIDFS_CHAT_CHUNK_SIZE: ${GRIDFS_CHAT_CHUNK_SIZE:-261120}
       MAIL_HOST: ${MAIL_HOST:-}
       MAIL_PORT: ${MAIL_PORT:-}
+      MAIL_SECURE: ${MAIL_SECURE:-false}
       MAIL_USER: ${MAIL_USER:-}
       MAIL_PASS: ${MAIL_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-}
