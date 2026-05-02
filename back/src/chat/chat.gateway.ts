@@ -11,8 +11,11 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Types } from 'mongoose';
 import { ChatService } from './chat.service.js';
 import { MessageStatus, ChatMessageType } from './schemas/message.schema.js';
+import { FcmService } from '../notifications/fcm.service.js';
+import { PushTokensService } from '../push-tokens/push-tokens.service.js';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -29,6 +32,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly fcmService: FcmService,
+    private readonly pushTokensService: PushTokensService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -170,6 +175,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     client.emit('new_message', messagePayload);
 
+    void this.sendChatPush(savedMessage, payload.recipientId, messagePayload);
+
     return {
       event: 'message_ack',
       data: {
@@ -178,6 +185,56 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         clientMessageId: payload.clientMessageId ?? null,
       },
     };
+  }
+
+  private async sendChatPush(
+    savedMessage: { _id: unknown; conversationId: unknown; messageType?: ChatMessageType; text?: string | null },
+    recipientId: string,
+    wired: { senderId: unknown; text?: unknown; messageType?: unknown },
+  ): Promise<void> {
+    try {
+      if (!Types.ObjectId.isValid(recipientId)) return;
+      const recipientObjectId = new Types.ObjectId(recipientId);
+      const tokens = await this.pushTokensService.findActiveForUserIds([recipientObjectId]);
+      if (tokens.length === 0) return;
+
+      const senderWire = wired.senderId as { _id?: string; name?: string } | string | undefined;
+      const senderId =
+        typeof senderWire === 'object' && senderWire
+          ? String(senderWire._id ?? '')
+          : String(senderWire ?? '');
+      const senderName =
+        typeof senderWire === 'object' && senderWire ? String(senderWire.name ?? '') : '';
+
+      const isImage = (wired.messageType ?? savedMessage.messageType) === ChatMessageType.IMAGE;
+      const text = (wired.text as string | undefined) ?? savedMessage.text ?? '';
+      const body = isImage ? '📷 صورة' : text;
+
+      const messageId = String((savedMessage._id as { toString: () => string }).toString());
+      const conversationId = String(
+        (savedMessage.conversationId as { toString: () => string }).toString(),
+      );
+
+      const result = await this.fcmService.sendBatch(
+        tokens.map((t) => t.token),
+        {
+          title: senderName || 'رسالة جديدة',
+          body,
+          data: {
+            type: 'chat',
+            conversationId,
+            senderId,
+            senderName,
+            messageId,
+          },
+        },
+      );
+      this.logger.log(
+        `chat push sent recipient=${recipientId} success=${result.successCount} failed=${result.failureCount}`,
+      );
+    } catch (err) {
+      this.logger.error(`chat push failed recipient=${recipientId}`, err as Error);
+    }
   }
 
   @SubscribeMessage('delivery_ack')

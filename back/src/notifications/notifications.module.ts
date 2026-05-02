@@ -30,6 +30,6 @@ import { PushToken, PushTokenSchema } from '../push-tokens/schemas/push-token.sc
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService, FcmService, AudienceResolverService, RetentionService],
-  exports: [NotificationsService],
+  exports: [NotificationsService, FcmService],
 })
 export class NotificationsModule {}

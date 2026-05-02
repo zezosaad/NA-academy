@@ -12,6 +12,8 @@ import { ChatGateway } from './chat.gateway.js';
 import { ChatService } from './chat.service.js';
 import { ChatController } from './chat.controller.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
+import { PushTokensModule } from '../push-tokens/push-tokens.module.js';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ActivationCodesModule } from '../activation-codes/activation-codes.modu
       { name: SubjectBundle.name, schema: SubjectBundleSchema },
     ]),
     ActivationCodesModule,
+    NotificationsModule,
+    PushTokensModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

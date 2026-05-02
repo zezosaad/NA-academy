@@ -17,6 +17,7 @@ Future<void> _upsertToInbox(RemoteMessage message) async {
   try {
     final db = AppDatabase();
     final data = message.data;
+    if (data['type'] == 'chat') return;
     final notifId = extractNotificationId(message) ?? '';
     if (notifId.isEmpty) return;
 
@@ -112,6 +113,11 @@ String? extractDeepLinkTarget(RemoteMessage message) {
       return null;
     case 'url':
       return data['url'];
+    case 'chat':
+      final conversationId = data['conversationId'];
+      return conversationId != null && conversationId.toString().isNotEmpty
+          ? '/chat/$conversationId'
+          : null;
     default:
       return null;
   }

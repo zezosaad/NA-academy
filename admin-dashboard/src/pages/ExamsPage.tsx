@@ -101,12 +101,6 @@ const getExamAccessMode = (exam?: Pick<Exam, "accessMode" | "hasFreeSection"> | 
   return exam?.hasFreeSection ? "free_section" : "code_required"
 }
 
-const accessModeLabels: Record<ExamAccessMode, string> = {
-  code_required: "Code required",
-  free_section: "Free section",
-  full_exam_free_attempts: "Full exam free attempts",
-  free: "Free (open to all)",
-}
 
 const toDateTimeLocalValue = (value?: string) => {
   if (!value) return ""
