@@ -320,10 +320,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
     bool openedWeb;
     try {
-      openedWeb = await launchUrl(
-        webUri,
-        mode: LaunchMode.externalApplication,
-      );
+      openedWeb = await launchUrl(webUri, mode: LaunchMode.externalApplication);
     } on PlatformException {
       openedWeb = false;
     }
