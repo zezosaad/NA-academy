@@ -53,12 +53,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _textFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _textController, curve: Curves.easeIn),
-    );
-    _textSlide = Tween<double>(begin: 24.0, end: 0.0).animate(
-      CurvedAnimation(parent: _textController, curve: Curves.easeOut),
-    );
+    _textFade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _textController, curve: Curves.easeIn));
+    _textSlide = Tween<double>(
+      begin: 24.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _textController, curve: Curves.easeOut));
 
     // Start logo, then trigger text 700 ms later
     _logoController.forward().then((_) {
@@ -132,10 +134,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                 builder: (context, child) {
                   return Transform.translate(
                     offset: Offset(0, _logoSlide.value * screenHeight * 0.45),
-                    child: Opacity(
-                      opacity: _logoFade.value,
-                      child: child,
-                    ),
+                    child: Opacity(opacity: _logoFade.value, child: child),
                   );
                 },
                 child: Container(
@@ -180,10 +179,11 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       style: GoogleFonts.cairo(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
-                        color: (isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.textPrimary)
-                            .withValues(alpha: 0.7),
+                        color:
+                            (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.textPrimary)
+                                .withValues(alpha: 0.7),
                       ),
                     ),
                     Text(

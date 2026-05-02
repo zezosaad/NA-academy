@@ -16,14 +16,22 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
+class _SettingsPageState extends ConsumerState<SettingsPage>
+    with WidgetsBindingObserver {
   static const String _instagramUrl =
       'https://www.instagram.com/na_acadmy1?igsh=MWJqY2I4MW5oZWcyZQ==';
   static const String _telegramUrl = 'https://t.me/na_academy1';
-  static const String _youtubeUrl = 'https://youtube.com/@na_academy?si=pHGwiAF3UQEBzbiQ';
-  static final Uri _instagramAppUri = Uri.parse('instagram://user?username=na_acadmy1');
-  static final Uri _telegramAppUri = Uri.parse('tg://resolve?domain=na_academy1');
-  static final Uri _youtubeAppUri = Uri.parse('youtube://www.youtube.com/@na_academy');
+  static const String _youtubeUrl =
+      'https://youtube.com/@na_academy?si=pHGwiAF3UQEBzbiQ';
+  static final Uri _instagramAppUri = Uri.parse(
+    'instagram://user?username=na_acadmy1',
+  );
+  static final Uri _telegramAppUri = Uri.parse(
+    'tg://resolve?domain=na_academy1',
+  );
+  static final Uri _youtubeAppUri = Uri.parse(
+    'youtube://www.youtube.com/@na_academy',
+  );
 
   bool _notificationsEnabled = true;
   bool _localeFollowsSystem = true;
@@ -63,7 +71,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
 
   Future<bool> _syncNotificationPermission({bool savePreference = true}) async {
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
-    final enabled = settings.authorizationStatus == AuthorizationStatus.authorized ||
+    final enabled =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
 
     if (savePreference) {
@@ -85,12 +94,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedMode = ref.watch(themeModeProvider);
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor =
-        isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
-    final textColor =
-        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
-    final mutedColor =
-        isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
 
     if (_loading) {
       return Scaffold(
@@ -109,19 +119,42 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
             _buildSectionHeader(context, 'settings.appearance'.tr()),
             const SizedBox(height: 8),
             _buildThemeSelector(
-                context, isDark, bgColor, borderColor, selectedMode),
+              context,
+              isDark,
+              bgColor,
+              borderColor,
+              selectedMode,
+            ),
             const SizedBox(height: 24),
             _buildSectionHeader(context, 'settings.preferences'.tr()),
             const SizedBox(height: 8),
             _buildNotificationsToggle(
-                context, isDark, bgColor, borderColor, textColor, mutedColor),
+              context,
+              isDark,
+              bgColor,
+              borderColor,
+              textColor,
+              mutedColor,
+            ),
             const SizedBox(height: 12),
             _buildLanguageSelector(
-                context, isDark, bgColor, borderColor, textColor),
+              context,
+              isDark,
+              bgColor,
+              borderColor,
+              textColor,
+            ),
             const SizedBox(height: 24),
             _buildSectionHeader(context, 'settings.contact.title'.tr()),
             const SizedBox(height: 8),
-            _buildContactLinks(context, isDark, bgColor, borderColor, textColor, mutedColor),
+            _buildContactLinks(
+              context,
+              isDark,
+              bgColor,
+              borderColor,
+              textColor,
+              mutedColor,
+            ),
           ],
         ),
       ),
@@ -213,7 +246,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          border: isLast ? null : Border(bottom: BorderSide(color: borderColor)),
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: borderColor)),
         ),
         child: Row(
           children: [
@@ -234,11 +269,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                 children: [
                   Text(
                     label,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontSize: 15),
                   ),
                   Text(
                     description,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: mutedColor),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: mutedColor),
                   ),
                 ],
               ),
@@ -263,13 +302,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
       return;
     }
 
-    final openedApp = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+    final openedApp = await launchUrl(
+      appUri,
+      mode: LaunchMode.externalApplication,
+    );
     if (openedApp) return;
 
-    final openedWeb = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    final openedWeb = await launchUrl(
+      webUri,
+      mode: LaunchMode.externalApplication,
+    );
     if (!openedWeb && mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('settings.contact.openFailed'.tr())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('settings.contact.openFailed'.tr())),
+      );
     }
   }
 
@@ -278,9 +324,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -370,9 +416,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
           selected: isSelected,
           child: Row(
             children: [
-              Icon(icon,
-                  size: 18,
-                  color: isSelected ? accentColor : (isDark ? AppColors.darkTextMuted : AppColors.textMuted)),
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected
+                    ? accentColor
+                    : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -380,21 +430,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                   children: [
                     Text(
                       label,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontSize: 15),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 15),
                     ),
                     Text(
                       description,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextMuted
-                                : AppColors.textMuted,
-                          ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -440,9 +486,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                 );
                 await _syncNotificationPermission();
               } else {
-                final settings = await FirebaseMessaging.instance.getNotificationSettings();
-                final osStillEnabled = settings.authorizationStatus == AuthorizationStatus.authorized ||
-                    settings.authorizationStatus == AuthorizationStatus.provisional;
+                final settings = await FirebaseMessaging.instance
+                    .getNotificationSettings();
+                final osStillEnabled =
+                    settings.authorizationStatus ==
+                        AuthorizationStatus.authorized ||
+                    settings.authorizationStatus ==
+                        AuthorizationStatus.provisional;
 
                 if (osStillEnabled && mounted) {
                   final openSettings = await showDialog<bool>(
@@ -450,14 +500,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                     builder: (dialogContext) {
                       return AlertDialog(
                         title: const Text('Notifications'),
-                        content: Text('notifications.permission_denied_explainer'.tr()),
+                        content: Text(
+                          'notifications.permission_denied_explainer'.tr(),
+                        ),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(false),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
                             child: const Text('Cancel'),
                           ),
                           FilledButton(
-                            onPressed: () => Navigator.of(dialogContext).pop(true),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
                             child: const Text('Open settings'),
                           ),
                         ],
@@ -478,18 +532,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
             },
             title: Text(
               'settings.notifications.title'.tr(),
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontSize: 15),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 15),
             ),
             subtitle: Text(
               _notificationsEnabled
                   ? 'settings.notifications.enabled'.tr()
                   : 'settings.notifications.disabled'.tr(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: mutedColor,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: mutedColor),
             ),
             secondary: Container(
               width: 44,
@@ -498,11 +551,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                 color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                LucideIcons.bell,
-                size: 16,
-                color: textColor,
-              ),
+              child: Icon(LucideIcons.bell, size: 16, color: textColor),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
@@ -518,24 +567,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: borderColor),
-                ),
+                border: Border(top: BorderSide(color: borderColor)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'notifications.inbox_title'.tr(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: textColor,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: textColor),
                   ),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: 16,
-                    color: mutedColor,
-                  ),
+                  Icon(LucideIcons.chevronRight, size: 16, color: mutedColor),
                 ],
               ),
             ),
@@ -580,8 +623,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
               description: 'settings.language.englishDescription'.tr(),
               isDark: isDark,
               borderColor: borderColor,
-              isSelected: !_localeFollowsSystem &&
-                  context.locale == const Locale('en'),
+              isSelected:
+                  !_localeFollowsSystem && context.locale == const Locale('en'),
               onTap: () => _selectLanguage(const Locale('en')),
             ),
             _languageOption(
@@ -591,8 +634,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
               description: 'settings.language.arabicDescription'.tr(),
               isDark: isDark,
               borderColor: borderColor,
-              isSelected: !_localeFollowsSystem &&
-                  context.locale == const Locale('ar'),
+              isSelected:
+                  !_localeFollowsSystem && context.locale == const Locale('ar'),
               onTap: () => _selectLanguage(const Locale('ar')),
               isLast: true,
             ),
@@ -631,13 +674,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
           selected: isSelected,
           child: Row(
             children: [
-              Icon(icon,
-                  size: 18,
-                  color: isSelected
-                      ? accentColor
-                      : (isDark
-                          ? AppColors.darkTextMuted
-                          : AppColors.textMuted)),
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected
+                    ? accentColor
+                    : (isDark ? AppColors.darkTextMuted : AppColors.textMuted),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -645,18 +688,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                   children: [
                     Text(
                       label,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontSize: 15),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 15),
                     ),
                     Text(
                       description,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextMuted
-                                : AppColors.textMuted,
-                          ),
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
