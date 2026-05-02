@@ -7,6 +7,7 @@ import { ExamCode, ExamCodeSchema } from '../activation-codes/schemas/exam-code.
 import { ExamsService } from './exams.service.js';
 import { ExamsController } from './exams.controller.js';
 import { ActivationCodesModule } from '../activation-codes/activation-codes.module.js';
+import { SubjectsModule } from '../subjects/subjects.module.js';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ActivationCodesModule } from '../activation-codes/activation-codes.modu
       { name: ExamCode.name, schema: ExamCodeSchema },
     ]),
     forwardRef(() => ActivationCodesModule),
+    SubjectsModule,
   ],
   controllers: [ExamsController],
   providers: [ExamsService],

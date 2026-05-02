@@ -44,7 +44,14 @@
       "PowerShell(Get-NetTCPConnection *)",
       "Bash(netstat -ano)",
       "Bash(gh repo *)",
-      "Bash(grep -E \"\\\\.\\(entity|controller|service\\)\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.\\(entity|controller|service\\)\\\\.ts$\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(git stash *)",
+      "Bash(dart run *)",
+      "Bash(dart --version)",
+      "Bash(flutter --version)",
+      "Bash(apt-get install *)",
+      "Bash(dart pub *)"
     ]
   }
 }

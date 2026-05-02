@@ -27,6 +27,7 @@ class Exam with _$Exam {
     @Default(ExamAccessMode.codeRequired) ExamAccessMode accessMode,
     @Default(ExamTimingMode.perQuestion) ExamTimingMode timingMode,
     @Default(ExamStatus.available) ExamStatus status,
+    @Default(false) bool isSubjectUnlocked,
     double? lastScore,
   }) = _Exam;
 
@@ -66,6 +67,7 @@ class Exam with _$Exam {
       accessMode: _parseAccessMode(json['accessMode'] as String?),
       timingMode: timingMode,
       status: _parseExamStatus(json['status'] as String?),
+      isSubjectUnlocked: json['isSubjectUnlocked'] as bool? ?? false,
       lastScore: (json['lastScore'] as num?)?.toDouble(),
     );
   }
@@ -115,9 +117,10 @@ class Exam with _$Exam {
 
 extension ExamAccessX on Exam {
   bool get canStartDirectly =>
-      (accessMode == ExamAccessMode.fullExamFreeAttempts ||
-          accessMode == ExamAccessMode.freeSection) &&
-      freeAttemptsRemaining > 0;
+      isSubjectUnlocked ||
+      ((accessMode == ExamAccessMode.fullExamFreeAttempts ||
+              accessMode == ExamAccessMode.freeSection) &&
+          freeAttemptsRemaining > 0);
 
   bool get needsCodeEntry => !canStartDirectly;
 }

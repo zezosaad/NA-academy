@@ -22,6 +22,7 @@ mixin _$Subject {
   String? get description => throw _privateConstructorUsedError;
   String? get coverImageUrl => throw _privateConstructorUsedError;
   int get lessonCount => throw _privateConstructorUsedError;
+  int get examCount => throw _privateConstructorUsedError;
   bool get isUnlocked => throw _privateConstructorUsedError;
   double get progressPercent => throw _privateConstructorUsedError;
 
@@ -42,6 +43,7 @@ abstract class $SubjectCopyWith<$Res> {
     String? description,
     String? coverImageUrl,
     int lessonCount,
+    int examCount,
     bool isUnlocked,
     double progressPercent,
   });
@@ -67,6 +69,7 @@ class _$SubjectCopyWithImpl<$Res, $Val extends Subject>
     Object? description = freezed,
     Object? coverImageUrl = freezed,
     Object? lessonCount = null,
+    Object? examCount = null,
     Object? isUnlocked = null,
     Object? progressPercent = null,
   }) {
@@ -91,6 +94,10 @@ class _$SubjectCopyWithImpl<$Res, $Val extends Subject>
             lessonCount: null == lessonCount
                 ? _value.lessonCount
                 : lessonCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            examCount: null == examCount
+                ? _value.examCount
+                : examCount // ignore: cast_nullable_to_non_nullable
                       as int,
             isUnlocked: null == isUnlocked
                 ? _value.isUnlocked
@@ -120,6 +127,7 @@ abstract class _$$SubjectImplCopyWith<$Res> implements $SubjectCopyWith<$Res> {
     String? description,
     String? coverImageUrl,
     int lessonCount,
+    int examCount,
     bool isUnlocked,
     double progressPercent,
   });
@@ -144,6 +152,7 @@ class __$$SubjectImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? coverImageUrl = freezed,
     Object? lessonCount = null,
+    Object? examCount = null,
     Object? isUnlocked = null,
     Object? progressPercent = null,
   }) {
@@ -169,6 +178,10 @@ class __$$SubjectImplCopyWithImpl<$Res>
             ? _value.lessonCount
             : lessonCount // ignore: cast_nullable_to_non_nullable
                   as int,
+        examCount: null == examCount
+            ? _value.examCount
+            : examCount // ignore: cast_nullable_to_non_nullable
+                  as int,
         isUnlocked: null == isUnlocked
             ? _value.isUnlocked
             : isUnlocked // ignore: cast_nullable_to_non_nullable
@@ -191,6 +204,7 @@ class _$SubjectImpl implements _Subject {
     this.description,
     this.coverImageUrl,
     this.lessonCount = 0,
+    this.examCount = 0,
     this.isUnlocked = false,
     this.progressPercent = 0.0,
   });
@@ -208,6 +222,9 @@ class _$SubjectImpl implements _Subject {
   final int lessonCount;
   @override
   @JsonKey()
+  final int examCount;
+  @override
+  @JsonKey()
   final bool isUnlocked;
   @override
   @JsonKey()
@@ -215,7 +232,7 @@ class _$SubjectImpl implements _Subject {
 
   @override
   String toString() {
-    return 'Subject(id: $id, title: $title, description: $description, coverImageUrl: $coverImageUrl, lessonCount: $lessonCount, isUnlocked: $isUnlocked, progressPercent: $progressPercent)';
+    return 'Subject(id: $id, title: $title, description: $description, coverImageUrl: $coverImageUrl, lessonCount: $lessonCount, examCount: $examCount, isUnlocked: $isUnlocked, progressPercent: $progressPercent)';
   }
 
   @override
@@ -231,6 +248,8 @@ class _$SubjectImpl implements _Subject {
                 other.coverImageUrl == coverImageUrl) &&
             (identical(other.lessonCount, lessonCount) ||
                 other.lessonCount == lessonCount) &&
+            (identical(other.examCount, examCount) ||
+                other.examCount == examCount) &&
             (identical(other.isUnlocked, isUnlocked) ||
                 other.isUnlocked == isUnlocked) &&
             (identical(other.progressPercent, progressPercent) ||
@@ -245,6 +264,7 @@ class _$SubjectImpl implements _Subject {
     description,
     coverImageUrl,
     lessonCount,
+    examCount,
     isUnlocked,
     progressPercent,
   );
@@ -265,6 +285,7 @@ abstract class _Subject implements Subject {
     final String? description,
     final String? coverImageUrl,
     final int lessonCount,
+    final int examCount,
     final bool isUnlocked,
     final double progressPercent,
   }) = _$SubjectImpl;
@@ -279,6 +300,8 @@ abstract class _Subject implements Subject {
   String? get coverImageUrl;
   @override
   int get lessonCount;
+  @override
+  int get examCount;
   @override
   bool get isUnlocked;
   @override
