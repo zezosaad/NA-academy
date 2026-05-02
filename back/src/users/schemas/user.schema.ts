@@ -46,6 +46,9 @@ export class User {
   })
   level!: EducationLevel;
 
+  @Prop({ type: String, default: '' })
+  university!: string;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

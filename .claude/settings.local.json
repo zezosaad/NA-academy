@@ -43,7 +43,8 @@
       "Bash(curl -s http://localhost/)",
       "PowerShell(Get-NetTCPConnection *)",
       "Bash(netstat -ano)",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(grep -E \"\\\\.\\(entity|controller|service\\)\\\\.ts$\")"
     ]
   }
 }

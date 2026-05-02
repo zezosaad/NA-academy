@@ -22,6 +22,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _universityController = TextEditingController();
   late final TapGestureRecognizer _termsTapRecognizer;
   late final TapGestureRecognizer _privacyTapRecognizer;
   bool _obscurePassword = true;
@@ -52,6 +53,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _universityController.dispose();
     super.dispose();
   }
 
@@ -110,6 +112,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       );
       return;
     }
+    if (_universityController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'auth.register.universityMissing'.tr(fallbackKey: 'من فضلك أدخل اسم الجامعة'),
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
 
     final result = await ref.read(authControllerProvider.notifier).register(
@@ -117,6 +131,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
           level: level,
+          university: _universityController.text.trim(),
         );
 
     if (!mounted) return;
@@ -241,6 +256,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           icon: LucideIcons.mail,
                           isDark: isDark,
                           keyboardType: TextInputType.emailAddress,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // University Field
+                      FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 450),
+                        child: _buildTextField(
+                          controller: _universityController,
+                          label: 'auth.register.universityLabel'.tr(fallbackKey: 'الجامعة'),
+                          hint: 'auth.register.universityHint'.tr(fallbackKey: 'اسم جامعتك'),
+                          icon: LucideIcons.school,
+                          isDark: isDark,
                         ),
                       ),
                       const SizedBox(height: 20),

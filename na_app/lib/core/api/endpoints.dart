@@ -29,6 +29,8 @@ class _UserEndpoints {
   static const String _prefix = '/users';
 
   String get me => '$_prefix/me';
+  String get mySubjects => '$_prefix/me/subjects';
+  String get updateMe => '$_prefix/me';
   String profile(String id) => '$_prefix/$id';
 }
 

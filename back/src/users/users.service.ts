@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -46,6 +53,7 @@ export class UsersService {
     name: string;
     role?: UserRole;
     level?: EducationLevel;
+    university?: string;
   }): Promise<UserDocument> {
     const existing = await this.userModel.findOne({ email: data.email.toLowerCase() }).exec();
     if (existing) {
@@ -61,6 +69,7 @@ export class UsersService {
       role: data.role || UserRole.STUDENT,
       status: UserStatus.ACTIVE,
       ...(data.level ? { level: data.level } : {}),
+      ...(data.university !== undefined ? { university: data.university } : {}),
     });
 
     return user.save();
@@ -158,6 +167,42 @@ export class UsersService {
     ]);
 
     return { data, total };
+  }
+
+  async updateProfile(
+    userId: string,
+    data: { name?: string; email?: string; university?: string; currentPassword?: string },
+  ): Promise<any> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) throw new NotFoundException('User not found');
+
+    if (data.email && data.email.toLowerCase() !== user.email) {
+      if (!data.currentPassword) {
+        throw new BadRequestException('Current password is required to change email');
+      }
+      const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+      if (!valid) throw new UnauthorizedException('Incorrect password');
+
+      const exists = await this.userModel.findOne({ email: data.email.toLowerCase() }).exec();
+      if (exists) throw new ConflictException('Email already in use');
+
+      user.email = data.email.toLowerCase();
+    }
+
+    if (data.name !== undefined) user.name = data.name;
+    if (data.university !== undefined) user.university = data.university;
+
+    await user.save();
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      level: user.level,
+      university: user.university,
+    };
   }
 
   async updateStatus(id: string, status: UserStatus): Promise<UserDocument> {

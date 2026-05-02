@@ -4,6 +4,7 @@ import { User, UserSchema } from './schemas/user.schema.js';
 import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
 import { DevicesModule } from '../devices/devices.module.js';
+import { SubjectsModule } from '../subjects/subjects.module.js';
 import { Session, SessionSchema } from '../auth/schemas/session.schema.js';
 import { SubjectCode, SubjectCodeSchema } from '../activation-codes/schemas/subject-code.schema.js';
 import { ExamCode, ExamCodeSchema } from '../activation-codes/schemas/exam-code.schema.js';
@@ -25,6 +26,7 @@ import { SecurityFlag, SecurityFlagSchema } from '../security/schemas/security-f
       { name: SecurityFlag.name, schema: SecurityFlagSchema },
     ]),
     forwardRef(() => DevicesModule),
+    SubjectsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

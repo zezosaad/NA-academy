@@ -11,6 +11,7 @@ import 'package:na_app/features/auth/domain/auth_models.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:na_app/features/profile/data/profile_repository.dart';
 import 'package:na_app/features/profile/presentation/widgets/weekly_chart.dart';
+import 'package:na_app/features/subjects/domain/subject_models.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -20,6 +21,7 @@ class ProfilePage extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final userAsync = ref.watch(profileUserProvider);
     final analyticsAsync = ref.watch(profileAnalyticsProvider);
+    final mySubjectsAsync = ref.watch(mySubjectsProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
@@ -29,6 +31,7 @@ class ProfilePage extends ConsumerWidget {
           onRefresh: () async {
             ref.invalidate(profileUserProvider);
             ref.invalidate(profileAnalyticsProvider);
+            ref.invalidate(mySubjectsProvider);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -85,6 +88,23 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   error: (e, st) =>
                       WeeklyChart(values: [], highlightIndex: _todayIndex()),
+                ),
+                const SizedBox(height: 32),
+                _buildSectionTitle(
+                  context,
+                  'profile.mySubjects'.tr(fallbackKey: 'موادي'),
+                  isDark,
+                ),
+                const SizedBox(height: 16),
+                mySubjectsAsync.when(
+                  data: (subjects) => _buildMySubjects(context, subjects, isDark),
+                  loading: () => const SizedBox(
+                    height: 100,
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    ),
+                  ),
+                  error: (_, __) => _buildMySubjects(context, [], isDark),
                 ),
                 const SizedBox(height: 32),
                 _buildSectionTitle(
@@ -203,6 +223,7 @@ class ProfilePage extends ConsumerWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 72,
@@ -237,15 +258,36 @@ class ProfilePage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    name,
-                    style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.textPrimary,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: GoogleFonts.cairo(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (user is User)
+                        GestureDetector(
+                          onTap: () =>
+                              context.push('/profile/edit', extra: user),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: accentSoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(LucideIcons.pencil,
+                                size: 14, color: accentColor),
+                          ),
+                        ),
+                    ],
                   ),
                   if (email.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -258,6 +300,31 @@ class ProfilePage extends ConsumerWidget {
                             ? AppColors.darkTextSecondary
                             : AppColors.textSecondary,
                       ),
+                    ),
+                  ],
+                  if (user is User && user.university.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(LucideIcons.school,
+                            size: 12,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            user.university,
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.darkTextMuted
+                                  : AppColors.textMuted,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -386,6 +453,96 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMySubjects(
+      BuildContext context, List<Subject> subjects, bool isDark) {
+    final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
+    final borderColor =
+        isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
+    final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
+    final accentSoft = isDark ? AppColors.darkAccentSoft : AppColors.accentSoft;
+    final textColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+
+    if (subjects.isEmpty) {
+      return FadeInUp(
+        delay: const Duration(milliseconds: 300),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            children: [
+              Icon(LucideIcons.bookOpen, size: 36, color: mutedColor),
+              const SizedBox(height: 12),
+              Text(
+                'profile.noSubjectsYet'
+                    .tr(fallbackKey: 'أدخل كود مادة للوصول إليها'),
+                style: GoogleFonts.cairo(fontSize: 14, color: mutedColor),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return FadeInUp(
+      delay: const Duration(milliseconds: 300),
+      child: SizedBox(
+        height: 110,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: subjects.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            final subject = subjects[index];
+            return GestureDetector(
+              onTap: () => context.push('/subjects/${subject.id}'),
+              child: Container(
+                width: 140,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: accentSoft,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(LucideIcons.bookOpen,
+                          size: 18, color: accentColor),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      subject.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.cairo(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

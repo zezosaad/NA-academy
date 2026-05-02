@@ -27,4 +27,9 @@ export class RegisterDto {
   @ApiProperty({ enum: EducationLevel, example: EducationLevel.SECONDARY_3 })
   @IsEnum(EducationLevel)
   level!: EducationLevel;
+
+  @ApiProperty({ example: 'Cairo University' })
+  @IsString()
+  @IsNotEmpty()
+  university!: string;
 }

@@ -53,6 +53,7 @@ class User {
   final UserRole role;
   final UserStatus status;
   final EducationLevel? level;
+  final String university;
 
   const User({
     required this.id,
@@ -62,6 +63,7 @@ class User {
     required this.role,
     required this.status,
     this.level,
+    this.university = '',
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -93,6 +95,7 @@ class User {
       role: _parseRole(json['role'] as String?),
       status: _parseStatus(json['status'] as String?),
       level: EducationLevelX.fromApi(json['level'] as String?),
+      university: json['university'] as String? ?? '',
     );
   }
 
@@ -104,6 +107,7 @@ class User {
     'role': role.name,
     'status': status.name,
     'level': level?.apiValue,
+    'university': university,
   };
 
   User copyWith({
@@ -114,6 +118,7 @@ class User {
     UserRole? role,
     UserStatus? status,
     EducationLevel? level,
+    String? university,
   }) {
     return User(
       id: id ?? this.id,
@@ -123,6 +128,7 @@ class User {
       role: role ?? this.role,
       status: status ?? this.status,
       level: level ?? this.level,
+      university: university ?? this.university,
     );
   }
 

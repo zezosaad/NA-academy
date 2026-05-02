@@ -217,6 +217,29 @@ export class SubjectsService {
     return unlockedIds;
   }
 
+  async findUnlockedSubjects(userId: string): Promise<any[]> {
+    const unlockedIds = await this.getUnlockedSubjectIds(userId);
+    if (unlockedIds.size === 0) return [];
+
+    const objectIds = [...unlockedIds]
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    const subjects = await this.subjectModel
+      .find({ _id: { $in: objectIds }, isActive: true })
+      .select('_id title description category level')
+      .lean()
+      .exec();
+
+    return subjects.map((s) => ({
+      id: s._id.toString(),
+      title: s.title,
+      description: s.description ?? null,
+      category: s.category,
+      level: s.level ?? null,
+    }));
+  }
+
   async findSubjectById(id: string): Promise<SubjectDocument> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid subject id');

@@ -25,6 +25,7 @@ import 'package:na_app/features/exams/domain/exam_models.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:na_app/features/chat/presentation/pages/chat_thread_page.dart';
 import 'package:na_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:na_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:na_app/features/profile/presentation/pages/saved_lessons_page.dart';
 import 'package:na_app/features/profile/presentation/pages/settings_page.dart';
 import 'package:na_app/features/notifications/presentation/pages/notifications_inbox_page.dart';
@@ -257,6 +258,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/profile',
                 builder: (context, state) => const ProfilePage(),
                 routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) {
+                      final user = state.extra as dynamic;
+                      return EditProfilePage(user: user);
+                    },
+                  ),
                   GoRoute(
                     path: 'saved-lessons',
                     builder: (context, state) => const SavedLessonsPage(),

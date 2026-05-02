@@ -41,6 +41,7 @@ export class AuthService {
     name: string;
     hardwareId: string;
     level: EducationLevel;
+    university: string;
     role?: UserRole;
   }) {
     // Create user
@@ -50,6 +51,7 @@ export class AuthService {
       name: data.name,
       role: data.role,
       level: data.level,
+      university: data.university,
     });
 
     // Register device
@@ -66,6 +68,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         level: user.level,
+        university: user.university,
       },
     };
   }
@@ -117,6 +120,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         level: user.level,
+        university: user.university,
       },
     };
   }
@@ -239,6 +243,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         level: user.level,
+        university: user.university,
       },
     };
   }

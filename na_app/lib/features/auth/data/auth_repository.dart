@@ -45,6 +45,7 @@ class AuthRepository {
     required String email,
     required String password,
     required EducationLevel level,
+    required String university,
   }) async {
     final hardwareId = await _hardwareIdStore.hardwareId;
     final response = await _dio.post<Map<String, dynamic>>(
@@ -55,6 +56,7 @@ class AuthRepository {
         'password': password,
         'hardwareId': hardwareId,
         'level': level.apiValue,
+        'university': university,
       },
     );
     return _parseAuthResponse(response.data!);

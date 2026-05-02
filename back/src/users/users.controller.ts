@@ -13,10 +13,13 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { UpdateStatusDto } from './dto/update-status.dto.js';
 import { UpdateLevelDto } from './dto/update-level.dto.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { ListUsersQueryDto } from './dto/list-users-query.dto.js';
 import { DevicesService } from '../devices/devices.service.js';
+import { SubjectsService } from '../subjects/subjects.service.js';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -25,6 +28,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly devicesService: DevicesService,
+    private readonly subjectsService: SubjectsService,
   ) {}
 
   @Get('me')
@@ -41,7 +45,21 @@ export class UsersController {
       role: user.role,
       status: user.status,
       level: user.level,
+      university: user.university,
     };
+  }
+
+  @Get('me/subjects')
+  @ApiOperation({ summary: 'Get subjects unlocked by the current user' })
+  async getMySubjects(@CurrentUser('userId') userId: string) {
+    return this.subjectsService.findUnlockedSubjects(userId);
+  }
+
+  @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update current user profile (name, email, university)' })
+  async updateMe(@CurrentUser('userId') userId: string, @Body() dto: UpdateProfileDto) {
+    return this.usersService.updateProfile(userId, dto);
   }
 
   @Get()
