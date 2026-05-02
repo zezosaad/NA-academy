@@ -29,7 +29,6 @@ mixin _$Exam {
   ExamAccessMode get accessMode => throw _privateConstructorUsedError;
   ExamTimingMode get timingMode => throw _privateConstructorUsedError;
   ExamStatus get status => throw _privateConstructorUsedError;
-  bool get isSubjectUnlocked => throw _privateConstructorUsedError;
   double? get lastScore => throw _privateConstructorUsedError;
 
   /// Create a copy of Exam
@@ -56,7 +55,6 @@ abstract class $ExamCopyWith<$Res> {
     ExamAccessMode accessMode,
     ExamTimingMode timingMode,
     ExamStatus status,
-    bool isSubjectUnlocked,
     double? lastScore,
   });
 }
@@ -88,7 +86,6 @@ class _$ExamCopyWithImpl<$Res, $Val extends Exam>
     Object? accessMode = null,
     Object? timingMode = null,
     Object? status = null,
-    Object? isSubjectUnlocked = null,
     Object? lastScore = freezed,
   }) {
     return _then(
@@ -141,10 +138,6 @@ class _$ExamCopyWithImpl<$Res, $Val extends Exam>
                 ? _value.status
                 : status // ignore: cast_nullable_to_non_nullable
                       as ExamStatus,
-            isSubjectUnlocked: null == isSubjectUnlocked
-                ? _value.isSubjectUnlocked
-                : isSubjectUnlocked // ignore: cast_nullable_to_non_nullable
-                      as bool,
             lastScore: freezed == lastScore
                 ? _value.lastScore
                 : lastScore // ignore: cast_nullable_to_non_nullable
@@ -176,7 +169,6 @@ abstract class _$$ExamImplCopyWith<$Res> implements $ExamCopyWith<$Res> {
     ExamAccessMode accessMode,
     ExamTimingMode timingMode,
     ExamStatus status,
-    bool isSubjectUnlocked,
     double? lastScore,
   });
 }
@@ -205,7 +197,6 @@ class __$$ExamImplCopyWithImpl<$Res>
     Object? accessMode = null,
     Object? timingMode = null,
     Object? status = null,
-    Object? isSubjectUnlocked = null,
     Object? lastScore = freezed,
   }) {
     return _then(
@@ -258,10 +249,6 @@ class __$$ExamImplCopyWithImpl<$Res>
             ? _value.status
             : status // ignore: cast_nullable_to_non_nullable
                   as ExamStatus,
-        isSubjectUnlocked: null == isSubjectUnlocked
-            ? _value.isSubjectUnlocked
-            : isSubjectUnlocked // ignore: cast_nullable_to_non_nullable
-                  as bool,
         lastScore: freezed == lastScore
             ? _value.lastScore
             : lastScore // ignore: cast_nullable_to_non_nullable
@@ -287,7 +274,6 @@ class _$ExamImpl implements _Exam {
     this.accessMode = ExamAccessMode.codeRequired,
     this.timingMode = ExamTimingMode.perQuestion,
     this.status = ExamStatus.available,
-    this.isSubjectUnlocked = false,
     this.lastScore,
   });
 
@@ -324,14 +310,11 @@ class _$ExamImpl implements _Exam {
   @JsonKey()
   final ExamStatus status;
   @override
-  @JsonKey()
-  final bool isSubjectUnlocked;
-  @override
   final double? lastScore;
 
   @override
   String toString() {
-    return 'Exam(id: $id, title: $title, subjectId: $subjectId, durationMinutes: $durationMinutes, questionCount: $questionCount, attemptsAllowed: $attemptsAllowed, attemptsRemaining: $attemptsRemaining, freeAttemptsRemaining: $freeAttemptsRemaining, dueDate: $dueDate, accessMode: $accessMode, timingMode: $timingMode, status: $status, isSubjectUnlocked: $isSubjectUnlocked, lastScore: $lastScore)';
+    return 'Exam(id: $id, title: $title, subjectId: $subjectId, durationMinutes: $durationMinutes, questionCount: $questionCount, attemptsAllowed: $attemptsAllowed, attemptsRemaining: $attemptsRemaining, freeAttemptsRemaining: $freeAttemptsRemaining, dueDate: $dueDate, accessMode: $accessMode, timingMode: $timingMode, status: $status, lastScore: $lastScore)';
   }
 
   @override
@@ -359,8 +342,6 @@ class _$ExamImpl implements _Exam {
             (identical(other.timingMode, timingMode) ||
                 other.timingMode == timingMode) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.isSubjectUnlocked, isSubjectUnlocked) ||
-                other.isSubjectUnlocked == isSubjectUnlocked) &&
             (identical(other.lastScore, lastScore) ||
                 other.lastScore == lastScore));
   }
@@ -380,7 +361,6 @@ class _$ExamImpl implements _Exam {
     accessMode,
     timingMode,
     status,
-    isSubjectUnlocked,
     lastScore,
   );
 
@@ -407,7 +387,6 @@ abstract class _Exam implements Exam {
     final ExamAccessMode accessMode,
     final ExamTimingMode timingMode,
     final ExamStatus status,
-    final bool isSubjectUnlocked,
     final double? lastScore,
   }) = _$ExamImpl;
 
@@ -435,8 +414,6 @@ abstract class _Exam implements Exam {
   ExamTimingMode get timingMode;
   @override
   ExamStatus get status;
-  @override
-  bool get isSubjectUnlocked;
   @override
   double? get lastScore;
 

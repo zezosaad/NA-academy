@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:na_app/features/exams/data/exams_repository.dart';
 import 'package:na_app/features/home/data/home_repository.dart';
 import 'package:na_app/features/profile/data/profile_repository.dart';
 import 'package:na_app/features/subjects/data/subjects_repository.dart';
@@ -47,8 +46,6 @@ final activateCodeProvider = Provider<Future<ActivationResult> Function(String c
         ref.invalidate(subjectsListProvider);
         ref.invalidate(todayViewStateProvider);
         ref.invalidate(mySubjectsProvider);
-        ref.invalidate(examsListProvider);
-        ref.invalidate(examsBySubjectProvider);
       }
       return result;
     };

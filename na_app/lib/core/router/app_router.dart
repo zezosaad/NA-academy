@@ -18,7 +18,6 @@ import 'package:na_app/features/subjects/presentation/pages/code_unlocking_page.
 import 'package:na_app/features/subjects/presentation/pages/code_expired_page.dart';
 import 'package:na_app/features/subjects/presentation/pages/code_used_page.dart';
 import 'package:na_app/features/exams/presentation/pages/exams_page.dart';
-import 'package:na_app/features/exams/presentation/pages/subject_exams_page.dart';
 import 'package:na_app/features/exams/presentation/pages/enter_exam_code_page.dart';
 import 'package:na_app/features/exams/presentation/pages/take_exam_page.dart';
 import 'package:na_app/features/exams/presentation/pages/exam_result_page.dart';
@@ -279,13 +278,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/exams/subject/:id',
-        builder: (context, state) {
-          final subjectId = state.pathParameters['id']!;
-          return SubjectExamsPage(subjectId: subjectId);
-        },
       ),
       GoRoute(
         path: '/exams/:id/enter-code',

@@ -14,7 +14,6 @@ import {
   LessonProgress,
   LessonProgressDocument,
 } from '../lesson-progress/schemas/lesson-progress.schema.js';
-import { Exam, ExamDocument } from '../exams/schemas/exam.schema.js';
 import { CreateSubjectDto } from './dto/create-subject.dto.js';
 import { UpdateSubjectDto } from './dto/update-subject.dto.js';
 import { CreateBundleDto } from './dto/create-bundle.dto.js';
@@ -31,29 +30,7 @@ export class SubjectsService {
     @InjectModel(Lesson.name) private readonly lessonModel: Model<LessonDocument>,
     @InjectModel(LessonProgress.name)
     private readonly lessonProgressModel: Model<LessonProgressDocument>,
-    @InjectModel(Exam.name) private readonly examModel: Model<ExamDocument>,
   ) {}
-
-  private async computeExamCounts(subjectIds: string[]): Promise<Map<string, number>> {
-    const result = new Map<string, number>();
-    if (subjectIds.length === 0) return result;
-    const validIds = subjectIds
-      .filter((id) => Types.ObjectId.isValid(id))
-      .map((id) => new Types.ObjectId(id));
-    if (validIds.length === 0) return result;
-
-    const counts = await this.examModel.aggregate<{ _id: Types.ObjectId; count: number }>([
-      { $match: { subjectId: { $in: validIds }, isActive: true } },
-      { $group: { _id: '$subjectId', count: { $sum: 1 } } },
-    ]);
-    for (const row of counts) {
-      result.set(row._id.toString(), row.count);
-    }
-    for (const id of subjectIds) {
-      if (!result.has(id)) result.set(id, 0);
-    }
-    return result;
-  }
 
   private async computeProgressPercents(
     userId: string,
@@ -153,13 +130,11 @@ export class SubjectsService {
       this.subjectModel.countDocuments(filter).exec(),
     ]);
 
-    const subjectIds = subjects.map((s) => s._id.toString());
-
     if (role === 'student' && userId) {
-      const [unlockedIds, progressMap, examCountMap] = await Promise.all([
+      const subjectIds = subjects.map((s) => s._id.toString());
+      const [unlockedIds, progressMap] = await Promise.all([
         this.getUnlockedSubjectIds(userId),
         this.computeProgressPercents(userId, subjectIds),
-        this.computeExamCounts(subjectIds),
       ]);
       const data = subjects.map((subject) => {
         const id = subject._id.toString();
@@ -167,18 +142,15 @@ export class SubjectsService {
           ...subject,
           isUnlocked: unlockedIds.has(id),
           progressPercent: progressMap.get(id) ?? 0,
-          examCount: examCountMap.get(id) ?? 0,
         };
       });
       return { data, total };
     }
 
-    const examCountMap = await this.computeExamCounts(subjectIds);
     const data = subjects.map((subject) => ({
       ...subject,
       isUnlocked: false,
       progressPercent: 0,
-      examCount: examCountMap.get(subject._id.toString()) ?? 0,
     }));
     return { data, total };
   }
@@ -303,9 +275,7 @@ export class SubjectsService {
     } else if (role !== 'student') {
       isUnlocked = true;
     }
-    const examCountMap = await this.computeExamCounts([subject._id.toString()]);
-    const examCount = examCountMap.get(subject._id.toString()) ?? 0;
-    return { ...subject, isUnlocked, progressPercent, examCount };
+    return { ...subject, isUnlocked, progressPercent };
   }
 
   async updateSubject(id: string, dto: UpdateSubjectDto): Promise<SubjectDocument> {

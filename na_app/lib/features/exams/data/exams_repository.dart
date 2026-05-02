@@ -21,19 +21,11 @@ class ExamsRepository {
 
   ExamsRepository({required Dio dio}) : _dio = dio;
 
-  Future<List<Exam>> listExams({
-    int page = 1,
-    int limit = 50,
-    String? subjectId,
-  }) async {
+  Future<List<Exam>> listExams({int page = 1, int limit = 50}) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         Endpoints.exams.list,
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-          if (subjectId != null) 'subjectId': subjectId,
-        },
+        queryParameters: {'page': page, 'limit': limit},
       );
       final data = response.data;
       if (data == null) return [];
@@ -161,14 +153,6 @@ class ExamsListNotifier extends AsyncNotifier<List<Exam>> {
     ref.invalidateSelf();
   }
 }
-
-final examsBySubjectProvider = FutureProvider.family<List<Exam>, String>((
-  ref,
-  subjectId,
-) async {
-  final repo = ref.watch(examsRepositoryProvider);
-  return repo.listExams(subjectId: subjectId, limit: 100);
-});
 
 @immutable
 class ExamStartParams {

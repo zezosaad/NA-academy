@@ -10,7 +10,6 @@ class Subject with _$Subject {
     String? description,
     String? coverImageUrl,
     @Default(0) int lessonCount,
-    @Default(0) int examCount,
     @Default(false) bool isUnlocked,
     @Default(0.0) double progressPercent,
   }) = _Subject;
@@ -27,7 +26,6 @@ class Subject with _$Subject {
       coverImageUrl:
           json['coverImage'] as String? ?? json['coverImageUrl'] as String?,
       lessonCount: json['lessonCount'] as int? ?? 0,
-      examCount: json['examCount'] as int? ?? 0,
       isUnlocked: json['isUnlocked'] as bool? ?? false,
       progressPercent:
           ((json['progressPercent'] as num?)?.toDouble() ?? 0.0) * 100,
