@@ -35,8 +35,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   void _onEmailChanged() {
-    final emailChanged =
-        _emailController.text.trim() != widget.user.email;
+    final emailChanged = _emailController.text.trim() != widget.user.email;
     if (_showPasswordField != emailChanged) {
       setState(() => _showPasswordField = emailChanged);
     }
@@ -74,8 +73,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         name: name != widget.user.name ? name : null,
         email: emailChanged ? email : null,
         university: university != widget.user.university ? university : null,
-        currentPassword:
-            emailChanged ? _passwordController.text : null,
+        currentPassword: emailChanged ? _passwordController.text : null,
       );
       ref.invalidate(profileUserProvider);
       if (mounted) Navigator.of(context).pop();
@@ -108,14 +106,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas;
     final cardColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor =
-        isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
-    final textColor =
-        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
     final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
     final initials = (widget.user.name.isNotEmpty)
-        ? widget.user.name.trim().split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
+        ? widget.user.name
+              .trim()
+              .split(' ')
+              .map((p) => p.isNotEmpty ? p[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase()
         : '?';
 
     return Scaffold(
@@ -159,7 +165,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 style: FilledButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -192,7 +201,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: accentColor.withValues(alpha: 0.12),
-                      border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -217,10 +229,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   const SizedBox(height: 4),
                   Text(
                     widget.user.email,
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      color: mutedColor,
-                    ),
+                    style: GoogleFonts.cairo(fontSize: 14, color: mutedColor),
                   ),
                 ],
               ),
@@ -304,7 +313,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               children: [
                 _buildReadOnlyField(
                   label: 'profile.edit.level'.tr(),
-                  value: widget.user.level?.displayLabel ??
+                  value:
+                      widget.user.level?.displayLabel ??
                       'profile.edit.levelUnset'.tr(),
                   icon: LucideIcons.graduationCap,
                   hint: 'profile.edit.levelHint'.tr(),
@@ -444,12 +454,19 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 const SizedBox(height: 2),
                 Text(
                   hint,
-                  style: GoogleFonts.cairo(fontSize: 12, color: mutedColor.withValues(alpha: 0.6)),
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: mutedColor.withValues(alpha: 0.6),
+                  ),
                 ),
               ],
             ),
           ),
-          Icon(LucideIcons.lock, size: 15, color: mutedColor.withValues(alpha: 0.5)),
+          Icon(
+            LucideIcons.lock,
+            size: 15,
+            color: mutedColor.withValues(alpha: 0.5),
+          ),
         ],
       ),
     );

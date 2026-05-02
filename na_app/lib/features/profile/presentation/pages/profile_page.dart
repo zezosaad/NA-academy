@@ -90,14 +90,11 @@ class ProfilePage extends ConsumerWidget {
                       WeeklyChart(values: [], highlightIndex: _todayIndex()),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionTitle(
-                  context,
-                  'profile.mySubjects'.tr(),
-                  isDark,
-                ),
+                _buildSectionTitle(context, 'profile.mySubjects'.tr(), isDark),
                 const SizedBox(height: 16),
                 mySubjectsAsync.when(
-                  data: (subjects) => _buildMySubjects(context, subjects, isDark),
+                  data: (subjects) =>
+                      _buildMySubjects(context, subjects, isDark),
                   loading: () => const SizedBox(
                     height: 100,
                     child: Center(
@@ -283,8 +280,11 @@ class ProfilePage extends ConsumerWidget {
                               color: accentSoft,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(LucideIcons.pencil,
-                                size: 14, color: accentColor),
+                            child: Icon(
+                              LucideIcons.pencil,
+                              size: 14,
+                              color: accentColor,
+                            ),
                           ),
                         ),
                     ],
@@ -306,11 +306,13 @@ class ProfilePage extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(LucideIcons.school,
-                            size: 12,
-                            color: isDark
-                                ? AppColors.darkTextMuted
-                                : AppColors.textMuted),
+                        Icon(
+                          LucideIcons.school,
+                          size: 12,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textMuted,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -458,14 +460,19 @@ class ProfilePage extends ConsumerWidget {
   }
 
   Widget _buildMySubjects(
-      BuildContext context, List<Subject> subjects, bool isDark) {
+    BuildContext context,
+    List<Subject> subjects,
+    bool isDark,
+  ) {
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
-    final borderColor =
-        isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.accent;
     final accentSoft = isDark ? AppColors.darkAccentSoft : AppColors.accentSoft;
-    final textColor =
-        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
     final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
 
     if (subjects.isEmpty) {
@@ -522,8 +529,11 @@ class ProfilePage extends ConsumerWidget {
                         color: accentSoft,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(LucideIcons.bookOpen,
-                          size: 18, color: accentColor),
+                      child: Icon(
+                        LucideIcons.bookOpen,
+                        size: 18,
+                        color: accentColor,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
