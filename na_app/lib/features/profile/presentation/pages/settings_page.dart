@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:na_app/core/theme/app_colors.dart';
@@ -92,6 +93,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     final selectedMode = ref.watch(themeModeProvider);
     final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
     final borderColor = isDark
@@ -112,7 +114,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     return Scaffold(
       appBar: AppBar(title: Text('settings.title'.tr())),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 120 + bottomInset),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -302,16 +304,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
       return;
     }
 
-    final openedApp = await launchUrl(
-      appUri,
-      mode: LaunchMode.externalApplication,
-    );
+    var openedApp = false;
+    try {
+      final canOpenApp = await canLaunchUrl(appUri);
+      if (canOpenApp) {
+        openedApp = await launchUrl(
+          appUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } on PlatformException {
+      openedApp = false;
+    }
     if (openedApp) return;
 
-    final openedWeb = await launchUrl(
-      webUri,
-      mode: LaunchMode.externalApplication,
-    );
+    bool openedWeb;
+    try {
+      openedWeb = await launchUrl(
+        webUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } on PlatformException {
+      openedWeb = false;
+    }
     if (!openedWeb && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('settings.contact.openFailed'.tr())),

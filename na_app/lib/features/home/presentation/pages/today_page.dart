@@ -245,7 +245,10 @@ class _GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final greeting = _getGreeting(now.hour);
+    final rawGreeting = _getGreeting(now.hour);
+    final greeting = 'today.greetingInNa'.tr(
+      namedArgs: {'greeting': rawGreeting},
+    );
     final dayName = _getDayName(now.weekday);
     final monthName = _getMonthName(now.month);
     final dateStr = 'today.dateFormat'.tr(
@@ -278,15 +281,31 @@ class _GreetingHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$greeting،\n$userName.',
+                  greeting,
                   style: GoogleFonts.cairo(
                     color: isDark
                         ? AppColors.darkTextPrimary
                         : AppColors.textPrimary,
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$userName.',
+                  style: GoogleFonts.cairo(
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

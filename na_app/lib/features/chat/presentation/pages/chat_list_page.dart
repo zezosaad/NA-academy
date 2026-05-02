@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,6 +15,7 @@ import 'package:na_app/features/chat/domain/chat_models.dart';
 import 'package:na_app/features/chat/presentation/controllers/chat_controller.dart';
 import 'package:na_app/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final chatListProvider =
     AsyncNotifierProvider<ChatListNotifier, List<Conversation>>(
@@ -55,6 +57,22 @@ class ChatListPage extends ConsumerStatefulWidget {
 }
 
 class _ChatListPageState extends ConsumerState<ChatListPage> {
+  static const String _instagramUrl =
+      'https://www.instagram.com/na_acadmy1?igsh=MWJqY2I4MW5oZWcyZQ==';
+  static const String _telegramUrl = 'https://t.me/na_academy1';
+  static const String _youtubeUrl =
+      'https://youtube.com/@na_academy?si=pHGwiAF3UQEBzbiQ';
+
+  static final Uri _instagramAppUri = Uri.parse(
+    'instagram://user?username=na_acadmy1',
+  );
+  static final Uri _telegramAppUri = Uri.parse(
+    'tg://resolve?domain=na_academy1',
+  );
+  static final Uri _youtubeAppUri = Uri.parse(
+    'youtube://www.youtube.com/@na_academy',
+  );
+
   @override
   void initState() {
     super.initState();
@@ -165,14 +183,29 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                 ),
                 data: (conversations) {
                   if (conversations.isEmpty) {
-                    return FadeIn(
-                      child: EmptyState(
-                        icon: LucideIcons.messageCircle,
-                        title: 'chat.emptyTitle'.tr(),
-                        message: 'chat.emptyMessageNoTeacher'.tr(),
-                        actionLabel: 'common.refresh'.tr(),
-                        onAction: () =>
-                            ref.read(chatListProvider.notifier).refresh(),
+                    return RefreshIndicator(
+                      color: AppColors.accent,
+                      onRefresh: () =>
+                          ref.read(chatListProvider.notifier).refresh(),
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                        children: [
+                          FadeIn(
+                            child: EmptyState(
+                              icon: LucideIcons.messageCircle,
+                              title: 'chat.emptyTitle'.tr(),
+                              message: 'chat.emptyMessageNoTeacher'.tr(),
+                              actionLabel: 'common.refresh'.tr(),
+                              onAction: () =>
+                                  ref.read(chatListProvider.notifier).refresh(),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildContactSection(isDark),
+                        ],
                       ),
                     );
                   }
@@ -183,8 +216,15 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                       physics: const BouncingScrollPhysics(),
-                      itemCount: conversations.length,
+                      itemCount: conversations.length + 1,
                       itemBuilder: (context, index) {
+                        if (index == conversations.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: _buildContactSection(isDark),
+                          );
+                        }
+
                         final conv = conversations[index];
                         return FadeInUp(
                           delay: Duration(milliseconds: 100 + (index * 50)),
@@ -226,6 +266,189 @@ class _ChatListPageState extends ConsumerState<ChatListPage> {
           'subjectId': conv.subjectId,
           'subjectTitle': conv.subjectTitle,
         },
+      );
+    }
+  }
+
+  Widget _buildContactSection(bool isDark) {
+    final bgColor = isDark ? AppColors.darkBgSurface : AppColors.bgSurface;
+    final borderColor = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
+    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'settings.contact.title'.tr(),
+          style: GoogleFonts.cairo(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            children: [
+              _contactOption(
+                icon: LucideIcons.camera,
+                title: 'settings.contact.instagramTitle'.tr(),
+                subtitle: 'settings.contact.instagramSubtitle'.tr(),
+                textColor: textColor,
+                mutedColor: mutedColor,
+                borderColor: borderColor,
+                isDark: isDark,
+                onTap: () => _openDeepLinkWithFallback(
+                  appUri: _instagramAppUri,
+                  webUrl: _instagramUrl,
+                ),
+              ),
+              _contactOption(
+                icon: LucideIcons.send,
+                title: 'settings.contact.telegramTitle'.tr(),
+                subtitle: 'settings.contact.telegramSubtitle'.tr(),
+                textColor: textColor,
+                mutedColor: mutedColor,
+                borderColor: borderColor,
+                isDark: isDark,
+                onTap: () => _openDeepLinkWithFallback(
+                  appUri: _telegramAppUri,
+                  webUrl: _telegramUrl,
+                ),
+              ),
+              _contactOption(
+                icon: LucideIcons.play,
+                title: 'settings.contact.youtubeTitle'.tr(),
+                subtitle: 'settings.contact.youtubeSubtitle'.tr(),
+                textColor: textColor,
+                mutedColor: mutedColor,
+                borderColor: borderColor,
+                isDark: isDark,
+                isLast: true,
+                onTap: () => _openDeepLinkWithFallback(
+                  appUri: _youtubeAppUri,
+                  webUrl: _youtubeUrl,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _contactOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color textColor,
+    required Color mutedColor,
+    required Color borderColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    bool isLast = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: borderColor)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 16, color: textColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      color: mutedColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.externalLink, size: 16, color: mutedColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openDeepLinkWithFallback({
+    required Uri appUri,
+    required String webUrl,
+  }) async {
+    final webUri = Uri.tryParse(webUrl);
+    if (webUri == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('settings.contact.openFailed'.tr())),
+      );
+      return;
+    }
+
+    var openedApp = false;
+    try {
+      final canOpenApp = await canLaunchUrl(appUri);
+      if (canOpenApp) {
+        openedApp = await launchUrl(
+          appUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } on PlatformException {
+      openedApp = false;
+    }
+    if (openedApp) return;
+
+    bool openedWeb;
+    try {
+      openedWeb = await launchUrl(
+        webUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } on PlatformException {
+      openedWeb = false;
+    }
+
+    if (!openedWeb && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('settings.contact.openFailed'.tr())),
       );
     }
   }

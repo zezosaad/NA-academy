@@ -34,6 +34,7 @@
     "greetingMorning": "صباح الخير",
     "greetingAfternoon": "طاب مساؤك",
     "greetingEvening": "مساء الخير",
+    "greetingInNa": "{greeting} في NA",
     "streakTitle": "حماس مستمر لمدة {count} أيام",
     "streakSubtitle": "استمر في التعلم، أنت تقدم أداءً رائعاً!",
     "resumeLearningHeader": "أكمل تعلمك",

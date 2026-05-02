@@ -34,6 +34,7 @@
     "greetingMorning": "Good morning",
     "greetingAfternoon": "Good afternoon",
     "greetingEvening": "Good evening",
+    "greetingInNa": "{greeting} at NA",
     "streakTitle": "On a {count}-day streak",
     "streakSubtitle": "Keep going — you're doing great!",
     "resumeLearningHeader": "Continue learning",
