@@ -7,6 +7,7 @@ import 'package:na_app/features/auth/presentation/pages/splash_page.dart';
 import 'package:na_app/features/auth/presentation/pages/login_page.dart';
 import 'package:na_app/features/auth/presentation/pages/register_page.dart';
 import 'package:na_app/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:na_app/features/auth/presentation/pages/verify_reset_code_page.dart';
 import 'package:na_app/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:na_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:na_app/features/home/presentation/pages/today_page.dart';
@@ -81,6 +82,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/forgot-password',
         builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '/auth/verify-reset-code',
+        builder: (context, state) {
+          final email = state.extra is String ? state.extra as String : '';
+          return VerifyResetCodePage(email: email);
+        },
       ),
       GoRoute(
         path: '/auth/reset-password',

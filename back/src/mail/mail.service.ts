@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
 
 @Injectable()
 export class MailService {
@@ -11,23 +12,36 @@ export class MailService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
-    const appSchemeBase = this.configService.get<string>('mail.appSchemeBase');
-    const publicResetHost = this.configService.get<string>('mail.publicResetHost');
-    const appScheme = `${appSchemeBase}/reset?token=${token}`;
-    const universalLink = `${publicResetHost}/reset?token=${token}`;
+  /**
+   * Send the Arabic password-reset email with the 6-digit OTP code and the NA Academy logo.
+   * The logo is attached with `cid:logo` so it renders inline (no external host required).
+   */
+  async sendPasswordResetCodeEmail(
+    email: string,
+    code: string,
+    userName?: string,
+  ): Promise<void> {
+    const logoPath = join(__dirname, 'templates', 'assets', 'logo.jpeg');
 
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Reset your NA-Academy password',
+        subject: 'رمز إعادة تعيين كلمة المرور - NA Academy',
         template: 'password-reset',
         context: {
-          appScheme,
-          universalLink,
+          code,
+          userName: userName || '',
+          expiryMinutes: 15,
         },
+        attachments: [
+          {
+            filename: 'logo.jpeg',
+            path: logoPath,
+            cid: 'logo',
+          },
+        ],
       });
-      this.logger.log(`Password reset email sent to ${email}`);
+      this.logger.log(`Password reset code email sent to ${email}`);
     } catch (error) {
       this.logger.error(`Failed to send password reset email to ${email}: ${error}`);
       throw error;

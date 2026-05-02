@@ -126,6 +126,26 @@ class AuthRepository {
     await _dio.post(Endpoints.auth.forgotPassword, data: {'email': email});
   }
 
+  Future<String> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      Endpoints.auth.verifyResetCode,
+      data: {'email': email, 'code': code},
+    );
+    final data = response.data;
+    final token = data?['verificationToken'];
+    if (token is! String || token.isEmpty) {
+      throw ApiException(
+        statusCode: response.statusCode ?? 0,
+        code: 'INVALID_RESPONSE',
+        message: 'Unexpected verification response',
+      );
+    }
+    return token;
+  }
+
   Future<({User user, AuthSession session})> resetPassword({
     required String token,
     required String newPassword,

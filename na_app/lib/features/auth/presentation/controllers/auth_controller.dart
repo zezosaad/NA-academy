@@ -147,6 +147,19 @@ class AuthController extends StateNotifier<AsyncValue<AuthSession?>> {
     }
   }
 
+  Future<({bool ok, String? token, String? errorMessage})> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final token = await _authRepository.verifyResetCode(email: email, code: code);
+      return (ok: true, token: token, errorMessage: null);
+    } catch (e, st) {
+      _logAuthError('verifyResetCode', e, st);
+      return (ok: false, token: null, errorMessage: _describeError(e));
+    }
+  }
+
   Future<AuthAttemptResult> resetPassword({
     required String token,
     required String newPassword,

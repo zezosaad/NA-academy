@@ -112,15 +112,19 @@
     },
     "forgotPassword": {
       "title": "Forgot password?",
-      "subtitle": "Enter your email and we'll send you a link to reset your password.",
+      "subtitle": "Enter your email and we'll send you a 6-digit code to reset your password.",
       "emailLabel": "Email",
       "emailHint": "you@example.com",
-      "submit": "Send reset link",
-      "successTitle": "Check your inbox",
-      "successMessage": "We sent a password reset link to {email}. It expires in 30 minutes.",
-      "backToSignIn": "Back to sign in",
-      "resend": "Resend email",
+      "submit": "Send code",
       "failure": "Something went wrong. Please try again."
+    },
+    "verifyResetCode": {
+      "title": "Enter the code",
+      "subtitle": "We sent a 6-digit code to {email}. It expires in 15 minutes.",
+      "submit": "Verify",
+      "resend": "Resend code",
+      "resent": "A new code has been sent to your email.",
+      "failure": "The code is incorrect or expired. Please try again."
     },
     "resetPassword": {
       "title": "Set new password",
@@ -131,10 +135,10 @@
       "confirmPasswordHint": "Re-enter your password",
       "passwordsMismatch": "Passwords do not match",
       "passwordTooShort": "Password must be at least 8 characters",
-      "invalidToken": "Invalid or missing reset token",
+      "invalidToken": "Invalid reset session. Please start over.",
       "minLengthHint": "At least 8 characters",
       "submit": "Reset password",
-      "failure": "This reset link is invalid, expired, or already used."
+      "failure": "This reset session is expired. Please request a new code."
     },
     "splash": {
       "loading": "Loading…"

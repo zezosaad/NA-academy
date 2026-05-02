@@ -20,6 +20,7 @@ class _AuthEndpoints {
   String get refresh => '$_prefix/refresh';
   String get logout => '$_prefix/logout';
   String get forgotPassword => '$_prefix/forgot-password';
+  String get verifyResetCode => '$_prefix/verify-reset-code';
   String get resetPassword => '$_prefix/reset-password';
 }
 

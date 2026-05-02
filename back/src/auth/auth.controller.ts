@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { VerifyResetCodeDto } from './dto/verify-reset-code.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -78,15 +79,27 @@ export class AuthController {
   @Post('forgot-password')
   @Public()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Request a password reset email (always returns 204)' })
+  @ApiOperation({
+    summary: 'Send a 6-digit password-reset code to the email (always returns 204)',
+  })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await this.authService.issueResetToken(dto.email);
+    await this.authService.issueResetCode(dto.email);
+  }
+
+  @Post('verify-reset-code')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify the 6-digit code and return a short-lived verification token',
+  })
+  async verifyResetCode(@Body() dto: VerifyResetCodeDto) {
+    return this.authService.verifyResetCode(dto.email, dto.code);
   }
 
   @Post('reset-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password using token from email' })
+  @ApiOperation({ summary: 'Reset password using verification token from /verify-reset-code' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.consumeResetToken(dto.token, dto.newPassword, dto.hardwareId);
   }

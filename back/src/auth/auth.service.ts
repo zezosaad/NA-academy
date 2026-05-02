@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
   GoneException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -175,32 +176,104 @@ export class AuthService {
     this.logger.log(`Session ${sessionId} deleted`);
   }
 
-  async issueResetToken(email: string): Promise<void> {
-    const user = await this.usersService.findByEmail(email);
+  /**
+   * Issue a 6-digit password-reset code, valid for 15 minutes.
+   * Invalidates any previous pending codes for the same user so only the latest works.
+   */
+  async issueResetCode(email: string): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersService.findByEmail(normalizedEmail);
     if (!user) {
-      this.logger.warn(`Password reset requested for unknown email: ${maskEmail(email)}`);
+      this.logger.warn(`Password reset requested for unknown email: ${maskEmail(normalizedEmail)}`);
       return;
     }
 
-    const rawToken = crypto.randomBytes(32).toString('base64url');
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await this.passwordResetModel
+      .updateMany(
+        { userId: user._id, consumed: false },
+        { $set: { consumed: true, consumedAt: new Date() } },
+      )
+      .exec();
+
+    const code = generateNumericCode(6);
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await this.passwordResetModel.create({
       userId: user._id,
-      tokenHash,
+      email: normalizedEmail,
+      tokenHash: codeHash,
       expiresAt,
       consumed: false,
+      attempts: 0,
+      verified: false,
     });
 
     try {
-      await this.mailService.sendPasswordResetEmail(email, rawToken);
-      this.logger.log(`Password reset token issued for user ${user._id}`);
+      await this.mailService.sendPasswordResetCodeEmail(normalizedEmail, code, user.name);
+      this.logger.log(`Password reset code issued for user ${user._id}`);
     } catch (err) {
       this.logger.error(
-        `Failed to send password reset email to ${maskEmail(email)} (user ${user._id}): ${err}`,
+        `Failed to send password reset code to ${maskEmail(normalizedEmail)} (user ${user._id}): ${err}`,
       );
     }
+  }
+
+  /**
+   * Verify a 6-digit code. On success, rotate the doc's tokenHash to a new opaque
+   * verification token and shorten its lifetime to 5 minutes. Returns that token
+   * for the client to use in the subsequent reset-password call.
+   *
+   * After 5 wrong attempts the code is permanently consumed and the user must request a new one.
+   */
+  async verifyResetCode(
+    email: string,
+    code: string,
+  ): Promise<{ verificationToken: string; expiresAt: Date }> {
+    const MAX_ATTEMPTS = 5;
+    const normalizedEmail = email.trim().toLowerCase();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+    const resetDoc = await this.passwordResetModel
+      .findOne({
+        email: normalizedEmail,
+        consumed: false,
+        verified: false,
+        expiresAt: { $gt: new Date() },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (!resetDoc) {
+      throw new GoneException('This code is invalid, expired, or has already been used');
+    }
+
+    if (resetDoc.tokenHash !== codeHash) {
+      resetDoc.attempts += 1;
+      if (resetDoc.attempts >= MAX_ATTEMPTS) {
+        resetDoc.consumed = true;
+        resetDoc.consumedAt = new Date();
+        await resetDoc.save();
+        throw new GoneException('Too many incorrect attempts. Please request a new code.');
+      }
+      await resetDoc.save();
+      throw new BadRequestException('The code you entered is incorrect');
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('base64url');
+    const verificationTokenHash = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
+    const verifiedExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    resetDoc.tokenHash = verificationTokenHash;
+    resetDoc.verified = true;
+    resetDoc.verifiedAt = new Date();
+    resetDoc.expiresAt = verifiedExpiresAt;
+    await resetDoc.save();
+
+    return { verificationToken, expiresAt: verifiedExpiresAt };
   }
 
   async consumeResetToken(
@@ -212,14 +285,21 @@ export class AuthService {
 
     const resetDoc = await this.passwordResetModel
       .findOneAndUpdate(
-        { tokenHash, consumed: false, expiresAt: { $gt: new Date() } },
+        {
+          tokenHash,
+          verified: true,
+          consumed: false,
+          expiresAt: { $gt: new Date() },
+        },
         { $set: { consumed: true, consumedAt: new Date() } },
         { new: true },
       )
       .exec();
 
     if (!resetDoc) {
-      throw new GoneException('This reset link is invalid, expired, or has already been used');
+      throw new GoneException(
+        'This password-reset session is invalid, expired, or has already been used',
+      );
     }
 
     const user = await this.usersService.findById(resetDoc.userId.toString());
@@ -324,4 +404,19 @@ function maskEmail(email: string): string {
   const domain = email.substring(atIndex);
   const visible = local.length <= 2 ? local[0] : local.substring(0, 2);
   return `${visible}***${domain}`;
+}
+
+/** Generate a numeric code with crypto-strong digits (rejection-sampled to avoid modulo bias). */
+function generateNumericCode(length: number): string {
+  let code = '';
+  while (code.length < length) {
+    const buf = crypto.randomBytes(length);
+    for (const byte of buf) {
+      if (byte < 250) {
+        code += (byte % 10).toString();
+        if (code.length === length) break;
+      }
+    }
+  }
+  return code;
 }
