@@ -111,50 +111,12 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
                   ),
             ),
             if (payloadData != null) ...[
-              const SizedBox(height: 24),
-              _buildPayloadSection(context, isDark, payloadData),
               const SizedBox(height: 16),
               _buildPayloadAction(payloadData),
             ],
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPayloadSection(
-    BuildContext context,
-    bool isDark,
-    Map<String, dynamic> data,
-  ) {
-    final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'notifications.payload'.tr(),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSunken : AppColors.bgSunken,
-            borderRadius: BorderRadius.circular(AppShapes.radiusSmall),
-          ),
-          child: Text(
-            const JsonEncoder.withIndent('  ').convert(data),
-            style: TextStyle(
-              fontSize: 13,
-              fontFamily: 'monospace',
-              color: mutedColor,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

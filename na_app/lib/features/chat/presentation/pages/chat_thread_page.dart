@@ -105,6 +105,7 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
           ..addAll(history)
           ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
       });
+      _markConversationReadIfNeeded();
       _scrollToBottom();
     } catch (_) {
       // Keep socket live updates working even if history request fails.
@@ -113,6 +114,22 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
         setState(() => _isLoadingHistory = false);
       }
     }
+  }
+
+  void _markConversationReadIfNeeded() {
+    if (_conversationId.isEmpty) return;
+
+    final hasUnreadFromCounterparty = _messages.any(
+      (message) =>
+          message.senderId == widget.counterpartyId &&
+          message.status != MessageDeliveryStatus.read,
+    );
+    if (!hasUnreadFromCounterparty) return;
+
+    ref.read(chatControllerProvider).markConversationRead(
+      conversationId: _conversationId,
+      senderId: widget.counterpartyId,
+    );
   }
 
   void _onNewMessage(ChatMessage message) {

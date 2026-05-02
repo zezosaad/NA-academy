@@ -25,6 +25,31 @@ class Conversation {
     this.unreadCount = 0,
   });
 
+  Conversation copyWith({
+    String? id,
+    bool? virtual,
+    String? counterpartyId,
+    String? counterpartyName,
+    String? counterpartyAvatarUrl,
+    String? subjectId,
+    String? subjectTitle,
+    MessagePreview? lastMessage,
+    bool clearLastMessage = false,
+    int? unreadCount,
+  }) {
+    return Conversation(
+      id: id ?? this.id,
+      virtual: virtual ?? this.virtual,
+      counterpartyId: counterpartyId ?? this.counterpartyId,
+      counterpartyName: counterpartyName ?? this.counterpartyName,
+      counterpartyAvatarUrl: counterpartyAvatarUrl ?? this.counterpartyAvatarUrl,
+      subjectId: subjectId ?? this.subjectId,
+      subjectTitle: subjectTitle ?? this.subjectTitle,
+      lastMessage: clearLastMessage ? null : (lastMessage ?? this.lastMessage),
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+
   factory Conversation.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'] as String?;
     final isVirtual = json['virtual'] as bool? ?? false;
@@ -61,6 +86,22 @@ class MessagePreview {
     required this.senderId,
     required this.status,
   });
+
+  MessagePreview copyWith({
+    String? text,
+    bool? hasImage,
+    DateTime? sentAt,
+    String? senderId,
+    String? status,
+  }) {
+    return MessagePreview(
+      text: text ?? this.text,
+      hasImage: hasImage ?? this.hasImage,
+      sentAt: sentAt ?? this.sentAt,
+      senderId: senderId ?? this.senderId,
+      status: status ?? this.status,
+    );
+  }
 
   factory MessagePreview.fromJson(Map<String, dynamic> json) {
     return MessagePreview(

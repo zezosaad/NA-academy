@@ -30,6 +30,12 @@ class ChatListNotifier extends AsyncNotifier<List<Conversation>> {
     ref.onDispose(() {
       repo.disconnectSocket();
     });
+
+    final conversationsSub = repo.conversations.listen((conversations) {
+      state = AsyncValue.data(conversations);
+    });
+    ref.onDispose(conversationsSub.cancel);
+
     await repo.connectSocket();
     return repo.listConversations();
   }
