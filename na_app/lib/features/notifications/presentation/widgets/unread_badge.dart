@@ -13,20 +13,28 @@ class UnreadBadge extends ConsumerWidget {
     return unreadAsync.when(
       data: (count) {
         if (count <= 0) return const SizedBox.shrink();
+        final label = count > 99 ? '99+' : '$count';
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.accent,
-            borderRadius: BorderRadius.circular(10),
+          width: 20,
+          height: 20,
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
           ),
-          constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+          alignment: Alignment.center,
           child: Text(
-            count > 99 ? '99+' : '$count',
+            label,
             textAlign: TextAlign.center,
+            textHeightBehavior: const TextHeightBehavior(
+              applyHeightToFirstAscent: false,
+              applyHeightToLastDescent: false,
+            ),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w700,
+              height: 1,
+              leadingDistribution: TextLeadingDistribution.even,
             ),
           ),
         );

@@ -243,11 +243,20 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               ],
             ),
             child: Center(
-              child: Icon(
-                slide.icon,
-                size: 56,
-                color: isDark ? AppColors.darkAccent : AppColors.accent,
-              ),
+              child: index == 0
+                  ? ClipOval(
+                      child: Image.asset(
+                        'assets/images/logo.jpeg',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Icon(
+                      slide.icon,
+                      size: 56,
+                      color: isDark ? AppColors.darkAccent : AppColors.accent,
+                    ),
             ),
           ),
 

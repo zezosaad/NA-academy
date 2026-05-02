@@ -29,6 +29,7 @@
   "today": {
     "errorTitle": "Something went wrong",
     "errorMessage": "We couldn't load today's data. Please try again.",
+    "notificationsTooltip": "Notifications",
     "settingsTooltip": "Settings",
     "greetingMorning": "Good morning",
     "greetingAfternoon": "Good afternoon",
@@ -229,6 +230,7 @@
       "codeHint": "Enter {length}-character code",
       "submit": "Unlock subject",
       "helpText": "Codes are provided by your instructor or school administration.",
+      "noCodeButton": "Don't have a code? Contact us",
       "errorRateLimited": "Too many attempts. Please wait and try again.",
       "errorDeviceMismatch": "This code is linked to another device.",
       "errorInvalid": "Invalid code. Please check and try again.",

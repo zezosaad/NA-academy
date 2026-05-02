@@ -299,6 +299,29 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                FadeInUp(
+                  delay: const Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 500),
+                  child: Center(
+                    child: TextButton.icon(
+                      onPressed: () => context.go('/chat'),
+                      icon: Icon(
+                        LucideIcons.messageCircle,
+                        size: 18,
+                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                      ),
+                      label: Text(
+                        'subjects.enterCode.noCodeButton'.tr(),
+                        style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.darkAccent : AppColors.accent,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

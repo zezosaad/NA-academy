@@ -16,6 +16,7 @@ import 'package:na_app/features/home/presentation/widgets/resume_card.dart';
 import 'package:na_app/features/home/presentation/widgets/subject_scroller.dart';
 import 'package:na_app/features/subjects/domain/subject_models.dart';
 import 'package:na_app/core/widgets/max_text_scale.dart';
+import 'package:na_app/features/notifications/presentation/widgets/unread_badge.dart';
 
 class TodayPage extends ConsumerWidget {
   const TodayPage({super.key});
@@ -290,31 +291,74 @@ class _GreetingHeader extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+          Row(
+            children: [
+              // Notifications button
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Tooltip(
+                      message: 'today.notificationsTooltip'.tr(),
+                      child: IconButton(
+                        onPressed: () => context.push('/notifications'),
+                        icon: Icon(
+                          LucideIcons.bell,
+                          size: 24,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: UnreadBadge(),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 8),
+              // Settings button
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Tooltip(
-              message: 'today.settingsTooltip'.tr(),
-              child: IconButton(
-                onPressed: () => context.push('/profile/settings'),
-                icon: Icon(
-                  LucideIcons.settings,
-                  size: 24,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.textPrimary,
+                child: Tooltip(
+                  message: 'today.settingsTooltip'.tr(),
+                  child: IconButton(
+                    onPressed: () => context.push('/profile/settings'),
+                    icon: Icon(
+                      LucideIcons.settings,
+                      size: 24,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

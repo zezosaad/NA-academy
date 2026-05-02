@@ -29,6 +29,7 @@
   "today": {
     "errorTitle": "حدث خطأ",
     "errorMessage": "لم نتمكن من تحميل بيانات اليوم. يرجى المحاولة مرة أخرى.",
+    "notificationsTooltip": "الإشعارات",
     "settingsTooltip": "الإعدادات",
     "greetingMorning": "صباح الخير",
     "greetingAfternoon": "طاب مساؤك",
@@ -229,6 +230,7 @@
       "codeHint": "أدخل الكود المكون من {length} رمزاً",
       "submit": "فتح المادة",
       "helpText": "يتم توفير الأكواد من قبل تدريسيك أو الإدارة.",
+      "noCodeButton": "ليس لديك كود؟ تواصل معنا",
       "errorRateLimited": "محاولات كثيرة. يرجى الانتظار والمحاولة مرة أخرى.",
       "errorDeviceMismatch": "هذا الكود مرتبط بجهاز آخر.",
       "errorInvalid": "كود غير صالح. يرجى التحقق والمحاولة مرة أخرى.",

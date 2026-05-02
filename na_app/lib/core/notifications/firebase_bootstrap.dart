@@ -1,12 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logger/logger.dart';
+import 'package:na_app/firebase_options.dart';
 
 final _log = Logger(printer: PrettyPrinter(methodCount: 0));
 
 @pragma('vm:entry-point')
 Future<void> initializeNotifications() async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: false,
