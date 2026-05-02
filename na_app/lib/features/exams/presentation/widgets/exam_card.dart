@@ -13,23 +13,16 @@ class ExamCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final badgeText = exam.isSubjectUnlocked
-        ? 'exams.subjectUnlockedBadge'.tr()
-        : switch (exam.accessMode) {
-            ExamAccessMode.fullExamFreeAttempts
-                when exam.freeAttemptsRemaining > 0 =>
-              '${exam.freeAttemptsRemaining} free tries',
-            _ when exam.attemptsRemaining > 0 => _getAttemptsText(
-              exam.attemptsRemaining,
-            ),
-            _ => null,
-          };
-    final badgeColor = exam.isSubjectUnlocked
-        ? (isDark ? AppColors.darkSuccess : AppColors.success)
-        : switch (exam.accessMode) {
-            ExamAccessMode.fullExamFreeAttempts => Colors.amber,
-            _ => isDark ? AppColors.darkAccent : AppColors.accent,
-          };
+    final isLocked = exam.status == ExamStatus.locked;
+    final hasFreeAttempts = exam.freeAttemptsRemaining > 0;
+
+    final (badgeText, badgeColor, badgeIcon) = _resolveBadge(isDark);
+
+    final mutedBorder = isDark
+        ? AppColors.darkBorderSubtle
+        : AppColors.borderSubtle;
+    final activeBorder = (isDark ? AppColors.darkAccent : AppColors.accent)
+        .withValues(alpha: 0.2);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -39,88 +32,171 @@ class ExamCard extends StatelessWidget {
               ? '/exams/${exam.id}/take'
               : '/exams/${exam.id}/enter-code',
         ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: (isDark ? AppColors.darkAccent : AppColors.accent)
-                  .withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+        child: Opacity(
+          opacity: isLocked && !hasFreeAttempts ? 0.7 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isLocked && !hasFreeAttempts ? mutedBorder : activeBorder,
+                width: 1.5,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      exam.title,
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (badgeText != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
                       child: Text(
-                        badgeText,
+                        exam.title,
                         style: GoogleFonts.cairo(
-                          color: badgeColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _IconLabel(
-                    icon: LucideIcons.clock,
-                    label: 'exams.durationMinutes'.tr(
-                      namedArgs: {'count': '${exam.durationMinutes}'},
+                    if (badgeText != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (badgeIcon != null) ...[
+                              Icon(badgeIcon, size: 12, color: badgeColor),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              badgeText,
+                              style: GoogleFonts.cairo(
+                                color: badgeColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _IconLabel(
+                      icon: LucideIcons.clock,
+                      label: 'exams.durationMinutes'.tr(
+                        namedArgs: {'count': '${exam.durationMinutes}'},
+                      ),
+                      isDark: isDark,
                     ),
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 20),
-                  _IconLabel(
-                    icon: LucideIcons.clipboardList,
-                    label: 'exams.questionCount'.tr(
-                      namedArgs: {'count': '${exam.questionCount}'},
+                    const SizedBox(width: 20),
+                    _IconLabel(
+                      icon: LucideIcons.clipboardList,
+                      label: 'exams.questionCount'.tr(
+                        namedArgs: {'count': '${exam.questionCount}'},
+                      ),
+                      isDark: isDark,
                     ),
-                    isDark: isDark,
+                  ],
+                ),
+                if (isLocked) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (isDark ? AppColors.darkBgSunken : AppColors.bgSunken),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.keyRound,
+                          size: 14,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.textMuted,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'exams.lockedHint'.tr(),
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  (String?, Color, IconData?) _resolveBadge(bool isDark) {
+    if (exam.isSubjectUnlocked) {
+      return (
+        'exams.subjectUnlockedBadge'.tr(),
+        isDark ? AppColors.darkSuccess : AppColors.success,
+        LucideIcons.check,
+      );
+    }
+    if (exam.freeAttemptsRemaining > 0) {
+      return (
+        'exams.freeAttemptsBadge'.tr(
+          namedArgs: {'count': '${exam.freeAttemptsRemaining}'},
+        ),
+        Colors.amber,
+        LucideIcons.gift,
+      );
+    }
+    if (exam.attemptsRemaining > 0) {
+      return (
+        _getAttemptsText(exam.attemptsRemaining),
+        isDark ? AppColors.darkAccent : AppColors.accent,
+        null,
+      );
+    }
+    if (exam.status == ExamStatus.locked) {
+      return (
+        'exams.lockedBadge'.tr(),
+        isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+        LucideIcons.lock,
+      );
+    }
+    return (null, isDark ? AppColors.darkAccent : AppColors.accent, null);
   }
 
   String _getAttemptsText(int n) {
