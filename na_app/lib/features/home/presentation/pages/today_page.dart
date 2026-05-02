@@ -299,7 +299,9 @@ class _GreetingHeader extends StatelessWidget {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+                      color: isDark
+                          ? AppColors.darkBgSurface
+                          : AppColors.bgSurface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -323,11 +325,7 @@ class _GreetingHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: -6,
-                    right: -6,
-                    child: UnreadBadge(),
-                  ),
+                  Positioned(top: -6, right: -6, child: UnreadBadge()),
                 ],
               ),
               const SizedBox(width: 8),

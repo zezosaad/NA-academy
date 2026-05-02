@@ -15,7 +15,11 @@ class EnterSubjectCodePage extends ConsumerStatefulWidget {
   final String? subjectTitle;
   final String? lockedLessonTitle;
 
-  const EnterSubjectCodePage({super.key, this.subjectTitle, this.lockedLessonTitle});
+  const EnterSubjectCodePage({
+    super.key,
+    this.subjectTitle,
+    this.lockedLessonTitle,
+  });
 
   @override
   ConsumerState<EnterSubjectCodePage> createState() =>
@@ -81,9 +85,7 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
                 () => _error = 'subjects.enterCode.errorDeviceMismatch'.tr(),
               );
             case ActivationErrorReason.invalid:
-              setState(
-                () => _error = 'subjects.enterCode.errorInvalid'.tr(),
-              );
+              setState(() => _error = 'subjects.enterCode.errorInvalid'.tr());
           }
       }
     } catch (e) {
@@ -104,228 +106,248 @@ class _EnterSubjectCodePageState extends ConsumerState<EnterSubjectCodePage> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBgCanvas : AppColors.bgCanvas,
       appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-              ),
-            ),
-            child: IconButton(
-              icon: Icon(
-                LucideIcons.chevronRight,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                size: 20,
-              ),
-              onPressed: () => context.pop(),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkBorderSubtle
+                  : AppColors.borderSubtle,
             ),
           ),
-          title: Text(
-            'subjects.enterCode.title'.tr(),
-            style: GoogleFonts.cairo(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+          child: IconButton(
+            icon: Icon(
+              LucideIcons.chevronRight,
               color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              size: 20,
             ),
+            onPressed: () => context.pop(),
           ),
-          centerTitle: true,
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FadeInDown(
-                  duration: const Duration(milliseconds: 500),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: (isDark ? AppColors.darkAccent : AppColors.accent).withValues(alpha: 0.2),
-                          width: 2,
-                        ),
+        title: Text(
+          'subjects.enterCode.title'.tr(),
+          style: GoogleFonts.cairo(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FadeInDown(
+                duration: const Duration(milliseconds: 500),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: (isDark ? AppColors.darkAccent : AppColors.accent)
+                          .withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            (isDark ? AppColors.darkAccent : AppColors.accent)
+                                .withValues(alpha: 0.2),
+                        width: 2,
                       ),
-                      child: Icon(
-                        LucideIcons.keyRound,
-                        size: 48,
-                        color: isDark ? AppColors.darkAccent : AppColors.accent,
-                      ),
+                    ),
+                    child: Icon(
+                      LucideIcons.keyRound,
+                      size: 48,
+                      color: isDark ? AppColors.darkAccent : AppColors.accent,
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 100),
-                  duration: const Duration(milliseconds: 500),
-                  child: Text(
-                    widget.lockedLessonTitle != null
-                        ? 'subjects.enterCode.lockedLessonSubtitle'.tr(namedArgs: {
-                            'lesson': widget.lockedLessonTitle!,
-                          })
-                        : widget.subjectTitle != null
-                        ? 'subjects.enterCode.subtitleNamed'.tr(namedArgs: {
+              ),
+              const SizedBox(height: 32),
+              FadeInUp(
+                delay: const Duration(milliseconds: 100),
+                duration: const Duration(milliseconds: 500),
+                child: Text(
+                  widget.lockedLessonTitle != null
+                      ? 'subjects.enterCode.lockedLessonSubtitle'.tr(
+                          namedArgs: {'lesson': widget.lockedLessonTitle!},
+                        )
+                      : widget.subjectTitle != null
+                      ? 'subjects.enterCode.subtitleNamed'.tr(
+                          namedArgs: {
                             'length': '$_subjectCodeLength',
                             'name': widget.subjectTitle!,
-                          })
-                        : 'subjects.enterCode.subtitleGeneric'.tr(namedArgs: {
-                            'length': '$_subjectCodeLength',
-                          }),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                      height: 1.5,
-                    ),
+                          },
+                        )
+                      : 'subjects.enterCode.subtitleGeneric'.tr(
+                          namedArgs: {'length': '$_subjectCodeLength'},
+                        ),
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 48),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 200),
-                  duration: const Duration(milliseconds: 500),
-                  child: TextField(
-                    controller: _controller,
-                    textCapitalization: TextCapitalization.characters,
-                      maxLength: _subjectCodeLength,
-                      textAlign: TextAlign.center,
-                      onChanged: (_) => setState(() => _error = null),
-                      decoration: InputDecoration(
-                        hintText: 'subjects.enterCode.codeHint'.tr(namedArgs: {
-                          'length': '$_subjectCodeLength',
-                        }),
-                        counterText: '',
-                        filled: true,
-                        fillColor: isDark ? AppColors.darkBgSurface : AppColors.bgSurface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkBorderSubtle : AppColors.borderSubtle,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkAccent : AppColors.accent,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                      ),
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 4,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                      ],
+              ),
+              const SizedBox(height: 48),
+              FadeInUp(
+                delay: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 500),
+                child: TextField(
+                  controller: _controller,
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: _subjectCodeLength,
+                  textAlign: TextAlign.center,
+                  onChanged: (_) => setState(() => _error = null),
+                  decoration: InputDecoration(
+                    hintText: 'subjects.enterCode.codeHint'.tr(
+                      namedArgs: {'length': '$_subjectCodeLength'},
                     ),
-                  ),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  FadeIn(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.danger.withValues(alpha: 0.3),
-                        ),
+                    counterText: '',
+                    filled: true,
+                    fillColor: isDark
+                        ? AppColors.darkBgSurface
+                        : AppColors.bgSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? AppColors.darkBorderSubtle
+                            : AppColors.borderSubtle,
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            LucideIcons.circleAlert,
-                            size: 20,
-                            color: AppColors.danger,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _error!,
-                              style: GoogleFonts.cairo(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.danger,
-                              ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? AppColors.darkBorderSubtle
+                            : AppColors.borderSubtle,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  ),
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.textPrimary,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  ],
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                FadeIn(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.circleAlert,
+                          size: 20,
+                          color: AppColors.danger,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.danger,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 32),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 300),
-                  duration: const Duration(milliseconds: 500),
-                  child: AppButton(
-                    label: 'subjects.enterCode.submit'.tr(),
-                    onPressed: _controller.text.trim().length == _subjectCodeLength
-                        ? _submit
-                        : null,
-                    isLoading: _isSubmitting,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 400),
-                  duration: const Duration(milliseconds: 500),
-                  child: Center(
-                    child: Text(
-                      'subjects.enterCode.helpText'.tr(),
-                      style: GoogleFonts.cairo(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 500),
-                  duration: const Duration(milliseconds: 500),
-                  child: Center(
-                    child: TextButton.icon(
-                      onPressed: () => context.go('/chat'),
-                      icon: Icon(
-                        LucideIcons.messageCircle,
-                        size: 18,
-                        color: isDark ? AppColors.darkAccent : AppColors.accent,
-                      ),
-                      label: Text(
-                        'subjects.enterCode.noCodeButton'.tr(),
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.darkAccent : AppColors.accent,
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
               ],
-            ),
+              const SizedBox(height: 32),
+              FadeInUp(
+                delay: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 500),
+                child: AppButton(
+                  label: 'subjects.enterCode.submit'.tr(),
+                  onPressed:
+                      _controller.text.trim().length == _subjectCodeLength
+                      ? _submit
+                      : null,
+                  isLoading: _isSubmitting,
+                ),
+              ),
+              const SizedBox(height: 24),
+              FadeInUp(
+                delay: const Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 500),
+                child: Center(
+                  child: Text(
+                    'subjects.enterCode.helpText'.tr(),
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FadeInUp(
+                delay: const Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 500),
+                child: Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.go('/chat'),
+                    icon: Icon(
+                      LucideIcons.messageCircle,
+                      size: 18,
+                      color: isDark ? AppColors.darkAccent : AppColors.accent,
+                    ),
+                    label: Text(
+                      'subjects.enterCode.noCodeButton'.tr(),
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkAccent : AppColors.accent,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 }

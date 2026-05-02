@@ -70,37 +70,37 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           // Animated Background Blobs
           _buildBackgroundBlobs(isDark, size),
 
-            // Main Content
-            SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      physics: const BouncingScrollPhysics(),
-                      onPageChanged: (page) {
-                        setState(() => _currentPage = page);
-                      },
-                      itemCount: _totalSlides,
-                      itemBuilder: (context, index) {
-                        return _buildSlide(
-                          context,
-                          _slides[index],
-                          isDark,
-                          index,
-                        );
-                      },
-                    ),
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (page) {
+                      setState(() => _currentPage = page);
+                    },
+                    itemCount: _totalSlides,
+                    itemBuilder: (context, index) {
+                      return _buildSlide(
+                        context,
+                        _slides[index],
+                        isDark,
+                        index,
+                      );
+                    },
                   ),
+                ),
 
-                  // Bottom Controls area
-                  _buildBottomControls(isDark),
-                ],
-              ),
+                // Bottom Controls area
+                _buildBottomControls(isDark),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBackgroundBlobs(bool isDark, Size size) {
