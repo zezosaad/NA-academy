@@ -51,7 +51,8 @@
       "Bash(dart --version)",
       "Bash(flutter --version)",
       "Bash(apt-get install *)",
-      "Bash(dart pub *)"
+      "Bash(dart pub *)",
+      "Bash(grep -n \"findSubjectByIdForUser\\\\|return { ...subject, isUnlocked\" /var/opt/NA-academy/back/src/subjects/subjects.service.ts)"
     ]
   }
 }

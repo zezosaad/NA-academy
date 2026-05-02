@@ -19,6 +19,7 @@ import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
 import { SaveAnswerDto } from './dto/save-answer.dto.js';
+import { SubjectsService } from '../subjects/subjects.service.js';
 
 @Injectable()
 export class ExamsService {
@@ -27,6 +28,7 @@ export class ExamsService {
     @InjectModel(ExamSession.name) private readonly sessionModel: Model<ExamSessionDocument>,
     @InjectModel(ExamScore.name) private readonly scoreModel: Model<ExamScoreDocument>,
     @InjectModel(ExamCode.name) private readonly examCodeModel: Model<ExamCodeDocument>,
+    private readonly subjectsService: SubjectsService,
   ) {}
 
   private resolveAccessMode(exam: Partial<Exam> | null | undefined): ExamAccessMode {
@@ -293,6 +295,7 @@ export class ExamsService {
     if (role === 'student' && userId) {
       const uId = new Types.ObjectId(userId);
       const examIds = exams.map((e) => e._id);
+      const unlockedSubjectIds = await this.subjectsService.getUnlockedSubjectIds(userId);
 
       const attemptCounts = await this.examCodeModel
         .aggregate<{
@@ -396,27 +399,33 @@ export class ExamsService {
         const completedFreeAttempts = freeCompletedMap.get(exam._id.toString()) ?? 0;
         const hasStartedSession = (startedMap.get(exam._id.toString()) ?? 0) > 0;
         const accessMode = this.resolveAccessMode(exam);
+        const isSubjectUnlocked = unlockedSubjectIds.has(exam.subjectId.toString());
+        const status = isSubjectUnlocked
+          ? completedAttempts > 0
+            ? 'completed'
+            : 'available'
+          : completedAttempts > 0
+            ? 'completed'
+            : hasStartedSession
+              ? 'available'
+              : accessMode !== ExamAccessMode.CODE_REQUIRED &&
+                  exam.freeAttemptLimit !== undefined &&
+                  exam.freeAttemptLimit - completedFreeAttempts > 0
+                ? 'available'
+                : availableCodes > 0
+                  ? 'available'
+                  : 'locked';
         return {
           ...exam,
           accessMode,
+          isSubjectUnlocked,
           attemptsRemaining: Math.max(0, availableCodes),
           freeAttemptsRemaining:
             accessMode === ExamAccessMode.CODE_REQUIRED || exam.freeAttemptLimit === undefined
               ? 0
               : Math.max(0, exam.freeAttemptLimit - completedFreeAttempts),
           lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
-          status:
-            completedAttempts > 0
-              ? 'completed'
-              : hasStartedSession
-                ? 'available'
-                : accessMode !== ExamAccessMode.CODE_REQUIRED &&
-                    exam.freeAttemptLimit !== undefined &&
-                    exam.freeAttemptLimit - completedFreeAttempts > 0
-                  ? 'available'
-                  : availableCodes > 0
-                    ? 'available'
-                    : 'locked',
+          status,
         };
       });
       return { data, total };
@@ -425,6 +434,7 @@ export class ExamsService {
     const data = exams.map((exam) => ({
       ...exam,
       accessMode: this.resolveAccessMode(exam),
+      isSubjectUnlocked: false,
       attemptsRemaining: 0,
       freeAttemptsRemaining: exam.freeAttemptLimit ?? 0,
       status: 'available' as string,

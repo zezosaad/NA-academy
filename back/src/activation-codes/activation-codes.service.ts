@@ -26,6 +26,7 @@ import { ExportFormat } from './dto/batch-export-query.dto.js';
 
 import { SubjectsService } from '../subjects/subjects.service.js';
 import { ExamsService } from '../exams/exams.service.js';
+import { AccessCheckHelper } from './helpers/access-check.helper.js';
 
 @Injectable()
 export class ActivationCodesService {
@@ -37,6 +38,7 @@ export class ActivationCodesService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly subjectsService: SubjectsService,
     private readonly examsService: ExamsService,
+    private readonly accessCheck: AccessCheckHelper,
   ) {}
 
   async generateSubjectCodes(dto: GenerateSubjectCodesDto) {
@@ -146,6 +148,16 @@ export class ActivationCodesService {
   async hasExamAccess(studentId: string, examId: string, hardwareId?: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(studentId) || !Types.ObjectId.isValid(examId)) {
       return false;
+    }
+
+    // Subject subscription grants unlimited access to all exams in that subject.
+    const exam = await this.examsService.findExamById(examId).catch(() => null);
+    if (exam?.subjectId) {
+      const subjectUnlocked = await this.accessCheck.hasSubjectAccess(
+        studentId,
+        exam.subjectId.toString(),
+      );
+      if (subjectUnlocked) return true;
     }
 
     const filter: Record<string, any> = {

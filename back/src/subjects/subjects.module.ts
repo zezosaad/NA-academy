@@ -9,6 +9,7 @@ import {
   LessonProgress,
   LessonProgressSchema,
 } from '../lesson-progress/schemas/lesson-progress.schema.js';
+import { Exam, ExamSchema } from '../exams/schemas/exam.schema.js';
 import { SubjectsService } from './subjects.service.js';
 import { SubjectsController } from './subjects.controller.js';
 
@@ -21,6 +22,7 @@ import { SubjectsController } from './subjects.controller.js';
       { name: User.name, schema: UserSchema },
       { name: Lesson.name, schema: LessonSchema },
       { name: LessonProgress.name, schema: LessonProgressSchema },
+      { name: Exam.name, schema: ExamSchema },
     ]),
   ],
   controllers: [SubjectsController],
