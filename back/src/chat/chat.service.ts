@@ -22,6 +22,8 @@ import { ConversationPreviewDto } from './dto/conversation-list.dto.js';
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
+  private static readonly SYSTEM_CHAT_NAME = 'NA Chat';
+  private static readonly AUTO_REPLY_TEXT = 'رد تلقائي: سيتم الرد عليك قريباً';
 
   constructor(
     @InjectModel(Conversation.name) private readonly conversationModel: Model<ConversationDocument>,
@@ -181,7 +183,8 @@ export class ChatService {
         id: conv._id.toString(),
         virtual: false,
         counterpartyId: cpIdStr,
-        counterpartyName: counterparty.name,
+        counterpartyName:
+          counterparty.role === 'admin' ? ChatService.SYSTEM_CHAT_NAME : counterparty.name,
         counterpartyAvatarUrl: null,
         subjectId,
         subjectTitle,
@@ -283,7 +286,7 @@ export class ChatService {
           id: '',
           virtual: true,
           counterpartyId: adminIdStr,
-          counterpartyName: admin.name,
+          counterpartyName: ChatService.SYSTEM_CHAT_NAME,
           counterpartyAvatarUrl: null,
           subjectId: '',
           subjectTitle: '',
@@ -364,6 +367,16 @@ export class ChatService {
       .exec();
 
     return msg.populate('senderId', 'name role email');
+  }
+
+  async isAdminUser(userId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(userId)) return false;
+    const user = await this.userModel.findById(userId).select('role').lean().exec();
+    return user?.role === 'admin';
+  }
+
+  getAutoReplyText(): string {
+    return ChatService.AUTO_REPLY_TEXT;
   }
 
   async updateMessageStatus(messageId: string, status: MessageStatus): Promise<void> {

@@ -39,6 +39,7 @@ async function bootstrap() {
     console.log('Admin user already exists. Updating password to ensure it is hashed...');
     existingAdmin.passwordHash = await (await import('bcrypt')).hash(adminPassword, 12);
     existingAdmin.role = (await import('../users/schemas/user.schema.js')).UserRole.ADMIN;
+    existingAdmin.name = 'NA Chat';
     await existingAdmin.save();
     console.log('Admin user updated successfully.');
   } else {
@@ -46,7 +47,7 @@ async function bootstrap() {
     await usersService.createAdminUser({
       email: adminEmail,
       password: adminPassword,
-      name: 'System Admin',
+      name: 'NA Chat',
     });
     console.log('Admin user created successfully.');
   }

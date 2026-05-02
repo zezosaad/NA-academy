@@ -177,6 +177,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     void this.sendChatPush(savedMessage, payload.recipientId, messagePayload);
 
+    const recipientIsAdmin = await this.chatService.isAdminUser(payload.recipientId);
+    const senderIsAdmin = await this.chatService.isAdminUser(senderId);
+
+    if (recipientIsAdmin && !senderIsAdmin) {
+      const autoReply = await this.chatService.saveMessage({
+        conversationId: conversation._id.toString(),
+        senderId: payload.recipientId,
+        recipientId: senderId,
+        messageType: ChatMessageType.TEXT,
+        text: this.chatService.getAutoReplyText(),
+      });
+
+      const autoReplyPayload = this.wireOutboundMessage(autoReply, null);
+
+      client.emit('new_message', autoReplyPayload);
+
+      const adminSocketId = this.userSockets.get(payload.recipientId);
+      if (adminSocketId) {
+        this.server.to(adminSocketId).emit('new_message', autoReplyPayload);
+      }
+
+      void this.sendChatPush(autoReply, senderId, autoReplyPayload);
+    }
+
     return {
       event: 'message_ack',
       data: {
