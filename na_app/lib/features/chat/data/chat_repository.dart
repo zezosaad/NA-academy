@@ -109,11 +109,12 @@ class ChatRepository {
         queryParameters: {'limit': limit},
       );
       final rawList = response.data ?? <dynamic>[];
-      final history = rawList
-          .whereType<Map<String, dynamic>>()
-          .map(ChatMessage.fromJson)
-          .toList()
-        ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      final history =
+          rawList
+              .whereType<Map<String, dynamic>>()
+              .map(ChatMessage.fromJson)
+              .toList()
+            ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
       for (final message in history) {
         _upsertMessage(message);
@@ -211,6 +212,18 @@ class ChatRepository {
 
   void markRead({required String conversationId, required String senderId}) {
     _chatSocket.markRead(conversationId: conversationId, senderId: senderId);
+
+    final convIdx = _conversations.indexWhere((c) => c.id == conversationId);
+    if (convIdx >= 0 && _conversations[convIdx].unreadCount > 0) {
+      final conv = _conversations[convIdx];
+      _conversations[convIdx] = conv.copyWith(
+        unreadCount: 0,
+        lastMessage: conv.lastMessage?.copyWith(status: 'read'),
+      );
+      _conversationsController.add(List<Conversation>.from(_conversations));
+    }
+
+    _safeListConversations();
   }
 
   void sendTyping({required String recipientId, required bool isTyping}) {

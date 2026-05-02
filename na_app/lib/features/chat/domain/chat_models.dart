@@ -25,11 +25,39 @@ class Conversation {
     this.unreadCount = 0,
   });
 
+  Conversation copyWith({
+    String? id,
+    bool? virtual,
+    String? counterpartyId,
+    String? counterpartyName,
+    String? counterpartyAvatarUrl,
+    String? subjectId,
+    String? subjectTitle,
+    MessagePreview? lastMessage,
+    bool clearLastMessage = false,
+    int? unreadCount,
+  }) {
+    return Conversation(
+      id: id ?? this.id,
+      virtual: virtual ?? this.virtual,
+      counterpartyId: counterpartyId ?? this.counterpartyId,
+      counterpartyName: counterpartyName ?? this.counterpartyName,
+      counterpartyAvatarUrl:
+          counterpartyAvatarUrl ?? this.counterpartyAvatarUrl,
+      subjectId: subjectId ?? this.subjectId,
+      subjectTitle: subjectTitle ?? this.subjectTitle,
+      lastMessage: clearLastMessage ? null : (lastMessage ?? this.lastMessage),
+      unreadCount: unreadCount ?? this.unreadCount,
+    );
+  }
+
   factory Conversation.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'] as String?;
     final isVirtual = json['virtual'] as bool? ?? false;
     if (!isVirtual && (rawId == null || rawId.isEmpty)) {
-      throw FormatException('Conversation.fromJson: non-virtual conversation must have a non-empty "id"');
+      throw FormatException(
+        'Conversation.fromJson: non-virtual conversation must have a non-empty "id"',
+      );
     }
     return Conversation(
       id: rawId ?? '',
@@ -61,6 +89,22 @@ class MessagePreview {
     required this.senderId,
     required this.status,
   });
+
+  MessagePreview copyWith({
+    String? text,
+    bool? hasImage,
+    DateTime? sentAt,
+    String? senderId,
+    String? status,
+  }) {
+    return MessagePreview(
+      text: text ?? this.text,
+      hasImage: hasImage ?? this.hasImage,
+      sentAt: sentAt ?? this.sentAt,
+      senderId: senderId ?? this.senderId,
+      status: status ?? this.status,
+    );
+  }
 
   factory MessagePreview.fromJson(Map<String, dynamic> json) {
     return MessagePreview(
@@ -103,12 +147,16 @@ class ChatMessage {
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final id = (json['_id'] as String?) ?? json['id'] as String?;
     if (id == null || id.isEmpty) {
-      throw FormatException('ChatMessage.fromJson: "_id" or "id" is required and must be non-empty');
+      throw FormatException(
+        'ChatMessage.fromJson: "_id" or "id" is required and must be non-empty',
+      );
     }
 
     final conversationId = json['conversationId'] as String?;
     if (conversationId == null || conversationId.isEmpty) {
-      throw FormatException('ChatMessage.fromJson: "conversationId" is required and must be non-empty');
+      throw FormatException(
+        'ChatMessage.fromJson: "conversationId" is required and must be non-empty',
+      );
     }
 
     final senderIdRaw = json['senderId'];
@@ -121,17 +169,23 @@ class ChatMessage {
       senderId = '';
     }
     if (senderId.isEmpty) {
-      throw FormatException('ChatMessage.fromJson: "senderId" is required and must be non-empty');
+      throw FormatException(
+        'ChatMessage.fromJson: "senderId" is required and must be non-empty',
+      );
     }
 
     final recipientId = json['recipientId'] as String?;
     if (recipientId == null || recipientId.isEmpty) {
-      throw FormatException('ChatMessage.fromJson: "recipientId" is required and must be non-empty');
+      throw FormatException(
+        'ChatMessage.fromJson: "recipientId" is required and must be non-empty',
+      );
     }
 
     final createdAt = _parseDate(json['createdAt'] as String?);
     if (createdAt == null) {
-      throw FormatException('ChatMessage.fromJson: "createdAt" is required and must be a valid date');
+      throw FormatException(
+        'ChatMessage.fromJson: "createdAt" is required and must be a valid date',
+      );
     }
 
     return ChatMessage(
@@ -150,11 +204,12 @@ class ChatMessage {
   }
 
   static MessageType _parseMessageType(String? value) => switch (value) {
-        'image' => MessageType.image,
-        _ => MessageType.text,
-      };
+    'image' => MessageType.image,
+    _ => MessageType.text,
+  };
 
-  static MessageDeliveryStatus _parseDeliveryStatus(String? value) => switch (value) {
+  static MessageDeliveryStatus _parseDeliveryStatus(String? value) =>
+      switch (value) {
         'pending' => MessageDeliveryStatus.pending,
         'delivered' => MessageDeliveryStatus.delivered,
         'read' => MessageDeliveryStatus.read,
