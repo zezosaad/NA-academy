@@ -34,10 +34,12 @@ class QuestionCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'exams.take.questionLabel'.tr(namedArgs: {
-              'current': '${currentIndex + 1}',
-              'total': '$totalCount',
-            }),
+            'exams.take.questionLabel'.tr(
+              namedArgs: {
+                'current': '${currentIndex + 1}',
+                'total': '$totalCount',
+              },
+            ),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
             ),
@@ -94,10 +96,9 @@ class _OptionTile extends StatelessWidget {
     return Semantics(
       selected: isSelected,
       button: true,
-      label: 'exams.take.optionSemanticLabel'.tr(namedArgs: {
-        'label': option.label,
-        'text': option.text,
-      }),
+      label: 'exams.take.optionSemanticLabel'.tr(
+        namedArgs: {'label': option.label, 'text': option.text},
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Material(
