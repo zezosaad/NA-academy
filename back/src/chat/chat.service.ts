@@ -56,13 +56,19 @@ export class ChatService {
 
   async canChat(userId1: string, userId2: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(userId1) || !Types.ObjectId.isValid(userId2)) {
+      this.logger.warn(`canChat: invalid ObjectId — userId1="${userId1}" userId2="${userId2}"`);
       return false;
     }
 
     const user1 = await this.userModel.findById(userId1).exec();
     const user2 = await this.userModel.findById(userId2).exec();
 
-    if (!user1 || !user2) return false;
+    if (!user1 || !user2) {
+      this.logger.warn(
+        `canChat: user not found — userId1="${userId1}" found=${!!user1}, userId2="${userId2}" found=${!!user2}`,
+      );
+      return false;
+    }
 
     if (user1.role === 'admin' || user2.role === 'admin') return true;
 

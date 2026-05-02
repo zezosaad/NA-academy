@@ -20,8 +20,8 @@ final dioProvider = Provider<Dio>((ref) {
     BaseOptions(
       baseUrl: const String.fromEnvironment(
         'API_BASE_URL',
-        // defaultValue: 'https://naacademy.tech/api/v1',
-        defaultValue: 'http://192.168.1.5:3000/api/v1',
+        defaultValue: 'https://naacademy.tech/api/v1',
+        // defaultValue: 'http://192.168.1.5:3000/api/v1',
       ),
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
