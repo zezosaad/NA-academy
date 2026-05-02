@@ -16,10 +16,12 @@ class NotificationDetailPage extends ConsumerStatefulWidget {
   const NotificationDetailPage({super.key, required this.notificationId});
 
   @override
-  ConsumerState<NotificationDetailPage> createState() => _NotificationDetailPageState();
+  ConsumerState<NotificationDetailPage> createState() =>
+      _NotificationDetailPageState();
 }
 
-class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage> {
+class _NotificationDetailPageState
+    extends ConsumerState<NotificationDetailPage> {
   NotificationsInboxData? _item;
   bool _loading = true;
 
@@ -61,8 +63,12 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
       );
     }
 
-    final titleColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
-    final bodyColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final titleColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.textPrimary;
+    final bodyColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.textSecondary;
     final mutedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
 
     Map<String, dynamic>? payloadData;
@@ -82,9 +88,9 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
             Text(
               _item!.title,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
-                  ),
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -94,21 +100,20 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
                 borderRadius: BorderRadius.circular(AppShapes.radiusPill),
               ),
               child: Text(
-                DateFormat.yMMMd(context.locale.languageCode)
-                    .add_jm()
-                    .format(DateTime.fromMillisecondsSinceEpoch(_item!.createdAt)),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: mutedColor,
-                    ),
+                DateFormat.yMMMd(context.locale.languageCode).add_jm().format(
+                  DateTime.fromMillisecondsSinceEpoch(_item!.createdAt),
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: mutedColor),
               ),
             ),
             const SizedBox(height: 20),
             Text(
               _item!.body,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: bodyColor,
-                    height: 1.7,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: bodyColor, height: 1.7),
             ),
             if (payloadData != null) ...[
               const SizedBox(height: 16),
@@ -134,7 +139,7 @@ class _NotificationDetailPageState extends ConsumerState<NotificationDetailPage>
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
       },
-        child: Text('notifications.open_url'.tr()),
-      );
+      child: Text('notifications.open_url'.tr()),
+    );
   }
 }

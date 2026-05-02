@@ -109,11 +109,12 @@ class ChatRepository {
         queryParameters: {'limit': limit},
       );
       final rawList = response.data ?? <dynamic>[];
-      final history = rawList
-          .whereType<Map<String, dynamic>>()
-          .map(ChatMessage.fromJson)
-          .toList()
-        ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      final history =
+          rawList
+              .whereType<Map<String, dynamic>>()
+              .map(ChatMessage.fromJson)
+              .toList()
+            ..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
       for (final message in history) {
         _upsertMessage(message);

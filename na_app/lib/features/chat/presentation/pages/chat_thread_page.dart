@@ -126,10 +126,12 @@ class _ChatThreadPageState extends ConsumerState<ChatThreadPage> {
     );
     if (!hasUnreadFromCounterparty) return;
 
-    ref.read(chatControllerProvider).markConversationRead(
-      conversationId: _conversationId,
-      senderId: widget.counterpartyId,
-    );
+    ref
+        .read(chatControllerProvider)
+        .markConversationRead(
+          conversationId: _conversationId,
+          senderId: widget.counterpartyId,
+        );
   }
 
   void _onNewMessage(ChatMessage message) {
