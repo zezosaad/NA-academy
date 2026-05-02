@@ -27,6 +27,7 @@ class QuestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textDir = Directionality.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,6 +48,7 @@ class QuestionCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             question.text,
+            textDirection: textDir,
             style: Theme.of(context).textTheme.titleLarge,
           ),
         ),
@@ -158,6 +160,7 @@ class _OptionTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       option.text,
+                      textDirection: Directionality.of(context),
                       style: Theme.of(
                         context,
                       ).textTheme.bodyLarge?.copyWith(color: textColor),

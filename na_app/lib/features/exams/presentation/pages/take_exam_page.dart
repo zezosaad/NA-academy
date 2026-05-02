@@ -34,6 +34,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
   String? _startError;
 
   List<ExamQuestion> _questions = [];
+  Exam? _exam;
   ExamSession? _session;
   String? _saveError;
   int _questionTimeLeftSeconds = 0;
@@ -41,6 +42,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
 
   bool get _usesPerQuestionTiming {
     if (_questions.isEmpty) return false;
+    if (_exam?.timingMode != ExamTimingMode.perQuestion) return false;
     return _questions.any((q) => q.timeLimitSeconds > 0);
   }
 
@@ -84,6 +86,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
         return;
       }
       setState(() {
+        _exam = result.exam;
         _session = session;
         _questions = result.questions;
         for (final entry in session.answers.entries) {
@@ -99,6 +102,7 @@ class _TakeExamPageState extends ConsumerState<TakeExamPage>
       final repo = ref.read(examsRepositoryProvider);
       final result = await repo.getExamAndStart(widget.examId);
       setState(() {
+        _exam = result.exam;
         _questions = result.questions;
         _session = result.session;
         _isStarting = false;

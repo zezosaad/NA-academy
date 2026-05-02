@@ -61,9 +61,7 @@ class Exam with _$Exam {
       attemptsAllowed: json['attemptsAllowed'] as int? ?? 0,
       attemptsRemaining: json['attemptsRemaining'] as int? ?? 0,
       freeAttemptsRemaining: json['freeAttemptsRemaining'] as int? ?? 0,
-      dueDate: json['dueDate'] != null
-          ? DateTime.tryParse(json['dueDate'] as String)
-          : null,
+      dueDate: _parseDate(json['dueDate']) ?? _parseDate(json['availableUntil']),
       accessMode: _parseAccessMode(json['accessMode'] as String?),
       timingMode: timingMode,
       status: _parseExamStatus(json['status'] as String?),
@@ -88,6 +86,11 @@ class Exam with _$Exam {
     'whole_exam' => ExamTimingMode.wholeExam,
     _ => ExamTimingMode.perQuestion,
   };
+
+  static DateTime? _parseDate(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
 
   static int _resolveDurationMinutes({
     required int? rawDurationMinutes,

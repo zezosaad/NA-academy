@@ -6,7 +6,13 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Exam, ExamAccessMode, ExamDocument, Question } from './schemas/exam.schema.js';
+import {
+  Exam,
+  ExamAccessMode,
+  ExamDocument,
+  ExamTimingMode,
+  Question,
+} from './schemas/exam.schema.js';
 import { ExamSession, ExamSessionDocument, SessionStatus } from './schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreDocument } from './schemas/exam-score.schema.js';
 import {
@@ -43,11 +49,16 @@ export class ExamsService {
     return exam.hasFreeSection ? ExamAccessMode.FREE_SECTION : ExamAccessMode.CODE_REQUIRED;
   }
 
-  private normalizeExamPayload(dto: CreateExamDto | UpdateExamDto) {
-    const accessMode = this.resolveAccessMode(dto as Partial<Exam>);
+  private normalizeExamPayload(dto: CreateExamDto | UpdateExamDto, current?: Partial<Exam>) {
+    const accessMode = this.resolveAccessMode({
+      ...current,
+      ...(dto as Partial<Exam>),
+    });
+    const timingMode = dto.timingMode ?? current?.timingMode ?? ExamTimingMode.PER_QUESTION;
     const normalized: Record<string, unknown> = {
       ...dto,
       accessMode,
+      timingMode,
       hasFreeSection: accessMode === ExamAccessMode.FREE_SECTION,
     };
 
@@ -57,6 +68,10 @@ export class ExamsService {
 
     if (accessMode === ExamAccessMode.CODE_REQUIRED) {
       normalized.freeAttemptLimit = undefined;
+    }
+
+    if (timingMode === ExamTimingMode.PER_QUESTION) {
+      normalized.examTimeLimitMinutes = undefined;
     }
 
     return normalized;
@@ -106,8 +121,62 @@ export class ExamsService {
     }
   }
 
+  private validateTiming(dto: CreateExamDto | UpdateExamDto, current?: Partial<Exam>) {
+    const timingMode = dto.timingMode ?? current?.timingMode ?? ExamTimingMode.PER_QUESTION;
+    const examTimeLimitMinutes = dto.examTimeLimitMinutes ?? current?.examTimeLimitMinutes;
+
+    if (timingMode === ExamTimingMode.WHOLE_EXAM) {
+      if (!examTimeLimitMinutes || examTimeLimitMinutes < 1) {
+        throw new BadRequestException('Whole exam timing requires examTimeLimitMinutes');
+      }
+      return;
+    }
+
+    if (dto.questions) {
+      for (const q of dto.questions) {
+        if (!q.timeLimitSeconds || q.timeLimitSeconds < 5) {
+          throw new BadRequestException(
+            `Question '${q.text}' must have a time limit of at least 5 seconds`,
+          );
+        }
+      }
+    }
+  }
+
+  private validateAvailability(dto: CreateExamDto | UpdateExamDto, current?: Partial<Exam>) {
+    const hasAvailableFrom = Object.prototype.hasOwnProperty.call(dto, 'availableFrom');
+    const hasAvailableUntil = Object.prototype.hasOwnProperty.call(dto, 'availableUntil');
+    const availableFromValue = hasAvailableFrom ? dto.availableFrom : current?.availableFrom;
+    const availableUntilValue = hasAvailableUntil ? dto.availableUntil : current?.availableUntil;
+
+    if (!availableFromValue || !availableUntilValue) return;
+
+    const availableFrom = new Date(availableFromValue);
+    const availableUntil = new Date(availableUntilValue);
+
+    if (Number.isNaN(availableFrom.getTime()) || Number.isNaN(availableUntil.getTime())) {
+      throw new BadRequestException('Exam availability dates are invalid');
+    }
+
+    if (availableFrom >= availableUntil) {
+      throw new BadRequestException('Exam availability start must be before the end');
+    }
+  }
+
+  private isExamAvailableNow(exam: Pick<Exam, 'availableFrom' | 'availableUntil'>) {
+    const now = Date.now();
+    const availableFrom = exam.availableFrom ? new Date(exam.availableFrom).getTime() : undefined;
+    const availableUntil = exam.availableUntil ? new Date(exam.availableUntil).getTime() : undefined;
+
+    if (availableFrom && now < availableFrom) return false;
+    if (availableUntil && now > availableUntil) return false;
+    return true;
+  }
+
   async createExam(dto: CreateExamDto, userId: string): Promise<ExamDocument> {
     this.validateQuestions(dto.questions);
+    this.validateTiming(dto);
+    this.validateAvailability(dto);
 
     const exam = new this.examModel({
       ...this.normalizeExamPayload(dto),
@@ -174,6 +243,9 @@ export class ExamsService {
   ): Promise<ExamSessionDocument> {
     const exam = await this.examModel.findById(examId).exec();
     if (!exam) throw new NotFoundException('Exam not found');
+    if (!this.isExamAvailableNow(exam)) {
+      throw new BadRequestException('Exam is outside its availability window');
+    }
 
     const activeSession = await this.sessionModel
       .findOne({
@@ -188,14 +260,17 @@ export class ExamsService {
     }
 
     const questionPool = this.getQuestionPool(exam, isFreeAttempt);
-    const timeLimit = questionPool.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60;
+    const timeLimitMinutes =
+      exam.timingMode === ExamTimingMode.WHOLE_EXAM
+        ? (exam.examTimeLimitMinutes ?? 1)
+        : Math.ceil(questionPool.reduce((total, q) => total + q.timeLimitSeconds, 0) / 60);
 
     const session = new this.sessionModel({
       studentId: new Types.ObjectId(studentId),
       examId: exam._id,
       status: SessionStatus.STARTED,
       startedAt: new Date(),
-      timeLimitMinutes: Math.floor(timeLimit),
+      timeLimitMinutes,
       isFreeAttempt,
     });
 
@@ -403,12 +478,18 @@ export class ExamsService {
         const status = isSubjectUnlocked
           ? completedAttempts > 0
             ? 'completed'
-            : 'available'
+            : this.isExamAvailableNow(exam)
+              ? 'available'
+              : 'locked'
           : completedAttempts > 0
             ? 'completed'
             : hasStartedSession
-              ? 'available'
-              : accessMode !== ExamAccessMode.CODE_REQUIRED &&
+              ? this.isExamAvailableNow(exam)
+                ? 'available'
+                : 'locked'
+              : !this.isExamAvailableNow(exam)
+                ? 'locked'
+                : accessMode !== ExamAccessMode.CODE_REQUIRED &&
                   exam.freeAttemptLimit !== undefined &&
                   exam.freeAttemptLimit - completedFreeAttempts > 0
                 ? 'available'
@@ -443,11 +524,16 @@ export class ExamsService {
   }
 
   async updateExam(id: string, dto: UpdateExamDto): Promise<ExamDocument> {
+    const existing = await this.examModel.findById(id).exec();
+    if (!existing) throw new NotFoundException('Exam not found');
+
     if (dto.questions) {
       this.validateQuestions(dto.questions);
     }
+    this.validateTiming(dto, existing);
+    this.validateAvailability(dto, existing);
 
-    const updateData: any = this.normalizeExamPayload(dto);
+    const updateData: any = this.normalizeExamPayload(dto, existing);
     if (dto.subjectId) {
       updateData.subjectId = new Types.ObjectId(dto.subjectId);
     }

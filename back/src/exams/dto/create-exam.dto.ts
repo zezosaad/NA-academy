@@ -8,12 +8,13 @@ import {
   IsInt,
   Min,
   IsEnum,
+  IsDateString,
   ValidateNested,
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ExamAccessMode } from '../schemas/exam.schema.js';
+import { ExamAccessMode, ExamTimingMode } from '../schemas/exam.schema.js';
 
 export class QuestionOptionDto {
   @ApiProperty({ example: 'A' })
@@ -78,6 +79,30 @@ export class CreateExamDto {
   @IsOptional()
   @IsEnum(ExamAccessMode)
   accessMode?: ExamAccessMode;
+
+  @ApiPropertyOptional({
+    enum: ExamTimingMode,
+    example: ExamTimingMode.PER_QUESTION,
+  })
+  @IsOptional()
+  @IsEnum(ExamTimingMode)
+  timingMode?: ExamTimingMode;
+
+  @ApiPropertyOptional({ example: 45 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  examTimeLimitMinutes?: number;
+
+  @ApiPropertyOptional({ example: '2026-05-10T09:00:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  availableFrom?: string | null;
+
+  @ApiPropertyOptional({ example: '2026-05-10T11:00:00.000Z' })
+  @IsOptional()
+  @IsDateString()
+  availableUntil?: string | null;
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()

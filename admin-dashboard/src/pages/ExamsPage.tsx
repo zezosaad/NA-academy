@@ -49,7 +49,7 @@ import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
 import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
-import type { Exam, Subject, Question, QuestionOption, ExamAccessMode } from "@/types"
+import type { Exam, Subject, Question, QuestionOption, ExamAccessMode, ExamTimingMode } from "@/types"
 import { format } from "date-fns"
 
 const getOptionLabel = (index: number) => {
@@ -89,6 +89,20 @@ const getExamAccessMode = (exam?: Pick<Exam, "accessMode" | "hasFreeSection"> | 
   return exam?.hasFreeSection ? "free_section" : "code_required"
 }
 
+const toDateTimeLocalValue = (value?: string) => {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
+}
+
+const fromDateTimeLocalValue = (value: string) => {
+  if (!value) return undefined
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
 export function ExamsPage() {
   const { showError } = useAppModal()
   const [exams, setExams] = useState<Exam[]>([])
@@ -104,6 +118,10 @@ export function ExamsPage() {
     title: "",
     subjectId: "",
     accessMode: "code_required" as ExamAccessMode,
+    timingMode: "per_question" as ExamTimingMode,
+    examTimeLimitMinutes: 30,
+    availableFrom: "",
+    availableUntil: "",
     hasFreeSection: false,
     freeQuestionCount: 0,
     freeAttemptLimit: 1,
@@ -143,6 +161,10 @@ export function ExamsPage() {
         title: exam.title,
         subjectId: typeof exam.subjectId === "string" ? exam.subjectId : exam.subjectId._id,
         accessMode: getExamAccessMode(exam),
+        timingMode: exam.timingMode ?? "per_question",
+        examTimeLimitMinutes: exam.examTimeLimitMinutes ?? 30,
+        availableFrom: toDateTimeLocalValue(exam.availableFrom),
+        availableUntil: toDateTimeLocalValue(exam.availableUntil),
         hasFreeSection: exam.hasFreeSection,
         freeQuestionCount: exam.freeQuestionCount ?? 0,
         freeAttemptLimit: exam.freeAttemptLimit ?? 1,
@@ -157,6 +179,10 @@ export function ExamsPage() {
         title: "",
         subjectId: "",
         accessMode: "code_required",
+        timingMode: "per_question",
+        examTimeLimitMinutes: 30,
+        availableFrom: "",
+        availableUntil: "",
         hasFreeSection: false,
         freeQuestionCount: 0,
         freeAttemptLimit: 1,
@@ -211,12 +237,37 @@ export function ExamsPage() {
       return
     }
 
+    if (examForm.timingMode === "whole_exam" && examForm.examTimeLimitMinutes < 1) {
+      showError("Whole exam duration must be at least 1 minute")
+      return
+    }
+
+    if (examForm.timingMode === "per_question") {
+      const invalidQuestionIndex = examForm.questions.findIndex((q) => q.timeLimitSeconds < 5)
+      if (invalidQuestionIndex >= 0) {
+        showError(`Question ${invalidQuestionIndex + 1} time must be at least 5 seconds`)
+        return
+      }
+    }
+
+    const availableFrom = fromDateTimeLocalValue(examForm.availableFrom)
+    const availableUntil = fromDateTimeLocalValue(examForm.availableUntil)
+    if (availableFrom && availableUntil && new Date(availableFrom) >= new Date(availableUntil)) {
+      showError("Exam availability start must be before the end")
+      return
+    }
+
     setSaving(true)
     try {
       const data = {
         title: examForm.title,
         subjectId: examForm.subjectId,
         accessMode: examForm.accessMode,
+        timingMode: examForm.timingMode,
+        examTimeLimitMinutes:
+          examForm.timingMode === "whole_exam" ? examForm.examTimeLimitMinutes : undefined,
+        availableFrom: availableFrom ?? null,
+        availableUntil: availableUntil ?? null,
         hasFreeSection: examForm.accessMode === "free_section",
         freeQuestionCount:
           examForm.accessMode === "free_section" ? examForm.freeQuestionCount : undefined,
@@ -341,6 +392,8 @@ export function ExamsPage() {
                 <TableHead>Title</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Questions</TableHead>
+                <TableHead>Timing</TableHead>
+                <TableHead>Availability</TableHead>
                 <TableHead>Access</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -356,6 +409,26 @@ export function ExamsPage() {
                       : e.subjectId.title}
                   </TableCell>
                   <TableCell>{e.questions.length}</TableCell>
+                  <TableCell>
+                    {e.timingMode === "whole_exam" ? (
+                      <span className="text-sm text-muted-foreground">
+                        {e.examTimeLimitMinutes ?? 0} min total
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Per question</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {e.availableFrom || e.availableUntil ? (
+                      <span className="text-sm">
+                        {e.availableFrom ? format(new Date(e.availableFrom), "MMM d, h:mm a") : "Now"}
+                        {" to "}
+                        {e.availableUntil ? format(new Date(e.availableUntil), "MMM d, h:mm a") : "No end"}
+                      </span>
+                    ) : (
+                      <span className="text-sm">Always open</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {getExamAccessMode(e) === "free_section" ? (
                       <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
@@ -429,6 +502,68 @@ export function ExamsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="rounded-md border p-3 space-y-3">
+              <div className="space-y-2">
+                <Label>Timing</Label>
+                <Select
+                  value={examForm.timingMode}
+                  onValueChange={(value: ExamTimingMode) =>
+                    setExamForm((f) => ({ ...f, timingMode: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="per_question">Time for each question</SelectItem>
+                    <SelectItem value="whole_exam">One timer for the whole exam</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {examForm.timingMode === "whole_exam" && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Exam duration:</Label>
+                  <Input
+                    type="number"
+                    className="w-24 h-8"
+                    min={1}
+                    value={examForm.examTimeLimitMinutes}
+                    onChange={(e) =>
+                      setExamForm((f) => ({ ...f, examTimeLimitMinutes: +e.target.value }))
+                    }
+                  />
+                  <span className="text-xs text-muted-foreground">minutes</span>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-md border p-3 space-y-3">
+              <Label>Availability Window</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Starts at</Label>
+                  <Input
+                    type="datetime-local"
+                    value={examForm.availableFrom}
+                    onChange={(e) =>
+                      setExamForm((f) => ({ ...f, availableFrom: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Ends at</Label>
+                  <Input
+                    type="datetime-local"
+                    value={examForm.availableUntil}
+                    onChange={(e) =>
+                      setExamForm((f) => ({ ...f, availableUntil: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
             </div>
 
@@ -578,9 +713,13 @@ export function ExamsPage() {
                             <Input
                               type="number"
                               className="w-20 h-8"
+                              disabled={examForm.timingMode === "whole_exam"}
                               value={q.timeLimitSeconds}
                               onChange={(e) => updateQuestion(qi, { timeLimitSeconds: +e.target.value })}
                             />
+                            {examForm.timingMode === "whole_exam" && (
+                              <span className="text-xs text-muted-foreground">not used</span>
+                            )}
                           </div>
                           {examForm.questions.length > 1 && (
                             <Button variant="ghost" size="sm" className="ml-auto" onClick={() => removeQuestion(qi)}>

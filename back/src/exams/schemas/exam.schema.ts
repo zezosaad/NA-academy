@@ -9,6 +9,11 @@ export enum ExamAccessMode {
   FULL_EXAM_FREE_ATTEMPTS = 'full_exam_free_attempts',
 }
 
+export enum ExamTimingMode {
+  PER_QUESTION = 'per_question',
+  WHOLE_EXAM = 'whole_exam',
+}
+
 @Schema()
 export class Question {
   _id!: Types.ObjectId;
@@ -60,6 +65,22 @@ export class Exam {
     type: String,
   })
   accessMode!: ExamAccessMode;
+
+  @Prop({
+    enum: ExamTimingMode,
+    default: ExamTimingMode.PER_QUESTION,
+    type: String,
+  })
+  timingMode!: ExamTimingMode;
+
+  @Prop({ type: Number, min: 1 })
+  examTimeLimitMinutes?: number;
+
+  @Prop({ type: Date })
+  availableFrom?: Date;
+
+  @Prop({ type: Date })
+  availableUntil?: Date;
 
   @Prop({ default: false, type: Boolean })
   hasFreeSection!: boolean;

@@ -193,6 +193,7 @@ export interface MediaAsset {
 
 // ── Exams ──
 export type ExamAccessMode = "code_required" | "free_section" | "full_exam_free_attempts"
+export type ExamTimingMode = "per_question" | "whole_exam"
 
 export interface QuestionOption {
   label: string
@@ -215,6 +216,10 @@ export interface Exam {
   subjectId: string | Subject
   questions: Question[]
   accessMode?: ExamAccessMode
+  timingMode?: ExamTimingMode
+  examTimeLimitMinutes?: number
+  availableFrom?: string
+  availableUntil?: string
   hasFreeSection: boolean
   freeQuestionCount: number
   freeAttemptLimit: number

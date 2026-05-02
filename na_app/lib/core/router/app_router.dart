@@ -33,11 +33,18 @@ import 'package:na_app/features/notifications/presentation/pages/notifications_i
 import 'package:na_app/features/notifications/presentation/pages/notification_detail_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
+  final refreshNotifier = _RouterRefreshNotifier();
+  ref.onDispose(refreshNotifier.dispose);
+  ref.listen(
+    authControllerProvider,
+    (previous, next) => refreshNotifier.refresh(),
+  );
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authControllerProvider);
       if (authState.isLoading) return null;
 
       final isAuthenticated = authState.valueOrNull != null;
@@ -190,6 +197,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ExamsPage(),
                 routes: [
                   GoRoute(
+                    path: 'subject/:id',
+                    builder: (context, state) {
+                      final subjectId = state.pathParameters['id']!;
+                      return SubjectExamsPage(subjectId: subjectId);
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id/enter-code',
+                    builder: (context, state) {
+                      final examId = state.pathParameters['id']!;
+                      return EnterExamCodePage(examId: examId);
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id/take',
+                    builder: (context, state) {
+                      final examId = state.pathParameters['id']!;
+                      return TakeExamPage(examId: examId);
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id/result',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>? ?? {};
+                      final score =
+                          extra['score'] as ExamScore? ??
+                          ExamScore(sessionId: '', score: 0);
+                      final timedOut = extra['timedOut'] as bool? ?? false;
+                      return ExamResultPage(score: score, timedOut: timedOut);
+                    },
+                  ),
+                  GoRoute(
                     path: ':id',
                     builder: (context, state) {
                       final examId = state.pathParameters['id']!;
@@ -281,38 +320,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/exams/subject/:id',
-        builder: (context, state) {
-          final subjectId = state.pathParameters['id']!;
-          return SubjectExamsPage(subjectId: subjectId);
-        },
-      ),
-      GoRoute(
-        path: '/exams/:id/enter-code',
-        builder: (context, state) {
-          final examId = state.pathParameters['id']!;
-          return EnterExamCodePage(examId: examId);
-        },
-      ),
-      GoRoute(
-        path: '/exams/:id/take',
-        builder: (context, state) {
-          final examId = state.pathParameters['id']!;
-          return TakeExamPage(examId: examId);
-        },
-      ),
-      GoRoute(
-        path: '/exams/:id/result',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          final score =
-              extra['score'] as ExamScore? ??
-              ExamScore(sessionId: '', score: 0);
-          final timedOut = extra['timedOut'] as bool? ?? false;
-          return ExamResultPage(score: score, timedOut: timedOut);
-        },
-      ),
-      GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsInboxPage(),
       ),
@@ -326,6 +333,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class _RouterRefreshNotifier extends ChangeNotifier {
+  void refresh() => notifyListeners();
+}
 
 class _PlaceholderPage extends StatelessWidget {
   final String title;

@@ -346,6 +346,8 @@ class ApiClient {
     accessMode?: "code_required" | "free_section" | "full_exam_free_attempts"
     timingMode?: "per_question" | "whole_exam"
     examTimeLimitMinutes?: number
+    availableFrom?: string | null
+    availableUntil?: string | null
     hasFreeSection?: boolean
     freeQuestionCount?: number
     freeAttemptLimit?: number
