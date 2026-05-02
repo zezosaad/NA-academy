@@ -125,4 +125,14 @@ export class CreateExamDto {
   @ValidateNested({ each: true })
   @Type(() => CreateQuestionDto)
   questions!: CreateQuestionDto[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'When non-empty, the exam is only visible/accessible to these student IDs and bypasses subject-subscription filtering for them.',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  assignedStudentIds?: string[];
 }

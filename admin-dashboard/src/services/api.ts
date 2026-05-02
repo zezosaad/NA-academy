@@ -343,7 +343,7 @@ class ApiClient {
   async createExam(data: {
     title: string
     subjectId: string
-    accessMode?: "code_required" | "free_section" | "full_exam_free_attempts"
+    accessMode?: "code_required" | "free_section" | "full_exam_free_attempts" | "free"
     timingMode?: "per_question" | "whole_exam"
     examTimeLimitMinutes?: number
     availableFrom?: string | null
@@ -351,6 +351,7 @@ class ApiClient {
     hasFreeSection?: boolean
     freeQuestionCount?: number
     freeAttemptLimit?: number
+    assignedStudentIds?: string[]
     questions: {
       text: string
       options: { label: string; text: string }[]
@@ -375,6 +376,40 @@ class ApiClient {
 
   async deleteExam(id: string): Promise<void> {
     return this.request(`/api/v1/exams/${id}`, { method: "DELETE" })
+  }
+
+  // ── Exam retake permits ──
+  async listExamRetakePermits(examId: string) {
+    return this.request<Array<{
+      _id: string
+      examId: string
+      studentId: { _id: string; name: string; email: string } | string
+      grantedBy: { _id: string; name: string; email: string } | string
+      status: "active" | "used" | "revoked"
+      usedAt?: string
+      note?: string
+      createdAt: string
+    }>>(`/api/v1/exams/${examId}/retake-permits`)
+  }
+
+  async grantExamRetakePermit(examId: string, studentId: string, note?: string) {
+    return this.request(`/api/v1/exams/${examId}/retake-permits`, {
+      method: "POST",
+      body: JSON.stringify({ studentId, note }),
+    })
+  }
+
+  async revokeExamRetakePermit(permitId: string) {
+    return this.request(`/api/v1/exams/retake-permits/${permitId}`, {
+      method: "DELETE",
+    })
+  }
+
+  async searchUsers(q: string, limit = 10) {
+    const qs = new URLSearchParams({ q, limit: String(limit) })
+    return this.request<Array<{ id: string; name: string; email: string; role: string }>>(
+      `/api/v1/users/search?${qs}`,
+    )
   }
 
   // ── Activation Codes ──

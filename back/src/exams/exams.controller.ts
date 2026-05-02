@@ -20,6 +20,7 @@ import { ListExamsQueryDto } from './dto/list-exams-query.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { SubmitExamDto } from './dto/submit-exam.dto.js';
 import { SaveAnswerDto } from './dto/save-answer.dto.js';
+import { GrantRetakePermitDto } from './dto/grant-retake-permit.dto.js';
 import { ActivationCodesService } from '../activation-codes/activation-codes.service.js';
 import { ExamAccessMode } from './schemas/exam.schema.js';
 
@@ -90,6 +91,12 @@ export class ExamsController {
     const accessMode =
       exam.accessMode ??
       (exam.hasFreeSection ? ExamAccessMode.FREE_SECTION : ExamAccessMode.CODE_REQUIRED);
+
+    // Targeted students bypass code/subscription checks.
+    const isAssigned =
+      Array.isArray(exam.assignedStudentIds) &&
+      exam.assignedStudentIds.some((sid: any) => sid?.toString() === userId);
+
     let isFreeAttempt = false;
 
     if (requestedFreeSection) {
@@ -101,14 +108,14 @@ export class ExamsController {
         throw new ForbiddenException('This exam does not offer a free section');
       }
       isFreeAttempt = true;
-    } else if (accessMode === ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS) {
-      const check = await this.examsService.canAccessFreeAttempt(id, userId);
-      if (check.allowed) {
-        isFreeAttempt = true;
-      }
+    } else if (
+      accessMode === ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS ||
+      accessMode === ExamAccessMode.FREE
+    ) {
+      isFreeAttempt = true;
     }
 
-    if (!isFreeAttempt) {
+    if (!isFreeAttempt && !isAssigned) {
       const hasAccess = await this.activationCodesService.hasExamAccess(
         userId,
         id,
@@ -127,6 +134,33 @@ export class ExamsController {
     }
 
     return { session, exam };
+  }
+
+  @Post(':id/retake-permits')
+  @Roles('admin', 'teacher')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Grant a one-time retake permit to a student for this exam' })
+  async grantRetakePermit(
+    @Param('id') id: string,
+    @Body() dto: GrantRetakePermitDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.examsService.grantRetakePermit(id, dto.studentId, userId, dto.note);
+  }
+
+  @Get(':id/retake-permits')
+  @Roles('admin', 'teacher')
+  @ApiOperation({ summary: 'List retake permits for an exam' })
+  async listRetakePermits(@Param('id') id: string) {
+    return this.examsService.listRetakePermits(id);
+  }
+
+  @Delete('retake-permits/:permitId')
+  @Roles('admin', 'teacher')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke an active retake permit' })
+  async revokeRetakePermit(@Param('permitId') permitId: string) {
+    await this.examsService.revokeRetakePermit(permitId);
   }
 
   @Post('submit')

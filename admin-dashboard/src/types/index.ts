@@ -192,8 +192,30 @@ export interface MediaAsset {
 }
 
 // ── Exams ──
-export type ExamAccessMode = "code_required" | "free_section" | "full_exam_free_attempts"
+export type ExamAccessMode =
+  | "code_required"
+  | "free_section"
+  | "full_exam_free_attempts"
+  | "free"
 export type ExamTimingMode = "per_question" | "whole_exam"
+export type RetakePermitStatus = "active" | "used" | "revoked"
+
+export interface RetakePermit {
+  _id: string
+  examId: string
+  studentId: { _id: string; name: string; email: string } | string
+  grantedBy: { _id: string; name: string; email: string } | string
+  status: RetakePermitStatus
+  usedAt?: string
+  note?: string
+  createdAt: string
+}
+
+export interface AssignableStudent {
+  id: string
+  name: string
+  email: string
+}
 
 export interface QuestionOption {
   label: string
@@ -225,6 +247,8 @@ export interface Exam {
   freeAttemptLimit: number
   freeAttemptsRemaining?: number
   isActive: boolean
+  assignedStudentIds?: string[]
+  assignedStudents?: AssignableStudent[]
   createdBy: string
   createdAt: string
   updatedAt: string

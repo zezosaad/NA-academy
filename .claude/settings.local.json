@@ -52,7 +52,10 @@
       "Bash(flutter --version)",
       "Bash(apt-get install *)",
       "Bash(dart pub *)",
-      "Bash(grep -n \"findSubjectByIdForUser\\\\|return { ...subject, isUnlocked\" /var/opt/NA-academy/back/src/subjects/subjects.service.ts)"
+      "Bash(grep -n \"findSubjectByIdForUser\\\\|return { ...subject, isUnlocked\" /var/opt/NA-academy/back/src/subjects/subjects.service.ts)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(/var/opt/NA-academy/admin-dashboard/node_modules/.bin/tsc --project /var/opt/NA-academy/admin-dashboard/tsconfig.json --noEmit)",
+      "Bash(dart analyze *)"
     ]
   }
 }

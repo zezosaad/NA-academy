@@ -16,6 +16,11 @@ import {
 import { ExamSession, ExamSessionDocument, SessionStatus } from './schemas/exam-session.schema.js';
 import { ExamScore, ExamScoreDocument } from './schemas/exam-score.schema.js';
 import {
+  ExamRetakePermit,
+  ExamRetakePermitDocument,
+  RetakePermitStatus,
+} from './schemas/exam-retake-permit.schema.js';
+import {
   ExamCode,
   ExamCodeDocument,
   CodeStatus as ExamCodeStatus,
@@ -33,6 +38,8 @@ export class ExamsService {
     @InjectModel(Exam.name) private readonly examModel: Model<ExamDocument>,
     @InjectModel(ExamSession.name) private readonly sessionModel: Model<ExamSessionDocument>,
     @InjectModel(ExamScore.name) private readonly scoreModel: Model<ExamScoreDocument>,
+    @InjectModel(ExamRetakePermit.name)
+    private readonly retakePermitModel: Model<ExamRetakePermitDocument>,
     @InjectModel(ExamCode.name) private readonly examCodeModel: Model<ExamCodeDocument>,
     private readonly subjectsService: SubjectsService,
   ) {}
@@ -66,12 +73,21 @@ export class ExamsService {
       normalized.freeQuestionCount = undefined;
     }
 
-    if (accessMode === ExamAccessMode.CODE_REQUIRED) {
+    if (
+      accessMode === ExamAccessMode.CODE_REQUIRED ||
+      accessMode === ExamAccessMode.FREE
+    ) {
       normalized.freeAttemptLimit = undefined;
     }
 
     if (timingMode === ExamTimingMode.PER_QUESTION) {
       normalized.examTimeLimitMinutes = undefined;
+    }
+
+    if (Array.isArray((dto as CreateExamDto).assignedStudentIds)) {
+      normalized.assignedStudentIds = ((dto as CreateExamDto).assignedStudentIds ?? [])
+        .filter((id) => Types.ObjectId.isValid(id))
+        .map((id) => new Types.ObjectId(id));
     }
 
     return normalized;
@@ -198,29 +214,99 @@ export class ExamsService {
     const accessMode = this.resolveAccessMode(exam);
     if (
       !exam ||
-      ![ExamAccessMode.FREE_SECTION, ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS].includes(accessMode) ||
-      exam.freeAttemptLimit === undefined
+      ![ExamAccessMode.FREE_SECTION, ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS].includes(accessMode)
     ) {
       return { allowed: false, remainingAttempts: 0, accessMode };
     }
 
-    const previousAttempts = await this.sessionModel
+    // Single-attempt rule: any prior completion blocks free attempts unless a permit is active.
+    const completed = await this.hasCompletedAttempt(examId, studentId);
+    if (completed) {
+      const permit = await this.findActiveRetakePermit(examId, studentId);
+      if (!permit) {
+        return { allowed: false, remainingAttempts: 0, accessMode };
+      }
+    }
+
+    return { allowed: true, remainingAttempts: 1, accessMode };
+  }
+
+  private async hasCompletedAttempt(examId: string, studentId: string): Promise<boolean> {
+    const count = await this.sessionModel
       .countDocuments({
         examId: new Types.ObjectId(examId),
         studentId: new Types.ObjectId(studentId),
-        isFreeAttempt: true,
-        status: {
-          $in: [SessionStatus.COMPLETED, SessionStatus.TIMED_OUT],
-        },
+        status: { $in: [SessionStatus.COMPLETED, SessionStatus.TIMED_OUT] },
       })
       .exec();
+    return count > 0;
+  }
 
-    const remainingAttempts = exam.freeAttemptLimit - previousAttempts;
-    return {
-      allowed: remainingAttempts > 0,
-      remainingAttempts: Math.max(0, remainingAttempts),
-      accessMode,
-    };
+  private async findActiveRetakePermit(examId: string, studentId: string) {
+    return this.retakePermitModel
+      .findOne({
+        examId: new Types.ObjectId(examId),
+        studentId: new Types.ObjectId(studentId),
+        status: RetakePermitStatus.ACTIVE,
+      })
+      .sort({ createdAt: 1 })
+      .exec();
+  }
+
+  private isStudentAssigned(exam: Pick<Exam, 'assignedStudentIds'>, studentId: string): boolean {
+    if (!exam.assignedStudentIds || exam.assignedStudentIds.length === 0) return false;
+    return exam.assignedStudentIds.some((id) => id.toString() === studentId);
+  }
+
+  async grantRetakePermit(
+    examId: string,
+    studentId: string,
+    grantedBy: string,
+    note?: string,
+  ): Promise<ExamRetakePermitDocument> {
+    if (!Types.ObjectId.isValid(examId) || !Types.ObjectId.isValid(studentId)) {
+      throw new BadRequestException('Invalid exam or student id');
+    }
+    const exam = await this.examModel.findById(examId).exec();
+    if (!exam) throw new NotFoundException('Exam not found');
+
+    const existing = await this.findActiveRetakePermit(examId, studentId);
+    if (existing) {
+      return existing;
+    }
+
+    const permit = new this.retakePermitModel({
+      examId: new Types.ObjectId(examId),
+      studentId: new Types.ObjectId(studentId),
+      grantedBy: new Types.ObjectId(grantedBy),
+      status: RetakePermitStatus.ACTIVE,
+      note,
+    });
+    return permit.save();
+  }
+
+  async listRetakePermits(examId: string): Promise<any[]> {
+    if (!Types.ObjectId.isValid(examId)) return [];
+    return this.retakePermitModel
+      .find({ examId: new Types.ObjectId(examId) })
+      .populate('studentId', 'name email')
+      .populate('grantedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  async revokeRetakePermit(permitId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(permitId)) {
+      throw new NotFoundException('Permit not found');
+    }
+    const permit = await this.retakePermitModel.findById(permitId).exec();
+    if (!permit) throw new NotFoundException('Permit not found');
+    if (permit.status !== RetakePermitStatus.ACTIVE) {
+      throw new BadRequestException('Permit is not active');
+    }
+    permit.status = RetakePermitStatus.REVOKED;
+    await permit.save();
   }
 
   async findExamById(id: string, includeAnswers: boolean = true): Promise<ExamDocument | any> {
@@ -247,6 +333,12 @@ export class ExamsService {
       throw new BadRequestException('Exam is outside its availability window');
     }
 
+    if (exam.assignedStudentIds && exam.assignedStudentIds.length > 0) {
+      if (!this.isStudentAssigned(exam, studentId)) {
+        throw new ForbiddenException('This exam is not assigned to you');
+      }
+    }
+
     const activeSession = await this.sessionModel
       .findOne({
         examId,
@@ -257,6 +349,19 @@ export class ExamsService {
 
     if (activeSession) {
       return activeSession; // Reconnect
+    }
+
+    // Single-attempt rule: any prior completed/timed-out attempt blocks a new session
+    // unless an active retake permit is consumed.
+    const completedBefore = await this.hasCompletedAttempt(examId, studentId);
+    let consumedPermit: ExamRetakePermitDocument | null = null;
+    if (completedBefore) {
+      consumedPermit = await this.findActiveRetakePermit(examId, studentId);
+      if (!consumedPermit) {
+        throw new ForbiddenException(
+          'You have already taken this exam. Ask the admin to grant a retake.',
+        );
+      }
     }
 
     const questionPool = this.getQuestionPool(exam, isFreeAttempt);
@@ -274,7 +379,16 @@ export class ExamsService {
       isFreeAttempt,
     });
 
-    return session.save();
+    const saved = await session.save();
+
+    if (consumedPermit) {
+      consumedPermit.status = RetakePermitStatus.USED;
+      consumedPermit.usedAt = new Date();
+      consumedPermit.consumedBySessionId = saved._id;
+      await consumedPermit.save();
+    }
+
+    return saved;
   }
 
   async submitExam(dto: SubmitExamDto, studentId: string): Promise<ExamScoreDocument> {
@@ -354,6 +468,38 @@ export class ExamsService {
       filter.isActive = true;
     }
 
+    if (role === 'student' && userId) {
+      const uId = new Types.ObjectId(userId);
+      const unlockedSubjectIds = await this.subjectsService.getUnlockedSubjectIds(userId);
+
+      // Visibility rules:
+      // - If exam has assignedStudentIds, only assigned students see it (overrides everything).
+      // - Else if user has any subscriptions, only show exams in their unlocked subjects.
+      // - Else (no subscriptions, no targeting), show all public (untargeted) exams.
+      const hasSubscriptions = unlockedSubjectIds.size > 0;
+      const subjectVisibilityClause = hasSubscriptions
+        ? {
+            $and: [
+              {
+                subjectId: {
+                  $in: [...unlockedSubjectIds]
+                    .filter((id) => Types.ObjectId.isValid(id))
+                    .map((id) => new Types.ObjectId(id)),
+                },
+              },
+              { $or: [{ assignedStudentIds: { $size: 0 } }, { assignedStudentIds: { $exists: false } }] },
+            ],
+          }
+        : {
+            $or: [
+              { assignedStudentIds: { $size: 0 } },
+              { assignedStudentIds: { $exists: false } },
+            ],
+          };
+
+      filter.$or = [{ assignedStudentIds: uId }, subjectVisibilityClause];
+    }
+
     const skip = (query.page - 1) * query.limit;
 
     const [exams, total] = await Promise.all([
@@ -373,10 +519,7 @@ export class ExamsService {
       const unlockedSubjectIds = await this.subjectsService.getUnlockedSubjectIds(userId);
 
       const attemptCounts = await this.examCodeModel
-        .aggregate<{
-          _id: Types.ObjectId;
-          count: number;
-        }>([
+        .aggregate<{ _id: Types.ObjectId; count: number }>([
           {
             $match: {
               examId: { $in: examIds },
@@ -394,10 +537,7 @@ export class ExamsService {
       }
 
       const latestScores = await this.scoreModel
-        .aggregate<{
-          _id: Types.ObjectId;
-          scorePercentage: number;
-        }>([
+        .aggregate<{ _id: Types.ObjectId; scorePercentage: number }>([
           { $match: { examId: { $in: examIds }, studentId: uId } },
           { $sort: { createdAt: -1 } },
           { $group: { _id: '$examId', scorePercentage: { $first: '$scorePercentage' } } },
@@ -413,7 +553,6 @@ export class ExamsService {
         .aggregate<{
           _id: Types.ObjectId;
           completedCount: number;
-          freeCompletedCount: number;
           startedCount: number;
         }>([
           {
@@ -437,20 +576,6 @@ export class ExamsService {
                   ],
                 },
               },
-              freeCompletedCount: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        { $eq: ['$isFreeAttempt', true] },
-                        { $in: ['$status', [SessionStatus.COMPLETED, SessionStatus.TIMED_OUT]] },
-                      ],
-                    },
-                    1,
-                    0,
-                  ],
-                },
-              },
               startedCount: {
                 $sum: { $cond: [{ $eq: ['$status', SessionStatus.STARTED] }, 1, 0] },
               },
@@ -460,51 +585,74 @@ export class ExamsService {
         .exec();
 
       const completedMap = new Map<string, number>();
-      const freeCompletedMap = new Map<string, number>();
       const startedMap = new Map<string, number>();
       for (const sc of completedSessionCounts) {
         completedMap.set(sc._id.toString(), sc.completedCount);
-        freeCompletedMap.set(sc._id.toString(), sc.freeCompletedCount);
         startedMap.set(sc._id.toString(), sc.startedCount);
+      }
+
+      const activePermits = await this.retakePermitModel
+        .find({
+          examId: { $in: examIds },
+          studentId: uId,
+          status: RetakePermitStatus.ACTIVE,
+        })
+        .select('examId')
+        .lean()
+        .exec();
+
+      const permitSet = new Set<string>();
+      for (const p of activePermits) {
+        permitSet.add(p.examId.toString());
       }
 
       const data = exams.map((exam) => {
         const availableCodes = attemptMap.get(exam._id.toString()) ?? 0;
         const completedAttempts = completedMap.get(exam._id.toString()) ?? 0;
-        const completedFreeAttempts = freeCompletedMap.get(exam._id.toString()) ?? 0;
         const hasStartedSession = (startedMap.get(exam._id.toString()) ?? 0) > 0;
+        const hasActivePermit = permitSet.has(exam._id.toString());
         const accessMode = this.resolveAccessMode(exam);
         const isSubjectUnlocked = unlockedSubjectIds.has(exam.subjectId.toString());
-        const status = isSubjectUnlocked
-          ? completedAttempts > 0
-            ? 'completed'
-            : this.isExamAvailableNow(exam)
-              ? 'available'
-              : 'locked'
-          : completedAttempts > 0
-            ? 'completed'
-            : hasStartedSession
-              ? this.isExamAvailableNow(exam)
-                ? 'available'
-                : 'locked'
-              : !this.isExamAvailableNow(exam)
-                ? 'locked'
-                : accessMode !== ExamAccessMode.CODE_REQUIRED &&
-                  exam.freeAttemptLimit !== undefined &&
-                  exam.freeAttemptLimit - completedFreeAttempts > 0
-                ? 'available'
-                : availableCodes > 0
-                  ? 'available'
-                  : 'locked';
+        const isAssigned = this.isStudentAssigned(exam as Exam, userId);
+        const isAvailableNow = this.isExamAvailableNow(exam);
+
+        // Single-attempt rule: completed = locked unless an active permit exists.
+        const lockedByCompletion = completedAttempts > 0 && !hasActivePermit;
+
+        // Determine entitlement to take the exam.
+        const isFreeAccess =
+          accessMode === ExamAccessMode.FREE ||
+          accessMode === ExamAccessMode.FULL_EXAM_FREE_ATTEMPTS ||
+          accessMode === ExamAccessMode.FREE_SECTION;
+
+        const hasEntitlement =
+          isAssigned ||
+          isSubjectUnlocked ||
+          isFreeAccess ||
+          availableCodes > 0 ||
+          hasStartedSession;
+
+        let status: string;
+        if (completedAttempts > 0 && !hasActivePermit) {
+          status = 'completed';
+        } else if (!isAvailableNow) {
+          status = 'locked';
+        } else if (hasEntitlement) {
+          status = 'available';
+        } else {
+          status = 'locked';
+        }
+
         return {
           ...exam,
           accessMode,
           isSubjectUnlocked,
-          attemptsRemaining: Math.max(0, availableCodes),
+          isAssigned,
+          hasRetakePermit: hasActivePermit,
+          attemptsRemaining: lockedByCompletion ? 0 : Math.max(0, availableCodes),
+          // Single-attempt rule: at most one attempt is ever available.
           freeAttemptsRemaining:
-            accessMode === ExamAccessMode.CODE_REQUIRED || exam.freeAttemptLimit === undefined
-              ? 0
-              : Math.max(0, exam.freeAttemptLimit - completedFreeAttempts),
+            !isFreeAccess || lockedByCompletion ? 0 : 1,
           lastScore: lastScoreMap.get(exam._id.toString()) ?? 0,
           status,
         };
@@ -516,6 +664,8 @@ export class ExamsService {
       ...exam,
       accessMode: this.resolveAccessMode(exam),
       isSubjectUnlocked: false,
+      isAssigned: false,
+      hasRetakePermit: false,
       attemptsRemaining: 0,
       freeAttemptsRemaining: exam.freeAttemptLimit ?? 0,
       status: 'available' as string,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Plus,
   Pencil,
@@ -7,6 +7,10 @@ import {
   ChevronDown,
   ChevronUp,
   GripVertical,
+  Users,
+  Search,
+  X,
+  Unlock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +53,15 @@ import { LoadingState } from "@/components/LoadingState"
 import { EmptyState } from "@/components/EmptyState"
 import { useAppModal } from "@/components/AppModalProvider"
 import { api } from "@/services/api"
-import type { Exam, Subject, Question, QuestionOption, ExamAccessMode, ExamTimingMode } from "@/types"
+import type {
+  Exam,
+  Subject,
+  Question,
+  QuestionOption,
+  ExamAccessMode,
+  ExamTimingMode,
+  AssignableStudent,
+} from "@/types"
 import { format } from "date-fns"
 
 const getOptionLabel = (index: number) => {
@@ -89,6 +101,13 @@ const getExamAccessMode = (exam?: Pick<Exam, "accessMode" | "hasFreeSection"> | 
   return exam?.hasFreeSection ? "free_section" : "code_required"
 }
 
+const accessModeLabels: Record<ExamAccessMode, string> = {
+  code_required: "Code required",
+  free_section: "Free section",
+  full_exam_free_attempts: "Full exam free attempts",
+  free: "Free (open to all)",
+}
+
 const toDateTimeLocalValue = (value?: string) => {
   if (!value) return ""
   const date = new Date(value)
@@ -125,11 +144,17 @@ export function ExamsPage() {
     hasFreeSection: false,
     freeQuestionCount: 0,
     freeAttemptLimit: 1,
+    assignedStudents: [] as AssignableStudent[],
     questions: [createEmptyQuestion()] as Question[],
   })
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [expandedQ, setExpandedQ] = useState<number | null>(0)
+  const [studentSearchTerm, setStudentSearchTerm] = useState("")
+  const [studentSearchResults, setStudentSearchResults] = useState<AssignableStudent[]>([])
+  const [studentSearchLoading, setStudentSearchLoading] = useState(false)
+  const studentSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [permitsDialogExam, setPermitsDialogExam] = useState<Exam | null>(null)
 
   const limit = 20
 
@@ -157,6 +182,10 @@ export function ExamsPage() {
   const openForm = (exam?: Exam) => {
     if (exam) {
       setEditingExam(exam)
+      const assigned: AssignableStudent[] =
+        exam.assignedStudents && exam.assignedStudents.length > 0
+          ? exam.assignedStudents
+          : (exam.assignedStudentIds ?? []).map((id) => ({ id, name: id, email: "" }))
       setExamForm({
         title: exam.title,
         subjectId: typeof exam.subjectId === "string" ? exam.subjectId : exam.subjectId._id,
@@ -168,6 +197,7 @@ export function ExamsPage() {
         hasFreeSection: exam.hasFreeSection,
         freeQuestionCount: exam.freeQuestionCount ?? 0,
         freeAttemptLimit: exam.freeAttemptLimit ?? 1,
+        assignedStudents: assigned,
         questions: exam.questions.map((q) => ({
           ...q,
           options: relabelOptions(q.options.map((option) => ({ ...option }))),
@@ -186,11 +216,64 @@ export function ExamsPage() {
         hasFreeSection: false,
         freeQuestionCount: 0,
         freeAttemptLimit: 1,
+        assignedStudents: [],
         questions: [createEmptyQuestion()],
       })
     }
+    setStudentSearchTerm("")
+    setStudentSearchResults([])
     setExpandedQ(0)
     setExamDialog(true)
+  }
+
+  const assignedIdSet = useMemo(
+    () => new Set(examForm.assignedStudents.map((s) => s.id)),
+    [examForm.assignedStudents],
+  )
+
+  useEffect(() => {
+    if (studentSearchTimer.current) clearTimeout(studentSearchTimer.current)
+    const term = studentSearchTerm.trim()
+    if (!term) {
+      setStudentSearchResults([])
+      setStudentSearchLoading(false)
+      return
+    }
+    setStudentSearchLoading(true)
+    studentSearchTimer.current = setTimeout(async () => {
+      try {
+        const results = await api.searchUsers(term, 10)
+        setStudentSearchResults(
+          results
+            .filter((u) => u.role === "student")
+            .map((u) => ({ id: u.id, name: u.name, email: u.email })),
+        )
+      } catch {
+        setStudentSearchResults([])
+      } finally {
+        setStudentSearchLoading(false)
+      }
+    }, 300)
+    return () => {
+      if (studentSearchTimer.current) clearTimeout(studentSearchTimer.current)
+    }
+  }, [studentSearchTerm])
+
+  const addAssignedStudent = (student: AssignableStudent) => {
+    setExamForm((f) =>
+      assignedIdSet.has(student.id)
+        ? f
+        : { ...f, assignedStudents: [...f.assignedStudents, student] },
+    )
+    setStudentSearchTerm("")
+    setStudentSearchResults([])
+  }
+
+  const removeAssignedStudent = (id: string) => {
+    setExamForm((f) => ({
+      ...f,
+      assignedStudents: f.assignedStudents.filter((s) => s.id !== id),
+    }))
   }
 
   const saveExam = async () => {
@@ -232,7 +315,11 @@ export function ExamsPage() {
       }
     }
 
-    if (examForm.accessMode !== "code_required" && examForm.freeAttemptLimit < 1) {
+    if (
+      (examForm.accessMode === "free_section" ||
+        examForm.accessMode === "full_exam_free_attempts") &&
+      examForm.freeAttemptLimit < 1
+    ) {
       showError("Free attempt limit must be at least 1")
       return
     }
@@ -272,7 +359,10 @@ export function ExamsPage() {
         freeQuestionCount:
           examForm.accessMode === "free_section" ? examForm.freeQuestionCount : undefined,
         freeAttemptLimit:
-          examForm.accessMode === "code_required" ? undefined : examForm.freeAttemptLimit,
+          examForm.accessMode === "code_required" || examForm.accessMode === "free"
+            ? undefined
+            : examForm.freeAttemptLimit,
+        assignedStudentIds: examForm.assignedStudents.map((s) => s.id),
         questions: examForm.questions.map((q, i) => ({ ...q, order: i })),
       }
       if (editingExam) {
@@ -430,23 +520,43 @@ export function ExamsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {getExamAccessMode(e) === "free_section" ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
-                        {e.freeQuestionCount} free questions
-                      </Badge>
-                    ) : getExamAccessMode(e) === "full_exam_free_attempts" ? (
-                      <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
-                        {e.freeAttemptLimit} free attempts
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Code required</Badge>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {getExamAccessMode(e) === "free_section" ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                          {e.freeQuestionCount} free questions
+                        </Badge>
+                      ) : getExamAccessMode(e) === "full_exam_free_attempts" ? (
+                        <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
+                          Free attempt
+                        </Badge>
+                      ) : getExamAccessMode(e) === "free" ? (
+                        <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">
+                          Free
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Code required</Badge>
+                      )}
+                      {e.assignedStudentIds && e.assignedStudentIds.length > 0 && (
+                        <Badge variant="secondary" className="gap-1">
+                          <Users className="h-3 w-3" />
+                          {e.assignedStudentIds.length} targeted
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {format(new Date(e.createdAt), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Manage retake permits"
+                        onClick={() => setPermitsDialogExam(e)}
+                      >
+                        <Unlock className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => openForm(e)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -582,7 +692,9 @@ export function ExamsPage() {
                           ? Math.max(f.freeQuestionCount || 1, 1)
                           : 0,
                       freeAttemptLimit:
-                        value === "code_required" ? 1 : Math.max(f.freeAttemptLimit || 1, 1),
+                        value === "code_required" || value === "free"
+                          ? 1
+                          : Math.max(f.freeAttemptLimit || 1, 1),
                     }))
                   }
                 >
@@ -591,10 +703,15 @@ export function ExamsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="code_required">Code required</SelectItem>
+                    <SelectItem value="free">Free (open to all)</SelectItem>
                     <SelectItem value="free_section">Free section</SelectItem>
                     <SelectItem value="full_exam_free_attempts">Full exam free attempts</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Every exam can be taken only once per student. Use the retake button on the exam
+                  list to grant a single retake to a specific student.
+                </p>
               </div>
 
               {examForm.accessMode === "free_section" && (
@@ -612,19 +729,69 @@ export function ExamsPage() {
                   />
                 </div>
               )}
+            </div>
 
-              {examForm.accessMode !== "code_required" && (
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs text-muted-foreground">Free attempts:</Label>
+            {/* Targeted students */}
+            <div className="rounded-md border p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <Label>Targeted Students (optional)</Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                If you add students here, only they will see and access this exam. Leave empty to
+                make it visible according to subject subscriptions and access mode.
+              </p>
+              <div className="relative">
+                <div className="flex items-center gap-2 rounded-md border px-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="number"
-                    className="w-20 h-8"
-                    min={1}
-                    value={examForm.freeAttemptLimit}
-                    onChange={(e) =>
-                      setExamForm((f) => ({ ...f, freeAttemptLimit: +e.target.value }))
-                    }
+                    placeholder="Search students by name or email"
+                    className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
+                    value={studentSearchTerm}
+                    onChange={(e) => setStudentSearchTerm(e.target.value)}
                   />
+                </div>
+                {studentSearchTerm.trim() && (
+                  <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md max-h-56 overflow-auto">
+                    {studentSearchLoading ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Searching…</div>
+                    ) : studentSearchResults.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">No students found</div>
+                    ) : (
+                      studentSearchResults.map((s) => {
+                        const alreadyAdded = assignedIdSet.has(s.id)
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            disabled={alreadyAdded}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed flex flex-col"
+                            onClick={() => addAssignedStudent(s)}
+                          >
+                            <span className="font-medium">{s.name}</span>
+                            <span className="text-xs text-muted-foreground">{s.email}</span>
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+              {examForm.assignedStudents.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {examForm.assignedStudents.map((s) => (
+                    <Badge key={s.id} variant="secondary" className="gap-1 pl-2 pr-1 py-1">
+                      <span className="text-xs">{s.name || s.id}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAssignedStudent(s.id)}
+                        className="ml-1 rounded-full hover:bg-muted-foreground/10 p-0.5"
+                        aria-label="Remove"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
                 </div>
               )}
             </div>
@@ -747,6 +914,12 @@ export function ExamsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Retake Permits Dialog */}
+      <RetakePermitsDialog
+        exam={permitsDialogExam}
+        onClose={() => setPermitsDialogExam(null)}
+      />
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
@@ -763,5 +936,213 @@ export function ExamsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+interface RetakePermit {
+  _id: string
+  status: "active" | "used" | "revoked"
+  usedAt?: string
+  note?: string
+  createdAt: string
+  studentId: { _id: string; name: string; email: string } | string
+  grantedBy: { _id: string; name: string; email: string } | string
+}
+
+function RetakePermitsDialog({
+  exam,
+  onClose,
+}: {
+  exam: Exam | null
+  onClose: () => void
+}) {
+  const { showError } = useAppModal()
+  const [permits, setPermits] = useState<RetakePermit[]>([])
+  const [loading, setLoading] = useState(false)
+  const [grantSearch, setGrantSearch] = useState("")
+  const [grantResults, setGrantResults] = useState<AssignableStudent[]>([])
+  const [grantNote, setGrantNote] = useState("")
+  const [granting, setGranting] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (!exam) return
+    setLoading(true)
+    try {
+      const data = await api.listExamRetakePermits(exam._id)
+      setPermits(data as RetakePermit[])
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to load retake permits")
+    } finally {
+      setLoading(false)
+    }
+  }, [exam, showError])
+
+  useEffect(() => {
+    if (exam) {
+      refresh()
+    } else {
+      setPermits([])
+      setGrantSearch("")
+      setGrantResults([])
+      setGrantNote("")
+    }
+  }, [exam, refresh])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const term = grantSearch.trim()
+    if (!term) {
+      setGrantResults([])
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const results = await api.searchUsers(term, 10)
+        setGrantResults(
+          results
+            .filter((u) => u.role === "student")
+            .map((u) => ({ id: u.id, name: u.name, email: u.email })),
+        )
+      } catch {
+        setGrantResults([])
+      }
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [grantSearch])
+
+  const handleGrant = async (studentId: string) => {
+    if (!exam) return
+    setGranting(studentId)
+    try {
+      await api.grantExamRetakePermit(exam._id, studentId, grantNote.trim() || undefined)
+      setGrantSearch("")
+      setGrantResults([])
+      setGrantNote("")
+      await refresh()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to grant retake")
+    } finally {
+      setGranting(null)
+    }
+  }
+
+  const handleRevoke = async (permitId: string) => {
+    try {
+      await api.revokeExamRetakePermit(permitId)
+      await refresh()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to revoke permit")
+    }
+  }
+
+  const studentName = (s: RetakePermit["studentId"]) =>
+    typeof s === "string" ? s : `${s.name} <${s.email}>`
+
+  return (
+    <Dialog open={!!exam} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Retake permits — {exam?.title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="rounded-md border p-3 space-y-2">
+            <Label className="text-sm">Grant a one-time retake to a student</Label>
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-md border px-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search student by name or email"
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
+                  value={grantSearch}
+                  onChange={(e) => setGrantSearch(e.target.value)}
+                />
+              </div>
+              {grantSearch.trim() && grantResults.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md max-h-56 overflow-auto">
+                  {grantResults.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      disabled={granting === s.id}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-accent disabled:opacity-50 flex flex-col"
+                      onClick={() => handleGrant(s.id)}
+                    >
+                      <span className="font-medium">{s.name}</span>
+                      <span className="text-xs text-muted-foreground">{s.email}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Input
+              placeholder="Optional note (reason for the retake)"
+              value={grantNote}
+              onChange={(e) => setGrantNote(e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium mb-2">Existing permits</h4>
+            {loading ? (
+              <LoadingState />
+            ) : permits.length === 0 ? (
+              <EmptyState title="No permits granted" description="Grant a retake using the form above." />
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Granted</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {permits.map((p) => (
+                      <TableRow key={p._id}>
+                        <TableCell className="text-sm">{studentName(p.studentId)}</TableCell>
+                        <TableCell>
+                          {p.status === "active" ? (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">
+                              Active
+                            </Badge>
+                          ) : p.status === "used" ? (
+                            <Badge variant="outline">Used</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Revoked
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {format(new Date(p.createdAt), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.status === "active" && (
+                            <Button variant="ghost" size="sm" onClick={() => handleRevoke(p._id)}>
+                              Revoke
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -143,7 +143,9 @@ class ExamCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'exams.lockedHint'.tr(),
+                            exam.status == ExamStatus.completed
+                                ? 'exams.alreadyTakenHint'.tr()
+                                : 'exams.lockedHint'.tr(),
                             style: GoogleFonts.cairo(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -166,6 +168,27 @@ class ExamCard extends StatelessWidget {
   }
 
   (String?, Color, IconData?) _resolveBadge(bool isDark) {
+    if (exam.hasRetakePermit) {
+      return (
+        'exams.retakeGrantedBadge'.tr(),
+        Colors.amber,
+        LucideIcons.lockOpen,
+      );
+    }
+    if (exam.isAssigned) {
+      return (
+        'exams.assignedBadge'.tr(),
+        isDark ? AppColors.darkAccent : AppColors.accent,
+        LucideIcons.userCheck,
+      );
+    }
+    if (exam.accessMode == ExamAccessMode.free) {
+      return (
+        'exams.freeBadge'.tr(),
+        isDark ? AppColors.darkSuccess : AppColors.success,
+        LucideIcons.gift,
+      );
+    }
     if (exam.isSubjectUnlocked) {
       return (
         'exams.subjectUnlockedBadge'.tr(),

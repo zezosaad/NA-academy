@@ -7,6 +7,7 @@ export enum ExamAccessMode {
   CODE_REQUIRED = 'code_required',
   FREE_SECTION = 'free_section',
   FULL_EXAM_FREE_ATTEMPTS = 'full_exam_free_attempts',
+  FREE = 'free',
 }
 
 export enum ExamTimingMode {
@@ -93,6 +94,9 @@ export class Exam {
 
   @Prop({ default: true, index: true, type: Boolean })
   isActive!: boolean;
+
+  @Prop({ type: [Types.ObjectId], ref: 'User', default: [], index: true })
+  assignedStudentIds!: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy?: Types.ObjectId;

@@ -4,7 +4,7 @@ part 'exam_models.freezed.dart';
 
 enum ExamStatus { available, completed, locked }
 
-enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts }
+enum ExamAccessMode { codeRequired, freeSection, fullExamFreeAttempts, free }
 
 enum ExamTimingMode { perQuestion, wholeExam }
 
@@ -28,6 +28,8 @@ class Exam with _$Exam {
     @Default(ExamTimingMode.perQuestion) ExamTimingMode timingMode,
     @Default(ExamStatus.available) ExamStatus status,
     @Default(false) bool isSubjectUnlocked,
+    @Default(false) bool isAssigned,
+    @Default(false) bool hasRetakePermit,
     double? lastScore,
   }) = _Exam;
 
@@ -66,6 +68,8 @@ class Exam with _$Exam {
       timingMode: timingMode,
       status: _parseExamStatus(json['status'] as String?),
       isSubjectUnlocked: json['isSubjectUnlocked'] as bool? ?? false,
+      isAssigned: json['isAssigned'] as bool? ?? false,
+      hasRetakePermit: json['hasRetakePermit'] as bool? ?? false,
       lastScore: (json['lastScore'] as num?)?.toDouble(),
     );
   }
@@ -73,6 +77,7 @@ class Exam with _$Exam {
   static ExamAccessMode _parseAccessMode(String? value) => switch (value) {
     'full_exam_free_attempts' => ExamAccessMode.fullExamFreeAttempts,
     'free_section' => ExamAccessMode.freeSection,
+    'free' => ExamAccessMode.free,
     _ => ExamAccessMode.codeRequired,
   };
 
@@ -120,7 +125,10 @@ class Exam with _$Exam {
 
 extension ExamAccessX on Exam {
   bool get canStartDirectly =>
+      hasRetakePermit ||
+      isAssigned ||
       isSubjectUnlocked ||
+      accessMode == ExamAccessMode.free ||
       ((accessMode == ExamAccessMode.fullExamFreeAttempts ||
               accessMode == ExamAccessMode.freeSection) &&
           freeAttemptsRemaining > 0);
